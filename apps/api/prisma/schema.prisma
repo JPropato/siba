@@ -1,6 +1,6 @@
 generator client {
   provider = "prisma-client-js"
-  engineType = "binary"
+  binaryTargets = ["native"]
 }
 
 datasource db {
@@ -10,69 +10,69 @@ datasource db {
 
 // ============ SEGURIDAD ============
 
-model User {
-  id           Int        @id @default(autoincrement())
-  email        String     @unique
-  passwordHash String     @map("password_hash")
-  nombre       String
-  apellido     String
-  ultimoLogin  DateTime?  @map("ultimo_login")
-  createdAt    DateTime   @default(now()) @map("created_at")
-  updatedAt    DateTime   @updatedAt @map("updated_at")
-  deletedAt    DateTime?  @map("deleted_at")
+model Usuario {
+  id            Int        @id @default(autoincrement())
+  email         String     @unique
+  claveHash     String     @map("clave_hash")
+  nombre        String
+  apellido      String
+  ultimoAcceso  DateTime?  @map("ultimo_acceso")
+  fechaCreacion DateTime   @default(now()) @map("fecha_creacion")
+  fechaActualizacion DateTime @updatedAt @map("fecha_actualizacion")
+  fechaEliminacion DateTime? @map("fecha_eliminacion")
 
-  roles UserRole[]
+  roles UsuarioRol[]
 
-  @@map("users")
+  @@map("usuarios")
 }
 
-model Role {
-  id          Int       @id @default(autoincrement())
-  nombre      String    @unique
-  descripcion String?
-  createdAt   DateTime  @default(now()) @map("created_at")
-  deletedAt   DateTime? @map("deleted_at")
+model Rol {
+  id             Int       @id @default(autoincrement())
+  nombre         String    @unique
+  descripcion    String?
+  fechaCreacion  DateTime  @default(now()) @map("fecha_creacion")
+  fechaEliminacion DateTime? @map("fecha_eliminacion")
 
-  users       UserRole[]
-  permissions RolePermission[]
+  usuarios     UsuarioRol[]
+  permisos     RolPermiso[]
 
   @@map("roles")
 }
 
-model Permission {
+model Permiso {
   id          Int    @id @default(autoincrement())
   codigo      String @unique
   descripcion String?
   modulo      String
 
-  roles RolePermission[]
+  roles RolPermiso[]
 
-  @@map("permissions")
+  @@map("permisos")
 }
 
-model UserRole {
-  id         Int      @id @default(autoincrement())
-  userId     Int      @map("user_id")
-  roleId     Int      @map("role_id")
-  assignedAt DateTime @default(now()) @map("assigned_at")
+model UsuarioRol {
+  id              Int      @id @default(autoincrement())
+  usuarioId       Int      @map("usuario_id")
+  rolId           Int      @map("rol_id")
+  fechaAsignacion DateTime @default(now()) @map("fecha_asignacion")
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  rol     Rol     @relation(fields: [rolId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, roleId])
-  @@map("user_roles")
+  @@unique([usuarioId, rolId])
+  @@map("usuario_roles")
 }
 
-model RolePermission {
-  id           Int @id @default(autoincrement())
-  roleId       Int @map("role_id")
-  permissionId Int @map("permission_id")
+model RolPermiso {
+  id         Int @id @default(autoincrement())
+  rolId      Int @map("rol_id")
+  permisoId  Int @map("permiso_id")
 
-  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
-  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  rol     Rol     @relation(fields: [rolId], references: [id], onDelete: Cascade)
+  permiso Permiso @relation(fields: [permisoId], references: [id], onDelete: Cascade)
 
-  @@unique([roleId, permissionId])
-  @@map("role_permissions")
+  @@unique([rolId, permisoId])
+  @@map("rol_permisos")
 }
 
 // ============ MAESTROS ============
@@ -84,9 +84,9 @@ model Cliente {
   telefono        String?
   email           String?
   direccionFiscal String?   @map("direccion_fiscal")
-  createdAt       DateTime  @default(now()) @map("created_at")
-  updatedAt       DateTime  @updatedAt @map("updated_at")
-  deletedAt       DateTime? @map("deleted_at")
+  fechaCreacion   DateTime  @default(now()) @map("fecha_creacion")
+  fechaActualizacion DateTime @updatedAt @map("fecha_actualizacion")
+  fechaEliminacion DateTime? @map("fecha_eliminacion")
 
   sucursales Sucursal[]
 
@@ -94,11 +94,11 @@ model Cliente {
 }
 
 model Zona {
-  id          Int       @id @default(autoincrement())
-  nombre      String    @unique
-  descripcion String?
-  createdAt   DateTime  @default(now()) @map("created_at")
-  deletedAt   DateTime? @map("deleted_at")
+  id             Int       @id @default(autoincrement())
+  nombre         String    @unique
+  descripcion    String?
+  fechaCreacion  DateTime  @default(now()) @map("fecha_creacion")
+  fechaEliminacion DateTime? @map("fecha_eliminacion")
 
   sucursales Sucursal[]
   vehiculos  Vehiculo[]
@@ -115,9 +115,9 @@ model Sucursal {
   telefono         String?
   contactoNombre   String?   @map("contacto_nombre")
   contactoTelefono String?   @map("contacto_telefono")
-  createdAt        DateTime  @default(now()) @map("created_at")
-  updatedAt        DateTime  @updatedAt @map("updated_at")
-  deletedAt        DateTime? @map("deleted_at")
+  fechaCreacion    DateTime  @default(now()) @map("fecha_creacion")
+  fechaActualizacion DateTime @updatedAt @map("fecha_actualizacion")
+  fechaEliminacion DateTime? @map("fecha_eliminacion")
 
   cliente Cliente @relation(fields: [clienteId], references: [id])
   zona    Zona    @relation(fields: [zonaId], references: [id])
@@ -126,15 +126,15 @@ model Sucursal {
 }
 
 model Vehiculo {
-  id        Int       @id @default(autoincrement())
-  zonaId    Int       @map("zona_id")
-  patente   String    @unique
-  marca     String?
-  modelo    String?
-  anio      Int?
-  tipo      String?
-  createdAt DateTime  @default(now()) @map("created_at")
-  deletedAt DateTime? @map("deleted_at")
+  id            Int       @id @default(autoincrement())
+  zonaId        Int       @map("zona_id")
+  patente       String    @unique
+  marca         String?
+  modelo        String?
+  anio          Int?
+  tipo          String?
+  fechaCreacion DateTime  @default(now()) @map("fecha_creacion")
+  fechaEliminacion DateTime? @map("fecha_eliminacion")
 
   zona Zona @relation(fields: [zonaId], references: [id])
 

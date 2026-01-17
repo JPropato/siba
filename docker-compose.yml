@@ -5,8 +5,8 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: siba
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: siba-dev
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
@@ -16,6 +16,26 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: ./apps/api/Dockerfile
+    container_name: siba-api
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+      - "5555:5555"
+    environment:
+      - DATABASE_URL=postgresql://postgres:admin@postgres:5432/siba-dev?schema=public
+      - NODE_ENV=development
+    volumes:
+      - .:/app
+      - /app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: npm run dev -w @siba/api
 
   minio:
     image: minio/minio:latest
