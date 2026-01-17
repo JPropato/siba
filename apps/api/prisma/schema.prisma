@@ -1,0 +1,142 @@
+generator client {
+  provider = "prisma-client-js"
+  engineType = "binary"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============ SEGURIDAD ============
+
+model User {
+  id           Int        @id @default(autoincrement())
+  email        String     @unique
+  passwordHash String     @map("password_hash")
+  nombre       String
+  apellido     String
+  ultimoLogin  DateTime?  @map("ultimo_login")
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+  deletedAt    DateTime?  @map("deleted_at")
+
+  roles UserRole[]
+
+  @@map("users")
+}
+
+model Role {
+  id          Int       @id @default(autoincrement())
+  nombre      String    @unique
+  descripcion String?
+  createdAt   DateTime  @default(now()) @map("created_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  users       UserRole[]
+  permissions RolePermission[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id          Int    @id @default(autoincrement())
+  codigo      String @unique
+  descripcion String?
+  modulo      String
+
+  roles RolePermission[]
+
+  @@map("permissions")
+}
+
+model UserRole {
+  id         Int      @id @default(autoincrement())
+  userId     Int      @map("user_id")
+  roleId     Int      @map("role_id")
+  assignedAt DateTime @default(now()) @map("assigned_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId])
+  @@map("user_roles")
+}
+
+model RolePermission {
+  id           Int @id @default(autoincrement())
+  roleId       Int @map("role_id")
+  permissionId Int @map("permission_id")
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+// ============ MAESTROS ============
+
+model Cliente {
+  id              Int       @id @default(autoincrement())
+  razonSocial     String    @map("razon_social")
+  cuit            String    @unique
+  telefono        String?
+  email           String?
+  direccionFiscal String?   @map("direccion_fiscal")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  deletedAt       DateTime? @map("deleted_at")
+
+  sucursales Sucursal[]
+
+  @@map("clientes")
+}
+
+model Zona {
+  id          Int       @id @default(autoincrement())
+  nombre      String    @unique
+  descripcion String?
+  createdAt   DateTime  @default(now()) @map("created_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  sucursales Sucursal[]
+  vehiculos  Vehiculo[]
+
+  @@map("zonas")
+}
+
+model Sucursal {
+  id               Int       @id @default(autoincrement())
+  clienteId        Int       @map("cliente_id")
+  zonaId           Int       @map("zona_id")
+  nombre           String
+  direccion        String
+  telefono         String?
+  contactoNombre   String?   @map("contacto_nombre")
+  contactoTelefono String?   @map("contacto_telefono")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+  deletedAt        DateTime? @map("deleted_at")
+
+  cliente Cliente @relation(fields: [clienteId], references: [id])
+  zona    Zona    @relation(fields: [zonaId], references: [id])
+
+  @@map("sucursales")
+}
+
+model Vehiculo {
+  id        Int       @id @default(autoincrement())
+  zonaId    Int       @map("zona_id")
+  patente   String    @unique
+  marca     String?
+  modelo    String?
+  anio      Int?
+  tipo      String?
+  createdAt DateTime  @default(now()) @map("created_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  zona Zona @relation(fields: [zonaId], references: [id])
+
+  @@map("vehiculos")
+}
