@@ -1,29 +1,121 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+/* SIBA Design System - Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ===== SIBA Design Tokens ===== */
 :root {
-  --background: 250 250 250;
-  --foreground: 24 24 27;
-  --card: 255 255 255;
-  --border: 228 228 231;
-  --primary: 24 24 27;
-  --primary-foreground: 250 250 250;
+  /* Dynamic Primary Color (Corporate Blue by default) */
+  --brand-color: #3b82f6;
+  --brand-light: #60a5fa;
+  --brand-dark: #2563eb;
+
+  /* Neutrals */
+  --background: #f8fafc;
+  --surface: #ffffff;
+  --border: #e2e8f0;
+  --foreground: #0f172a;
+  --muted: #475569;
+  --muted-foreground: #94a3b8;
+
+  /* Semantic */
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --error: #ef4444;
 }
 
 .dark {
-  --background: 9 9 11;
-  --foreground: 250 250 250;
-  --card: 24 24 27;
-  --border: 39 39 42;
-  --primary: 250 250 250;
-  --primary-foreground: 24 24 27;
+  --brand-color: #60a5fa;
+  --brand-light: #93c5fd;
+  --brand-dark: #3b82f6;
+
+  --background: #0f172a;
+  --surface: #1e293b;
+  --border: #334155;
+  --foreground: #f8fafc;
+  --muted: #94a3b8;
+  --muted-foreground: #64748b;
 }
 
+/* ===== Base Styles ===== */
 body {
-  font-family: 'Inter', system-ui, sans-serif;
-  background-color: rgb(var(--background));
-  color: rgb(var(--foreground));
+  font-family: 'Manrope', system-ui, sans-serif;
+  background-color: var(--background);
+  color: var(--foreground);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.material-symbols-outlined {
+  font-variation-settings:
+    'FILL' 0,
+    'wght' 300,
+    'GRAD' 0,
+    'opsz' 24;
+}
+
+.luxury-shadow {
+  box-shadow:
+    0 4px 20px -4px rgba(0, 0, 0, 0.08),
+    0 8px 40px -8px rgba(0, 0, 0, 0.06);
+}
+
+/* Force Brand Utilities (Bypass Tailwind Opacity Issues) */
+@layer utilities {
+  .bg-brand {
+    background-color: var(--brand-color) !important;
+  }
+
+  .bg-brand-light {
+    background-color: var(--brand-light) !important;
+  }
+
+  .bg-brand-dark {
+    background-color: var(--brand-dark) !important;
+  }
+
+  .text-brand {
+    color: var(--brand-color) !important;
+  }
+
+  .border-brand {
+    border-color: var(--brand-color) !important;
+  }
+
+  .ring-brand {
+    --tw-ring-color: var(--brand-color) !important;
+  }
+}
+
+/* Custom Scrollbar for Sidebar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Sidebar Active Indicator */
+.sidebar-active-indicator {
+  position: absolute;
+  left: 0;
+  top: 20%;
+  bottom: 20%;
+  width: 4px;
+  background-color: var(--brand-color);
+  border-radius: 0 4px 4px 0;
+  box-shadow: 1px 0 8px var(--brand-color);
 }
