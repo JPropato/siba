@@ -1,16 +1,39 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
+import api from '../lib/api';
+import { useAuthStore } from '../stores/auth-store';
+import { useNavigate } from 'react-router-dom';
 
 export function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const navigate = useNavigate();
+  const setAuth = useAuthStore((state) => state.setAuth);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    // TODO: Implement actual auth
-    setTimeout(() => setIsLoading(false), 1500);
+    setError(null);
+
+    try {
+      const response = await api.post('/auth/login', { email, password });
+      const { user, accessToken } = response.data;
+
+      setAuth(user, accessToken); // Save user & token in store
+
+      navigate('/dashboard'); // Auto-redirect
+
+    } catch (err: unknown) {
+      console.error('Login failed', err);
+      const message = err instanceof Error ? err.message : 'Error al iniciar sesión. Verifique sus credenciales.';
+      const axiosError = err as { response?: { data?: { error?: string } } };
+      setError(axiosError.response?.data?.error || message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -46,7 +69,14 @@ export function LoginPage() {
               </p>
             </div>
 
+
             <form onSubmit={handleSubmit} className="space-y-4">
+              {error && (
+                <div className="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-900/20 rounded-lg p-3 text-center">
+                  <p className="text-xs text-red-600 dark:text-red-400 font-medium">{error}</p>
+                </div>
+              )}
+
               {/* Email Field */}
               <div className="flex flex-col gap-1.5">
                 <label className="text-[9px] font-bold uppercase tracking-widest text-[var(--muted)] px-1">

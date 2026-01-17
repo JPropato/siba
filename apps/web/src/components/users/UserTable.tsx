@@ -1,0 +1,87 @@
+import type { User } from '../../types/user';
+
+interface UserTableProps {
+    users: User[];
+    onEdit: (user: User) => void;
+    onDelete: (user: User) => void;
+    isLoading: boolean;
+}
+
+export default function UserTable({ users, onEdit, onDelete, isLoading }: UserTableProps) {
+    if (isLoading) {
+        return (
+            <div className="w-full h-40 flex items-center justify-center">
+                <span className="material-symbols-outlined animate-spin text-4xl text-brand">progress_activity</span>
+            </div>
+        );
+    }
+
+    if (users.length === 0) {
+        return (
+            <div className="w-full p-8 text-center border border-dashed border-slate-300 dark:border-slate-700 rounded-lg">
+                <p className="text-slate-500 dark:text-slate-400">No se encontraron usuarios.</p>
+            </div>
+        );
+    }
+
+    return (
+        <div className="w-full overflow-hidden rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm">
+            <table className="w-full text-left text-sm">
+                <thead className="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
+                    <tr>
+                        <th className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">Usuario</th>
+                        <th className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">Roles</th>
+                        <th className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">Último Acceso</th>
+                        <th className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100 text-right">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200 dark:divide-slate-800 bg-white dark:bg-slate-950">
+                    {users.map((user) => (
+                        <tr key={user.id} className="hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors">
+                            <td className="px-4 py-3">
+                                <div className="flex flex-col">
+                                    <span className="font-medium text-slate-900 dark:text-white">
+                                        {user.nombre} {user.apellido}
+                                    </span>
+                                    <span className="text-xs text-slate-500 dark:text-slate-400">{user.email}</span>
+                                </div>
+                            </td>
+                            <td className="px-4 py-3">
+                                <div className="flex gap-1 flex-wrap">
+                                    {user.roles.map((rol) => (
+                                        <span key={rol} className="px-2 py-0.5 rounded-full bg-brand/10 text-brand text-[10px] uppercase font-bold tracking-wider border border-brand/20">
+                                            {rol}
+                                        </span>
+                                    ))}
+                                </div>
+                            </td>
+                            <td className="px-4 py-3">
+                                <span className="text-slate-600 dark:text-slate-400 text-xs">
+                                    {user.ultimoAcceso ? new Date(user.ultimoAcceso).toLocaleDateString() : 'Nunca'}
+                                </span>
+                            </td>
+                            <td className="px-4 py-3 text-right">
+                                <div className="flex items-center justify-end gap-2">
+                                    <button
+                                        onClick={() => onEdit(user)}
+                                        className="p-1.5 text-slate-400 hover:text-brand transition-colors rounded hover:bg-slate-100 dark:hover:bg-slate-800"
+                                        title="Editar"
+                                    >
+                                        <span className="material-symbols-outlined text-[18px]">edit</span>
+                                    </button>
+                                    <button
+                                        onClick={() => onDelete(user)}
+                                        className="p-1.5 text-slate-400 hover:text-red-500 transition-colors rounded hover:bg-red-50 dark:hover:bg-red-900/10"
+                                        title="Eliminar"
+                                    >
+                                        <span className="material-symbols-outlined text-[18px]">delete</span>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        </div>
+    );
+}
