@@ -9,14 +9,19 @@
 ```
 main (producción)
   │
-  └── develop (integración)
+  └── uat (testing/pre-prod) ← rama por defecto para desarrollo
         │
         ├── feature/nombre-feature
         ├── fix/nombre-fix
         └── hotfix/nombre-hotfix
 ```
 
-### Tipos de Branches
+### Branches Principales
+
+| Branch | Propósito | Protegida |
+|--------|-----------|-----------|
+| `main` | Producción | ✅ Sí |
+| `uat` | Testing/Pre-prod, rama por defecto | ✅ Sí |
 
 | Prefijo | Uso | Ejemplo |
 |---------|-----|---------|
