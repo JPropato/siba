@@ -1,76 +1,72 @@
-# Agent Skills
+# Sistema Bauman
 
-A collection of skills for AI coding agents. Skills are packaged instructions and scripts that extend agent capabilities.
+Sistema de gestión interno para empresa de construcción, obras y mantenimiento.
 
-Skills follow the [Agent Skills](https://agentskills.io/) format.
+## 📋 Descripción
 
-## Available Skills
+ERP interno que permite:
+- Gestionar clientes y sucursales
+- Administrar tickets de servicio técnico
+- Presupuestar y controlar obras
+- Gestionar finanzas (gastos, ingresos, contribuciones)
 
-### react-best-practices
+## 🏗️ Stack Tecnológico
 
-Industry best practices for React and Next.js performance optimization. Contains 40+ rules across 8 categories, prioritized by impact.
+| Capa | Tecnología |
+|------|------------|
+| Frontend | React 19 + Vite + TypeScript + shadcn/ui |
+| Backend | Express 5 + TypeScript + Prisma |
+| Base de datos | PostgreSQL 16 |
+| Storage | MinIO (S3-compatible) |
+| Infraestructura | Docker + Dokploy |
 
-**Use when:**
-- Writing new React components or Next.js pages
-- Implementing data fetching (client or server-side)
-- Reviewing code for performance issues
-- Optimizing bundle size or load times
+## 📁 Estructura
 
-**Categories covered:**
-- Eliminating waterfalls (Critical)
-- Bundle size optimization (Critical)
-- Server-side performance (High)
-- Client-side data fetching (Medium-High)
-- Re-render optimization (Medium)
-- Rendering performance (Medium)
-- JavaScript micro-optimizations (Low-Medium)
-
-### web-design-guidelines
-
-Review UI code for compliance with web interface best practices. Audits your code for 100+ rules covering accessibility, performance, and UX.
-
-**Use when:**
-- "Review my UI"
-- "Check accessibility"
-- "Audit design"
-- "Review UX"
-- "Check my site against best practices"
-
-### dokploy-deploy
-
-Deploy applications to Dokploy using the CLI or API.
-
-**Use when:**
-- "Deploy to dokploy"
-- "Push to production"
-- "Set up dokploy deployment"
-
-## Installation
-
-Skills in this repository are located in `.agent/skills/` and are automatically discovered by Antigravity.
-
-## Usage
-
-Skills are automatically available once installed. The agent will use them when relevant tasks are detected.
-
-**Examples:**
 ```
-Deploy my app
-```
-```
-Review this React component for performance issues
-```
-```
-Help me optimize this Next.js page
+sistema-bauman/
+├── apps/
+│   ├── web/          # Frontend React
+│   └── api/          # Backend Express
+├── packages/
+│   └── shared/       # Tipos y validadores compartidos
+├── docs/
+│   └── preparacion-proyecto/  # Documentación de planificación
+└── docker-compose.yml
 ```
 
-## Skill Structure
+## 📄 Documentación
 
-Each skill contains:
-- `SKILL.md` - Instructions for the agent
-- `scripts/` - Helper scripts for automation (optional)
-- `references/` - Supporting documentation (optional)
+Ver [`docs/preparacion-proyecto/README.md`](./docs/preparacion-proyecto/README.md) para:
+- Stack tecnológico detallado
+- Lineamientos de arquitectura
+- Diseño visual
+- Roadmap de desarrollo
+- Modelo de datos
 
-## License
+## 🌿 Branches
 
-MIT
+| Branch | Propósito |
+|--------|-----------|
+| `main` | Producción |
+| `uat` | Testing/Pre-producción (default) |
+
+## 🚀 Setup (próximamente)
+
+```bash
+# Clonar
+git clone https://github.com/JPropato/siba.git
+cd siba
+
+# Instalar dependencias
+npm install
+
+# Levantar servicios
+docker-compose up -d
+
+# Desarrollo
+npm run dev
+```
+
+## 📝 Licencia
+
+Privado - Bauman © 2026
