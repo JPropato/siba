@@ -10,12 +10,20 @@ import ZonasPage from './pages/ZonasPage';
 import SedesPage from './pages/SedesPage';
 import VehiculosPage from './pages/VehiculosPage';
 import MaterialesPage from './pages/MaterialesPage';
+import EmpleadosPage from './pages/EmpleadosPage';
+import VacacionesPage from './pages/VacacionesPage';
+import SueldosPage from './pages/SueldosPage';
+import AusenciasPage from './pages/AusenciasPage';
+import TicketsPage from './pages/TicketsPage';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import DashboardLayout from './components/layout/DashboardLayout';
 import './App.css';
 
 // --- Error Boundary ---
-class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean, error: Error | null }> {
+class ErrorBoundary extends Component<
+  { children: ReactNode },
+  { hasError: boolean; error: Error | null }
+> {
   constructor(props: { children: ReactNode }) {
     super(props);
     this.state = { hasError: false, error: null };
@@ -26,7 +34,7 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boole
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error("Uncaught error:", error, errorInfo);
+    console.error('Uncaught error:', error, errorInfo);
   }
 
   render() {
@@ -64,24 +72,41 @@ function DashboardWrapper({ children }: { children: React.ReactNode }) {
     if (id === 'sedes') navigate('/dashboard/sedes');
     if (id === 'vehiculos') navigate('/dashboard/vehicles');
     if (id === 'materiales') navigate('/dashboard/materials');
+    if (id === 'empleados') navigate('/dashboard/empleados');
+    if (id === 'vacaciones') navigate('/dashboard/vacaciones');
+    if (id === 'sueldos') navigate('/dashboard/sueldos');
+    if (id === 'ausencias') navigate('/dashboard/ausencias');
+    if (id === 'tickets') navigate('/dashboard/tickets');
   };
 
   const getPageInfo = (path: string) => {
     if (path.includes('users')) return { id: 'usuarios', label: 'Usuarios' };
     if (path.includes('roles')) return { id: 'roles', label: 'Roles' };
-    if (path.includes('clients')) return { id: 'clientes', label: 'Clientes', parentLabel: 'Administración' };
-    if (path.includes('zones')) return { id: 'zonas', label: 'Zonas', parentLabel: 'Administración' };
-    if (path.includes('sedes')) return { id: 'sedes', label: 'Sedes', parentLabel: 'Administración' };
-    if (path.includes('vehicles')) return { id: 'vehiculos', label: 'Vehículos', parentLabel: 'Administración' };
-    if (path.includes('materials')) return { id: 'materiales', label: 'Materiales', parentLabel: 'Catálogo' };
+    if (path.includes('clients'))
+      return { id: 'clientes', label: 'Clientes', parentLabel: 'Administración' };
+    if (path.includes('zones'))
+      return { id: 'zonas', label: 'Zonas', parentLabel: 'Administración' };
+    if (path.includes('sedes'))
+      return { id: 'sedes', label: 'Sedes', parentLabel: 'Administración' };
+    if (path.includes('vehicles'))
+      return { id: 'vehiculos', label: 'Vehículos', parentLabel: 'Administración' };
+    if (path.includes('materials'))
+      return { id: 'materiales', label: 'Materiales', parentLabel: 'Catálogo' };
+    if (path.includes('empleados'))
+      return { id: 'empleados', label: 'Empleados', parentLabel: 'Recursos Humanos' };
+    if (path.includes('vacaciones'))
+      return { id: 'vacaciones', label: 'Vacaciones', parentLabel: 'Recursos Humanos' };
+    if (path.includes('sueldos'))
+      return { id: 'sueldos', label: 'Sueldos', parentLabel: 'Recursos Humanos' };
+    if (path.includes('ausencias'))
+      return { id: 'ausencias', label: 'Ausencias', parentLabel: 'Recursos Humanos' };
+    if (path.includes('tickets'))
+      return { id: 'tickets', label: 'Tickets', parentLabel: 'Comercial' };
     return { id: 'dashboard', label: 'Dashboard' };
   };
 
   return (
-    <DashboardLayout
-      currentPage={getPageInfo(location.pathname)}
-      onNavigate={handleNavigate}
-    >
+    <DashboardLayout currentPage={getPageInfo(location.pathname)} onNavigate={handleNavigate}>
       {children}
     </DashboardLayout>
   );
@@ -95,30 +120,110 @@ export default function App() {
         <Route path="/login" element={<LoginPage />} />
 
         <Route element={<ProtectedRoute />}>
-          <Route path="/dashboard" element={
-            <DashboardWrapper><DashboardPage /></DashboardWrapper>
-          } />
-          <Route path="/dashboard/users" element={
-            <DashboardWrapper><UsersPage /></DashboardWrapper>
-          } />
-          <Route path="/dashboard/roles" element={
-            <DashboardWrapper><RolesPage /></DashboardWrapper>
-          } />
-          <Route path="/dashboard/clients" element={
-            <DashboardWrapper><ClientsPage /></DashboardWrapper>
-          } />
-          <Route path="/dashboard/zones" element={
-            <DashboardWrapper><ZonasPage /></DashboardWrapper>
-          } />
-          <Route path="/dashboard/sedes" element={
-            <DashboardWrapper><SedesPage /></DashboardWrapper>
-          } />
-          <Route path="/dashboard/vehicles" element={
-            <DashboardWrapper><VehiculosPage /></DashboardWrapper>
-          } />
-          <Route path="/dashboard/materials" element={
-            <DashboardWrapper><MaterialesPage /></DashboardWrapper>
-          } />
+          <Route
+            path="/dashboard"
+            element={
+              <DashboardWrapper>
+                <DashboardPage />
+              </DashboardWrapper>
+            }
+          />
+          <Route
+            path="/dashboard/users"
+            element={
+              <DashboardWrapper>
+                <UsersPage />
+              </DashboardWrapper>
+            }
+          />
+          <Route
+            path="/dashboard/roles"
+            element={
+              <DashboardWrapper>
+                <RolesPage />
+              </DashboardWrapper>
+            }
+          />
+          <Route
+            path="/dashboard/clients"
+            element={
+              <DashboardWrapper>
+                <ClientsPage />
+              </DashboardWrapper>
+            }
+          />
+          <Route
+            path="/dashboard/zones"
+            element={
+              <DashboardWrapper>
+                <ZonasPage />
+              </DashboardWrapper>
+            }
+          />
+          <Route
+            path="/dashboard/sedes"
+            element={
+              <DashboardWrapper>
+                <SedesPage />
+              </DashboardWrapper>
+            }
+          />
+          <Route
+            path="/dashboard/vehicles"
+            element={
+              <DashboardWrapper>
+                <VehiculosPage />
+              </DashboardWrapper>
+            }
+          />
+          <Route
+            path="/dashboard/materials"
+            element={
+              <DashboardWrapper>
+                <MaterialesPage />
+              </DashboardWrapper>
+            }
+          />
+          <Route
+            path="/dashboard/empleados"
+            element={
+              <DashboardWrapper>
+                <EmpleadosPage />
+              </DashboardWrapper>
+            }
+          />
+          <Route
+            path="/dashboard/vacaciones"
+            element={
+              <DashboardWrapper>
+                <VacacionesPage />
+              </DashboardWrapper>
+            }
+          />
+          <Route
+            path="/dashboard/sueldos"
+            element={
+              <DashboardWrapper>
+                <SueldosPage />
+              </DashboardWrapper>
+            }
+          />
+          <Route
+            path="/dashboard/ausencias"
+            element={
+              <DashboardWrapper>
+                <AusenciasPage />
+              </DashboardWrapper>
+            }
+          />
+          <Route
+            path="/dashboard/tickets"
+            element={
+              <DashboardWrapper>
+                <TicketsPage />
+              </DashboardWrapper>
+            }
+          />
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
         </Route>
 

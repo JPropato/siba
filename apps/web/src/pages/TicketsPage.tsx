@@ -1,0 +1,336 @@
+import { useState, useEffect, useCallback } from 'react';
+import api from '../lib/api';
+import type {
+  Ticket,
+  EstadoTicket,
+  RubroTicket,
+  PrioridadTicket,
+  TicketFormData,
+} from '../types/tickets';
+import {
+  ESTADO_LABELS,
+  ESTADO_COLORS,
+  PRIORIDAD_LABELS,
+  PRIORIDAD_COLORS,
+  RUBRO_LABELS,
+} from '../types/tickets';
+import TicketDialog from '../components/tickets/TicketDialog';
+
+export default function TicketsPage() {
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [estadoFilter, setEstadoFilter] = useState<EstadoTicket | ''>('');
+  const [rubroFilter, setRubroFilter] = useState<RubroTicket | ''>('');
+  const [prioridadFilter, setPrioridadFilter] = useState<PrioridadTicket | ''>('');
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingTicket, setEditingTicket] = useState<Ticket | null>(null);
+
+  const fetchTickets = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const params = new URLSearchParams({
+        page: String(page),
+        limit: '10',
+      });
+      if (search) params.append('search', search);
+      if (estadoFilter) params.append('estado', estadoFilter);
+      if (rubroFilter) params.append('rubro', rubroFilter);
+      if (prioridadFilter) params.append('prioridad', prioridadFilter);
+
+      const res = await api.get(`/tickets?${params}`);
+      setTickets(res.data.data || []);
+      setTotalPages(res.data.meta?.totalPages || 1);
+      setTotal(res.data.meta?.total || 0);
+    } catch (error) {
+      console.error('Error fetching tickets:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [page, search, estadoFilter, rubroFilter, prioridadFilter]);
+
+  useEffect(() => {
+    fetchTickets();
+  }, [fetchTickets]);
+
+  const handleCreate = () => {
+    setEditingTicket(null);
+    setIsDialogOpen(true);
+  };
+
+  const handleEdit = (ticket: Ticket) => {
+    setEditingTicket(ticket);
+    setIsDialogOpen(true);
+  };
+
+  const handleDelete = async (ticket: Ticket) => {
+    if (!confirm(`¿Eliminar el ticket TKT-${String(ticket.codigoInterno).padStart(5, '0')}?`))
+      return;
+    try {
+      await api.delete(`/tickets/${ticket.id}`);
+      fetchTickets();
+    } catch (error) {
+      console.error('Error deleting ticket:', error);
+    }
+  };
+
+  const handleSave = async (data: TicketFormData) => {
+    if (editingTicket) {
+      await api.put(`/tickets/${editingTicket.id}`, data);
+    } else {
+      await api.post('/tickets', data);
+    }
+    setIsDialogOpen(false);
+    fetchTickets();
+  };
+
+  const formatCode = (code: number) => `TKT-${String(code).padStart(5, '0')}`;
+  const formatDate = (date: string | null) => {
+    if (!date) return '-';
+    return new Date(date).toLocaleDateString('es-AR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
+  };
+
+  return (
+    <div className="p-6 space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Tickets de Servicio</h1>
+          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+            {total} tickets en total
+          </p>
+        </div>
+        <button
+          onClick={handleCreate}
+          className="px-4 py-2.5 bg-brand hover:bg-brand-dark text-white text-sm font-bold rounded-lg shadow-lg shadow-brand/20 transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
+        >
+          <span className="material-symbols-outlined text-[20px]">add</span>
+          NUEVO TICKET
+        </button>
+      </div>
+
+      {/* Filters */}
+      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 space-y-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="lg:col-span-2">
+            <input
+              type="text"
+              placeholder="Buscar por descripción, código..."
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
+              className="w-full h-10 px-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none focus:border-brand transition-all"
+            />
+          </div>
+          <select
+            value={estadoFilter}
+            onChange={(e) => {
+              setEstadoFilter(e.target.value as EstadoTicket | '');
+              setPage(1);
+            }}
+            className="h-10 px-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none focus:border-brand"
+          >
+            <option value="">Todos los estados</option>
+            {Object.entries(ESTADO_LABELS).map(([k, v]) => (
+              <option key={k} value={k}>
+                {v}
+              </option>
+            ))}
+          </select>
+          <select
+            value={rubroFilter}
+            onChange={(e) => {
+              setRubroFilter(e.target.value as RubroTicket | '');
+              setPage(1);
+            }}
+            className="h-10 px-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none focus:border-brand"
+          >
+            <option value="">Todos los rubros</option>
+            {Object.entries(RUBRO_LABELS).map(([k, v]) => (
+              <option key={k} value={k}>
+                {v}
+              </option>
+            ))}
+          </select>
+          <select
+            value={prioridadFilter}
+            onChange={(e) => {
+              setPrioridadFilter(e.target.value as PrioridadTicket | '');
+              setPage(1);
+            }}
+            className="h-10 px-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none focus:border-brand"
+          >
+            <option value="">Todas las prioridades</option>
+            {Object.entries(PRIORIDAD_LABELS).map(([k, v]) => (
+              <option key={k} value={k}>
+                {v}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* Table */}
+      <div className="w-full overflow-hidden rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm border-collapse">
+            <thead className="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
+              <tr>
+                <th className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">
+                  Código
+                </th>
+                <th className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">
+                  Descripción
+                </th>
+                <th className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">
+                  Sucursal
+                </th>
+                <th className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">
+                  Técnico
+                </th>
+                <th className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">
+                  Estado
+                </th>
+                <th className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">
+                  Prioridad
+                </th>
+                <th className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">
+                  Fecha
+                </th>
+                <th className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100 text-right">
+                  Acciones
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200 dark:divide-slate-800 bg-white dark:bg-slate-950">
+              {isLoading ? (
+                <tr>
+                  <td colSpan={8} className="px-4 py-12 text-center text-slate-400">
+                    <span className="material-symbols-outlined animate-spin text-3xl">
+                      progress_activity
+                    </span>
+                  </td>
+                </tr>
+              ) : tickets.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="px-4 py-12 text-center text-slate-400">
+                    No se encontraron tickets
+                  </td>
+                </tr>
+              ) : (
+                tickets.map((t) => (
+                  <tr
+                    key={t.id}
+                    className="hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors"
+                  >
+                    <td className="px-4 py-3">
+                      <div className="font-mono font-semibold text-brand">
+                        {formatCode(t.codigoInterno)}
+                      </div>
+                      {t.codigoCliente && (
+                        <div className="text-xs text-slate-400">{t.codigoCliente}</div>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="font-medium text-slate-900 dark:text-white max-w-xs truncate">
+                        {t.descripcion}
+                      </div>
+                      <div className="text-xs text-slate-400">{RUBRO_LABELS[t.rubro]}</div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="text-slate-900 dark:text-white">
+                        {t.sucursal?.nombre || '-'}
+                      </div>
+                      <div className="text-xs text-slate-400">
+                        {t.sucursal?.cliente?.razonSocial || '-'}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-slate-600 dark:text-slate-400">
+                      {t.tecnico ? `${t.tecnico.nombre} ${t.tecnico.apellido}` : '-'}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs font-semibold ${ESTADO_COLORS[t.estado]}`}
+                      >
+                        {ESTADO_LABELS[t.estado]}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs font-semibold ${PRIORIDAD_COLORS[t.prioridad]}`}
+                      >
+                        {PRIORIDAD_LABELS[t.prioridad]}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-slate-600 dark:text-slate-400 text-sm">
+                      {formatDate(t.fechaCreacion)}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <button
+                          onClick={() => handleEdit(t)}
+                          className="p-2 text-slate-400 hover:text-brand hover:bg-brand/10 rounded-lg transition-colors"
+                          title="Editar"
+                        >
+                          <span className="material-symbols-outlined text-[20px]">edit</span>
+                        </button>
+                        <button
+                          onClick={() => handleDelete(t)}
+                          className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
+                          title="Eliminar"
+                        >
+                          <span className="material-symbols-outlined text-[20px]">delete</span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex justify-center gap-2">
+          <button
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page === 1}
+            className="px-3 py-1.5 text-sm bg-slate-100 dark:bg-slate-800 rounded-lg disabled:opacity-50"
+          >
+            Anterior
+          </button>
+          <span className="px-3 py-1.5 text-sm text-slate-600 dark:text-slate-400">
+            Página {page} de {totalPages}
+          </span>
+          <button
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={page === totalPages}
+            className="px-3 py-1.5 text-sm bg-slate-100 dark:bg-slate-800 rounded-lg disabled:opacity-50"
+          >
+            Siguiente
+          </button>
+        </div>
+      )}
+
+      {/* Dialog */}
+      <TicketDialog
+        isOpen={isDialogOpen}
+        onClose={() => setIsDialogOpen(false)}
+        onSave={handleSave}
+        initialData={editingTicket}
+      />
+    </div>
+  );
+}

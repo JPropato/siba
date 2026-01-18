@@ -24,6 +24,7 @@ const menuPermissions: Record<string, string | null> = {
   finanzas: 'finanzas:leer',
   administracion: 'admin:leer',
   catalogo: 'admin:leer',
+  rrhh: 'empleados:leer',
   seguridad: 'seguridad:leer',
   configuracion: null, // Siempre visible
 };
@@ -63,8 +64,17 @@ const allNavItems: NavItem[] = [
     id: 'catalogo',
     label: 'Catálogo',
     icon: 'inventory_2',
+    subItems: [{ id: 'materiales', label: 'Materiales' }],
+  },
+  {
+    id: 'rrhh',
+    label: 'Recursos Humanos',
+    icon: 'groups',
     subItems: [
-      { id: 'materiales', label: 'Materiales' },
+      { id: 'empleados', label: 'Empleados' },
+      { id: 'vacaciones', label: 'Vacaciones' },
+      { id: 'sueldos', label: 'Sueldos' },
+      { id: 'ausencias', label: 'Ausencias' },
     ],
   },
   {
@@ -95,7 +105,7 @@ export function Sidebar({
 
   // Filtrar menús según permisos del usuario
   const navItems = useMemo(() => {
-    return allNavItems.filter(item => {
+    return allNavItems.filter((item) => {
       const requiredPerm = menuPermissions[item.id];
       if (requiredPerm === null) return true; // Sin restricción
       if (isSuperAdmin()) return true; // Super Admin ve todo
@@ -134,9 +144,10 @@ export function Sidebar({
         <div
           onClick={() => handleItemClick(item)}
           className={`relative flex items-center gap-3 px-3 py-3 rounded-lg cursor-pointer transition-all
-            ${isActive
-              ? 'bg-brand/10 text-brand'
-              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
+            ${
+              isActive
+                ? 'bg-brand/10 text-brand'
+                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
             }
             ${hasSubItems && showLabels ? 'justify-between' : ''}
             ${!showLabels ? 'justify-center' : ''}
@@ -153,8 +164,9 @@ export function Sidebar({
           </div>
           {hasSubItems && showLabels && (
             <span
-              className={`material-symbols-outlined text-xs transition-transform ${isExpanded ? 'rotate-180' : ''
-                }`}
+              className={`material-symbols-outlined text-xs transition-transform ${
+                isExpanded ? 'rotate-180' : ''
+              }`}
             >
               expand_more
             </span>
@@ -177,9 +189,10 @@ export function Sidebar({
                 key={subItem.id}
                 onClick={() => handleSubItemClick(subItem, item.label)}
                 className={`px-3 py-2 rounded-lg cursor-pointer text-sm transition-all
-                  ${currentPage === subItem.id
-                    ? 'text-brand font-medium'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  ${
+                    currentPage === subItem.id
+                      ? 'text-brand font-medium'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                   }
                 `}
               >
@@ -238,9 +251,10 @@ export function Sidebar({
                 onMobileClose?.();
               }}
               className={`flex items-center gap-3 px-3 py-2 cursor-pointer transition-colors rounded-lg
-                ${currentPage === item.id
-                  ? 'text-brand'
-                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'
+                ${
+                  currentPage === item.id
+                    ? 'text-brand'
+                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'
                 }
                 ${!isMobile && isCollapsed ? 'justify-center' : ''}
               `}

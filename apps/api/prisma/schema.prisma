@@ -9,6 +9,38 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ============ ENUMS ============
+
+enum TipoEmpleado {
+  TECNICO
+  ADMINISTRATIVO
+  GERENTE
+}
+
+enum TipoContratacion {
+  CONTRATO_MARCO
+}
+
+enum RubroTicket {
+  CIVIL
+  ELECTRICIDAD
+  SANITARIOS
+  VARIOS
+}
+
+enum PrioridadTicket {
+  PROGRAMADO
+  EMERGENCIA
+  URGENCIA
+}
+
+enum EstadoTicket {
+  NUEVO
+  PROGRAMADO
+  EN_CURSO
+  FINALIZADO
+}
+
 // ============ SEGURIDAD ============
 
 model Usuario {
@@ -22,7 +54,13 @@ model Usuario {
   fechaActualizacion DateTime @updatedAt @map("fecha_actualizacion")
   fechaEliminacion DateTime? @map("fecha_eliminacion")
 
-  roles UsuarioRol[]
+  roles    UsuarioRol[]
+  empleado Empleado?
+
+  // Ticket relations
+  ticketsCreadoPor        Ticket[]          @relation("TicketCreadoPor")
+  ticketsActualizadoPor   Ticket[]          @relation("TicketActualizadoPor")
+  ticketHistorial         TicketHistorial[]
 
   @@map("usuarios")
 }
@@ -90,7 +128,8 @@ model Cliente {
   fechaActualizacion DateTime @updatedAt @map("fecha_actualizacion")
   fechaEliminacion DateTime? @map("fecha_eliminacion")
 
-  sucursales Sucursal[]
+  sucursales     Sucursal[]
+  ordenesTrabajo OrdenTrabajo[]
 
   @@map("clientes")
 }
@@ -105,6 +144,7 @@ model Zona {
 
   sucursales Sucursal[]
   vehiculos  Vehiculo[]
+  empleados  Empleado[]
 
   @@map("zonas")
 }
@@ -127,6 +167,10 @@ model Sucursal {
   cliente Cliente @relation(fields: [clienteId], references: [id])
   zona    Zona    @relation(fields: [zonaId], references: [id])
 
+  // Ticket relations
+  tickets        Ticket[]
+  ordenesTrabajo OrdenTrabajo[]
+
   @@map("sucursales")
 }
 
@@ -139,8 +183,7 @@ model Vehiculo {
   modelo          String?
   anio            Int?
   tipo            String?
-  proximosKm      Int?      @map("proximos_km")
-  proximoService  DateTime? @map("proximo_service")
+  kilometros      Int?
   estado          String    @default("ACTIVO") // ACTIVO, TALLER, FUERA_SERVICIO
   fechaCreacion   DateTime  @default(now()) @map("fecha_creacion")
   fechaActualizacion DateTime @updatedAt @map("fecha_actualizacion")
@@ -188,4 +231,109 @@ model HistorialPrecio {
   material        Material  @relation(fields: [materialId], references: [id])
 
   @@map("historial_precios")
+}
+
+model Empleado {
+  id                    Int              @id @default(autoincrement())
+  nombre                String
+  apellido              String
+  email                 String?          @unique
+  direccion             String?
+  telefono              String?
+  inicioRelacionLaboral DateTime         @map("inicio_relacion_laboral")
+  tipo                  TipoEmpleado
+  contratacion          TipoContratacion?
+  zonaId                Int?             @map("zona_id")
+  usuarioId             Int?             @unique @map("usuario_id")
+  
+  fechaCreacion         DateTime         @default(now()) @map("fecha_creacion")
+  fechaActualizacion    DateTime         @updatedAt @map("fecha_actualizacion")
+  fechaEliminacion      DateTime?        @map("fecha_eliminacion")
+
+  zona    Zona?    @relation(fields: [zonaId], references: [id])
+  usuario Usuario? @relation(fields: [usuarioId], references: [id])
+
+  // Ticket relations
+  ticketsAsignado Ticket[]       @relation("TicketTecnico")
+  ordenesTrabajo  OrdenTrabajo[] @relation("OrdenTrabajoTecnico")
+
+  @@map("empleados")
+}
+
+// ============ TICKETS ============
+
+model Ticket {
+  id                  Int             @id @default(autoincrement())
+  codigoInterno       Int             @unique @default(autoincrement()) @map("codigo_interno")
+  codigoCliente       String?         @map("codigo_cliente")
+  descripcion         String
+  trabajo             String?
+  observaciones       String?
+  rubro               RubroTicket
+  prioridad           PrioridadTicket
+  estado              EstadoTicket    @default(NUEVO)
+  
+  fechaCreacion       DateTime        @default(now()) @map("fecha_creacion")
+  fechaProgramada     DateTime?       @map("fecha_programada")
+  fechaFinalizacion   DateTime?       @map("fecha_finalizacion")
+  fechaActualizacion  DateTime        @updatedAt @map("fecha_actualizacion")
+  fechaEliminacion    DateTime?       @map("fecha_eliminacion")
+  
+  sucursalId          Int             @map("sucursal_id")
+  tecnicoId           Int?            @map("tecnico_id")
+  creadoPorId         Int             @map("creado_por_id")
+  actualizadoPorId    Int?            @map("actualizado_por_id")
+  ticketRelacionadoId Int?            @map("ticket_relacionado_id")
+  
+  sucursal            Sucursal        @relation(fields: [sucursalId], references: [id])
+  tecnico             Empleado?       @relation("TicketTecnico", fields: [tecnicoId], references: [id])
+  creadoPor           Usuario         @relation("TicketCreadoPor", fields: [creadoPorId], references: [id])
+  actualizadoPor      Usuario?        @relation("TicketActualizadoPor", fields: [actualizadoPorId], references: [id])
+  ticketRelacionado   Ticket?         @relation("TicketRelacionado", fields: [ticketRelacionadoId], references: [id])
+  ticketsRelacionados Ticket[]        @relation("TicketRelacionado")
+  
+  historial           TicketHistorial[]
+  ordenTrabajo        OrdenTrabajo?
+
+  @@map("tickets")
+}
+
+model TicketHistorial {
+  id               Int      @id @default(autoincrement())
+  ticketId         Int      @map("ticket_id")
+  usuarioId        Int      @map("usuario_id")
+  fechaCambio      DateTime @default(now()) @map("fecha_cambio")
+  campoModificado  String   @map("campo_modificado")
+  valorAnterior    String?  @map("valor_anterior")
+  valorNuevo       String?  @map("valor_nuevo")
+  observacion      String?
+  
+  ticket           Ticket   @relation(fields: [ticketId], references: [id])
+  usuario          Usuario  @relation(fields: [usuarioId], references: [id])
+
+  @@map("ticket_historial")
+}
+
+model OrdenTrabajo {
+  id                     Int       @id @default(autoincrement())
+  numeroOT               Int       @unique @default(autoincrement()) @map("numero_ot")
+  fechaOT                DateTime  @map("fecha_ot")
+  ticketId               Int       @unique @map("ticket_id")
+  clienteId              Int       @map("cliente_id")
+  sucursalId             Int       @map("sucursal_id")
+  tecnicoId              Int       @map("tecnico_id")
+  descripcionTrabajo     String    @map("descripcion_trabajo")
+  materialesUsados       String?   @map("materiales_usados")
+  firmaResponsable       String?   @map("firma_responsable")
+  aclaracionResponsable  String?   @map("aclaracion_responsable")
+  
+  fechaCreacion          DateTime  @default(now()) @map("fecha_creacion")
+  fechaActualizacion     DateTime  @updatedAt @map("fecha_actualizacion")
+  
+  ticket                 Ticket    @relation(fields: [ticketId], references: [id])
+  cliente                Cliente   @relation(fields: [clienteId], references: [id])
+  sucursal               Sucursal  @relation(fields: [sucursalId], references: [id])
+  tecnico                Empleado  @relation("OrdenTrabajoTecnico", fields: [tecnicoId], references: [id])
+
+  @@map("ordenes_trabajo")
 }

@@ -7,6 +7,8 @@ import zonaRoutes from './zona.routes.js';
 import sedeRoutes from './sucursal.routes.js';
 import vehiculoRoutes from './vehiculo.routes.js';
 import materialRoutes from './material.routes.js';
+import empleadoRoutes from './empleado.routes.js';
+import ticketRoutes from './ticket.routes.js';
 
 const router = Router();
 
@@ -19,5 +21,7 @@ router.use('/zones', zonaRoutes);
 router.use('/sedes', sedeRoutes);
 router.use('/vehiculos', vehiculoRoutes);
 router.use('/materials', materialRoutes);
+router.use('/empleados', empleadoRoutes);
+router.use('/tickets', ticketRoutes);
 
 export default router;
