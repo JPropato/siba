@@ -13,6 +13,11 @@
   --brand-light: #60a5fa;
   --brand-dark: #2563eb;
 
+  /* Gold Accent */
+  --gold-primary: #bd8e3d;
+  --gold-light: #e6c489;
+  --gold-muted: #c5a36a;
+
   /* Neutrals */
   --background: #f8fafc;
   --surface: #ffffff;
@@ -31,6 +36,10 @@
   --brand-color: #60a5fa;
   --brand-light: #93c5fd;
   --brand-dark: #3b82f6;
+
+  --gold-primary: #e6c489;
+  --gold-light: #f3dfba;
+  --gold-muted: #bd8e3d;
 
   --background: #0f172a;
   --surface: #1e293b;
@@ -88,6 +97,18 @@ body {
   .ring-brand {
     --tw-ring-color: var(--brand-color) !important;
   }
+
+  /* Sidebar Active Indicator */
+  .sidebar-active-indicator {
+    position: absolute;
+    left: 0;
+    top: 20%;
+    bottom: 20%;
+    width: 4px;
+    background-color: var(--brand-color);
+    border-radius: 0 4px 4px 0;
+    box-shadow: 1px 0 8px var(--brand-color);
+  }
 }
 
 /* Custom Scrollbar for Sidebar */
@@ -106,16 +127,4 @@ body {
 
 .dark .custom-scrollbar::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.1);
-}
-
-/* Sidebar Active Indicator */
-.sidebar-active-indicator {
-  position: absolute;
-  left: 0;
-  top: 20%;
-  bottom: 20%;
-  width: 4px;
-  background-color: var(--brand-color);
-  border-radius: 0 4px 4px 0;
-  box-shadow: 1px 0 8px var(--brand-color);
 }

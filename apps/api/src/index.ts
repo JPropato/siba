@@ -5,12 +5,12 @@ import helmet from 'helmet';
 import { PrismaClient } from '@prisma/client';
 
 import cookieParser from 'cookie-parser';
-import routes from './routes';
+import routes from './routes/index.js';
 
 // ... (imports anteriores)
 
 const app = express();
-const prisma = new PrismaClient();
+export const prisma = new PrismaClient();
 const PORT = process.env.API_PORT || 3001;
 
 // Middleware
@@ -19,7 +19,11 @@ app.use(cors({
   origin: [
     'http://localhost:5173',
     'http://localhost:5174',
-    'http://127.0.0.1:5173'
+    'http://localhost:5175',
+    'http://localhost:5176',
+    'http://127.0.0.1:5173',
+    'http://127.0.0.1:5174',
+    'http://127.0.0.1:5175',
   ],
   credentials: true,
 }));
@@ -54,13 +58,21 @@ app.use((err: Error, _req: express.Request, res: express.Response, _next: expres
 });
 
 // Start server
-const server = app.listen(Number(PORT), '0.0.0.0', () => {
+const server = app.listen(Number(PORT), '0.0.0.0', async () => {
   console.log(`🚀 API running on http://localhost:${PORT}`);
   console.log(`   Health check: http://localhost:${PORT}/api/health`);
+
+  try {
+    console.log('⏳ Connecting to Database...');
+    await prisma.$connect();
+    console.log('✅ Database connected successfully');
+  } catch (err) {
+    console.error('❌ Database connection failed at startup:', err);
+  }
 });
 
 server.on('error', (err) => {
   console.error('❌ Server failed to start:', err);
 });
 
-export { app, prisma };
+export { app };

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ThemeSettings } from './ThemeSettings';
 import { useAuthStore } from '../../stores/auth-store';
 import api from '../../lib/api';
 
@@ -29,7 +30,7 @@ export function TopHeader({
   };
 
   return (
-    <header className="h-16 flex items-center justify-between px-8 border-b border-[var(--border)] bg-[var(--surface)]/80 dark:bg-bg-dark/50 backdrop-blur-md z-10 transition-colors">
+    <header className="h-16 flex items-center justify-between px-8 border-b border-[var(--border)] bg-[var(--surface)]/80 dark:bg-bg-dark/50 backdrop-blur-md z-30 transition-colors">
       {/* Left Section */}
       <div className="flex items-center gap-6">
         <button
@@ -58,6 +59,9 @@ export function TopHeader({
 
       {/* Right Section */}
       <div className="flex items-center gap-3">
+        {/* Theme Color Picker */}
+        <ThemeSettings />
+
         {/* Theme Toggle */}
         <button
           onClick={onToggleDarkMode}

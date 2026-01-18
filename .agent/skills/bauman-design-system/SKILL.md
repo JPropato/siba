@@ -170,6 +170,21 @@ Desktop:  lg: 1024px
 Wide:     xl: 1280px
 ```
 
+### 🧱 Estratigrafía de Z-index (Layers)
+
+Para evitar solapamientos visuales o modales recortados por el layout, se debe respetar el siguiente estándar de capas:
+
+| Capa              | Z-index | Uso                                            |
+| ----------------- | ------- | ---------------------------------------------- |
+| **Overlay/Modal** | `z-[100]` | Fondos oscuros de modales y modales centrales. |
+| **Sidebar Mobile**| `z-50`    | Drawer lateral en dispositivos móviles.         |
+| **Sidebar Desktop**| `z-40`    | Sidebar fija en desktop.                        |
+| **Top Header**    | `z-30`    | Barra superior (sticky/blur).                   |
+| **Content Area**  | `z-0`     | Fondo de página y contenido estándar.           |
+
+> [!IMPORTANT]
+> Los modales deben usar `fixed inset-0 z-[100]` para el contenedor de overlay y `z-[101]` para el contenido del diálogo, asegurando que cubran absolutamente todo el layout global.
+
 ### Layout por Breakpoint
 
 | Elemento  | Mobile         | Tablet         | Desktop         |
@@ -304,3 +319,36 @@ className = 'transition-[width] duration-300 ease-in-out';
 - Estilo: "BAUMAN" con "BAU" negro, "MAN" gris
 - Subtítulo: "SOLUCIONES CORPORATIVAS"
 - Icono placeholder: Escaleras geométricas SVG en gold
+
+---
+
+## Patrones de Páginas de Gestión (CRUD)
+
+Para garantizar la consistencia en todos los módulos administrativos (Usuarios, Clientes, Sedes, etc.), se debe seguir estrictamente este layout:
+
+### 1. Header de Página
+- **Título**: `h2` o `h1` con `font-bold` y `tracking-tight`.
+- **Descripción**: `p` de apoyo en `text-sm` y `text-slate-500`.
+- **Acción Principal**: Botón `bg-brand` alineado a la derecha (en desktop) o superior (en mobile).
+
+### 2. Barra de Filtros
+- Contenedor con `bg-white dark:bg-slate-900/50`, `p-4`, `rounded-xl` y `border`.
+- **Buscador**: Input de `h-10` con icono de búsqueda interno y `pl-10`.
+- **Estilo**: Minimalista, sin sombras pesadas si no es necesario.
+
+### 3. Tabla de Datos
+- **Bordes**: `rounded-lg border`.
+- **Header**: `bg-slate-50 dark:bg-slate-900` con texto en `uppercase tracking-wider text-[11px]`.
+- **Filas**: `h-12` a `h-14`, con `hover:bg-slate-50`.
+- **Acciones**: Iconos de `18px`, con botones de `p-1.5` y `hover:bg-brand/10`.
+- **Badges**: Para estados o códigos, usar `px-2 py-0.5 rounded-full bg-brand/10 text-brand text-[10px] font-bold border border-brand/20`.
+
+### 4. Diálogos (Modales)
+- **Implementación**: Utilizar **React Portals** (`document.body`) para evitar solapamientos visuales.
+- **Header**: Título `text-xl font-bold` con botón de cierre simple.
+- **Forms**: Labels en `text-xs font-bold uppercase tracking-wider`. Inputs de altura `h-9` con `rounded-lg`.
+- **Feedback**: Errores en rojo suave (`bg-red-50`) con icono de advertencia.
+- **Acciones**: Botón de "Guardar" con icono `save` y "Cancelar" como texto secundario.
+
+> [!TIP]
+> Al desarrollar un nuevo módulo, el archivo `UsersPage.tsx` y `UserTable.tsx` deben tomarse como la **referencia absoluta** (Golden Standard) de la aplicación.

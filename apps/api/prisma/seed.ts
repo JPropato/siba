@@ -1,116 +1,223 @@
 import { PrismaClient } from '@prisma/client';
-// import bcrypt from 'bcryptjs'; // Evitamos problemas de dependencias en Docker
+import { fakerES as faker } from '@faker-js/faker';
 
 const prisma = new PrismaClient();
 
 async function main() {
-    console.log('🌱 Empezando el seed del módulo de seguridad (en español)...');
+    console.log('🌱 Empezando el seed del ecosistema de prueba (SIBA)...');
 
-    // 1. Crear Permisos Base
+    // ----------------------------------------------------
+    // 1. Roles y Permisos (Base)
+    // ----------------------------------------------------
+    console.log('🛡️  Configurando seguridad base...');
+
+    // Permisos
     const permisos = [
-        // Módulo Dashboard
         { codigo: 'dashboard:leer', modulo: 'Dashboard', descripcion: 'Ver el panel principal' },
-
-        // Módulo Seguridad
         { codigo: 'seguridad:leer', modulo: 'Seguridad', descripcion: 'Ver usuarios y roles' },
-        {
-            codigo: 'seguridad:escribir',
-            modulo: 'Seguridad',
-            descripcion: 'Crear/Editar usuarios y roles',
-        },
-
-        // Módulo Comercial
+        { codigo: 'seguridad:escribir', modulo: 'Seguridad', descripcion: 'Crear/Editar usuarios y roles' },
         { codigo: 'comercial:leer', modulo: 'Comercial', descripcion: 'Ver tickets y obras' },
         { codigo: 'comercial:escribir', modulo: 'Comercial', descripcion: 'Gestionar tickets y obras' },
-
-        // Módulo Finanzas
         { codigo: 'finanzas:leer', modulo: 'Finanzas', descripcion: 'Ver reportes financieros' },
         { codigo: 'finanzas:escribir', modulo: 'Finanzas', descripcion: 'Gestionar gastos e ingresos' },
-
-        // Módulo Administración
-        {
-            codigo: 'admin:leer',
-            modulo: 'Administración',
-            descripcion: 'Ver maestros (clientes, vehiculos, etc)',
-        },
+        { codigo: 'admin:leer', modulo: 'Administración', descripcion: 'Ver maestros (clientes, vehiculos, etc)' },
         { codigo: 'admin:escribir', modulo: 'Administración', descripcion: 'Editar maestros' },
     ];
 
     for (const p of permisos) {
-        await prisma.permiso.upsert({
-            where: { codigo: p.codigo },
-            update: {},
-            create: p,
-        });
+        await prisma.permiso.upsert({ where: { codigo: p.codigo }, update: {}, create: p });
     }
-    console.log('✅ Permisos creados.');
 
-    // 2. Crear Roles Base
+    // Rol Super Admin
     const superAdmin = await prisma.rol.upsert({
         where: { nombre: 'Super Admin' },
         update: {},
-        create: {
-            nombre: 'Super Admin',
-            descripcion: 'Acceso total al sistema',
-        },
+        create: { nombre: 'Super Admin', descripcion: 'Acceso total al sistema' },
     });
 
+    // Asignar todos los permisos al Super Admin
     const todosLosPermisos = await prisma.permiso.findMany();
-
     for (const p of todosLosPermisos) {
         await prisma.rolPermiso.upsert({
-            where: {
-                rolId_permisoId: {
-                    rolId: superAdmin.id,
-                    permisoId: p.id,
-                },
-            },
+            where: { rolId_permisoId: { rolId: superAdmin.id, permisoId: p.id } },
             update: {},
-            create: {
-                rolId: superAdmin.id,
-                permisoId: p.id,
-            },
+            create: { rolId: superAdmin.id, permisoId: p.id },
         });
     }
-    console.log('✅ Rol Super Admin creado y permisos asignados.');
 
-    // 3. Crear Usuario Admin Defecto
-    console.log('👤 Creando usuario administrador...');
+    // Usuario Admin
     const adminEmail = 'admin@bauman.com.ar';
-    // Hash para 'admin123' (generado previamente: $2a$10$nnsjtX37HKdZa9PA3dEVYuQrIxyeWFYXbZMMD3pEW/Y6tupKa/WN6)
-    const hashedPassword = '$2a$10$nnsjtX37HKdZa9PA3dEVYuQrIxyeWFYXbZMMD3pEW/Y6tupKa/WN6';
-
+    const hashedPassword = '$2a$10$nnsjtX37HKdZa9PA3dEVYuQrIxyeWFYXbZMMD3pEW/Y6tupKa/WN6'; // admin123
     const adminUser = await prisma.usuario.upsert({
         where: { email: adminEmail },
-        update: {
-            claveHash: hashedPassword
-        },
+        update: { claveHash: hashedPassword },
         create: {
             email: adminEmail,
             nombre: 'Admin',
             apellido: 'Principale',
             claveHash: hashedPassword,
-            fechaCreacion: new Date(),
         },
     });
 
-    // Asignar Rol Super Admin
     await prisma.usuarioRol.upsert({
-        where: {
-            usuarioId_rolId: {
-                usuarioId: adminUser.id,
-                rolId: superAdmin.id,
-            },
-        },
+        where: { usuarioId_rolId: { usuarioId: adminUser.id, rolId: superAdmin.id } },
         update: {},
-        create: {
-            usuarioId: adminUser.id,
-            rolId: superAdmin.id,
-        },
+        create: { usuarioId: adminUser.id, rolId: superAdmin.id },
     });
 
-    console.log(`✅ Usuario Admin creado: ${adminEmail} (Pass: admin123)`);
-    console.log('🏁 Seed completado con éxito.');
+    console.log('✅ Seguridad base configurada.');
+
+    // ----------------------------------------------------
+    // 2. Administración: Zonas
+    // ----------------------------------------------------
+    console.log('🗺️  Creando Zonas Geográficas...');
+    const zonasData = ['Norte', 'Sur', 'Este', 'Oeste', 'CABA Centro'];
+    const zonas = [];
+
+    // Create zones strictly
+    await prisma.zona.deleteMany({}); // Limpiar zonas para evitar conflictos de unique indices
+
+    for (const nombreZona of zonasData) {
+        const z = await prisma.zona.create({
+            data: {
+                nombre: nombreZona,
+                // Codigo is auto-increment Int, we don't set it manually
+                descripcion: `Zona operativa ${nombreZona}`,
+            }
+        });
+        zonas.push(z);
+    }
+
+    // ----------------------------------------------------
+    // 3. Administración: Clientes y Sucursales
+    // ----------------------------------------------------
+    console.log('🏢  Creando Clientes y Sucursales...');
+    await prisma.sucursal.deleteMany({});
+    await prisma.cliente.deleteMany({});
+
+    const TOTAL_CLIENTES = 20;
+
+    for (let i = 0; i < TOTAL_CLIENTES; i++) {
+        const esEmpresa = faker.datatype.boolean();
+        const nombreCliente = esEmpresa ? faker.company.name() : faker.person.fullName();
+
+        // Crear Cliente
+        const cliente = await prisma.cliente.create({
+            data: {
+                codigo: 1000 + i, // Manual sequence for unique Int code
+                razonSocial: nombreCliente,
+                cuit: faker.string.numeric(11),
+                email: faker.internet.email(),
+                telefono: faker.phone.number(),
+                direccionFiscal: faker.location.streetAddress(),
+                // Removed non-existent fields: tipo, condicionIva, estado
+            }
+        });
+
+        // Crear 1 a 3 Sucursales para este cliente
+        const numSedes = faker.number.int({ min: 1, max: 3 });
+        for (let j = 0; j < numSedes; j++) {
+            const zonaAleatoria = faker.helpers.arrayElement(zonas);
+            await prisma.sucursal.create({
+                data: {
+                    clienteId: cliente.id,
+                    zonaId: zonaAleatoria.id,
+                    nombre: j === 0 ? 'Casa Central' : `Sucursal ${faker.location.city()}`,
+                    direccion: faker.location.streetAddress(),
+                    telefono: faker.phone.number(),
+                    contactoNombre: faker.person.fullName(),
+                    contactoTelefono: faker.phone.number(),
+                    // Removed: emailContacto, latitud, longitud (not in Sucursal model)
+                }
+            });
+        }
+    }
+
+    // ----------------------------------------------------
+    // 4. Administración: Vehículos
+    // ----------------------------------------------------
+    console.log('🚚  Creando Flota de Vehículos...');
+    await prisma.vehiculo.deleteMany({});
+
+    const marcas = ['Toyota', 'Ford', 'Renault', 'Volkswagen', 'Peugeot', 'Fiat'];
+    const tipos = ['Utilitario', 'Camioneta', 'Auto', 'Camión'];
+    const TOTAL_VEHICULOS = 15;
+
+    for (let i = 0; i < TOTAL_VEHICULOS; i++) {
+        const marca = faker.helpers.arrayElement(marcas);
+        const modelo = faker.vehicle.model();
+        const anio = faker.date.past({ years: 10 }).getFullYear();
+        const zonaAsignada = faker.datatype.boolean() ? faker.helpers.arrayElement(zonas).id : null;
+
+        const kmActual = faker.number.int({ min: 10000, max: 250000 });
+        const proximoServiceKm = kmActual + faker.number.int({ min: 1000, max: 10000 });
+
+        await prisma.vehiculo.create({
+            data: {
+                patente: faker.vehicle.vrm().toUpperCase(),
+                marca: marca,
+                modelo: modelo,
+                anio: anio,
+                tipo: faker.helpers.arrayElement(tipos),
+                zonaId: zonaAsignada,
+                proximosKm: proximoServiceKm,
+                proximoService: faker.date.future(),
+                estado: faker.helpers.arrayElement(['ACTIVO', 'ACTIVO', 'ACTIVO', 'TALLER']),
+            }
+        });
+    }
+
+    // ----------------------------------------------------
+    // 5. Catálogo: Materiales con Historial de Precios
+    // ----------------------------------------------------
+    console.log('📦  Creando Catálogo de Materiales...');
+    await prisma.material.deleteMany({});
+
+    const categorias = ['Limpieza', 'Construcción', 'Oficina', 'Seguridad', 'Electrónica'];
+    const unidades = ['Unidades', 'Litros', 'Metros', 'Kilos', 'Packs', 'Cajas'];
+    const TOTAL_MATERIALES = 30;
+
+    for (let i = 0; i < TOTAL_MATERIALES; i++) {
+        const categoria = faker.helpers.arrayElement(categorias);
+        const unidad = faker.helpers.arrayElement(unidades);
+        const costoBase = Number(faker.commerce.price({ min: 100, max: 5000 }));
+        const margen = faker.number.int({ min: 20, max: 60 });
+        const precioVenta = costoBase * (1 + margen / 100);
+
+        const material = await prisma.material.create({
+            data: {
+                codigoArticulo: faker.commerce.isbn(10).toUpperCase(),
+                nombre: faker.commerce.productName(),
+                descripcion: faker.commerce.productDescription(),
+                presentacion: faker.commerce.productMaterial(),
+                unidadMedida: unidad,
+                categoria: categoria,
+                stockMinimo: faker.number.int({ min: 5, max: 50 }),
+                // Pricing Actual
+                precioCosto: costoBase,
+                porcentajeRentabilidad: margen,
+                precioVenta: precioVenta,
+            }
+        });
+
+        // Crear Historial Simulado
+        for (let h = 2; h > 0; h--) {
+            const costoViejo = costoBase * (1 - (h * 0.10)); // 10% menos cada vez
+            const ventaViejo = costoViejo * (1 + margen / 100);
+
+            await prisma.historialPrecio.create({
+                data: {
+                    materialId: material.id,
+                    precioCosto: costoViejo,
+                    precioVenta: ventaViejo,
+                    porcentajeRentabilidad: margen,
+                    fechaCambio: faker.date.past({ years: 1 }),
+                }
+            });
+        }
+    }
+
+    console.log('🏁 Seed de prueba finalizado exitosamente.');
 }
 
 main()

@@ -1,7 +1,12 @@
 import { Router } from 'express';
-import authRoutes from './auth.routes';
-import userRoutes from './user.routes';
-import roleRoutes from './role.routes';
+import authRoutes from './auth.routes.js';
+import userRoutes from './user.routes.js';
+import roleRoutes from './role.routes.js';
+import clientRoutes from './client.routes.js';
+import zonaRoutes from './zona.routes.js';
+import sedeRoutes from './sucursal.routes.js';
+import vehiculoRoutes from './vehiculo.routes.js';
+import materialRoutes from './material.routes.js';
 
 const router = Router();
 
@@ -9,6 +14,10 @@ const router = Router();
 router.use('/auth', authRoutes);
 router.use('/users', userRoutes);
 router.use('/roles', roleRoutes);
-// router.use('/clients', clientRoutes);
+router.use('/clients', clientRoutes);
+router.use('/zones', zonaRoutes);
+router.use('/sedes', sedeRoutes);
+router.use('/vehiculos', vehiculoRoutes);
+router.use('/materials', materialRoutes);
 
 export default router;

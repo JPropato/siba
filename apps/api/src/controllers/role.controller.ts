@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
-import { prisma } from '../index';
+import { prisma } from '../index.js';
 
 // Schemas de validación
 const createRoleSchema = z.object({

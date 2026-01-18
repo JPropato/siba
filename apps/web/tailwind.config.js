@@ -11,6 +11,11 @@ export default {
           light: 'var(--brand-light)',
           dark: 'var(--brand-dark)',
         },
+        gold: {
+          DEFAULT: '#bd8e3d',
+          light: '#e6c489',
+          muted: '#C5A36A',
+        },
         slate: {
           DEFAULT: '#334155',
           light: '#64748b',

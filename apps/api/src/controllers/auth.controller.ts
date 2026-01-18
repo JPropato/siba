@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
-import { AuthService } from '../services/auth.service';
+import { AuthService } from '../services/auth.service.js';
 
 // Schema de validación para Login
 const loginSchema = z.object({
@@ -69,12 +69,10 @@ export const refresh = async (req: Request, res: Response) => {
     const newAccessToken = AuthService.generateAccessToken(user);
     // Opcional: Rotar refresh token también
 
-    // No devolver la contraseña
-    const { claveHash, ...userWithoutPass } = user;
-
+    // No devolver la contraseña (ya viene filtrada de AuthService)
     res.json({
         accessToken: newAccessToken,
-        user: userWithoutPass
+        user
     });
 };
 

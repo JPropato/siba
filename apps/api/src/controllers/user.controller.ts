@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
-import { prisma } from '../index';
-import { AuthService } from '../services/auth.service';
+import { prisma } from '../index.js';
+import { AuthService } from '../services/auth.service.js';
 
 // --- Schemas ---
 const createUserSchema = z.object({

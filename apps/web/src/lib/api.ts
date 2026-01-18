@@ -36,9 +36,10 @@ api.interceptors.response.use(
     (response) => response,
     async (error) => {
         const originalRequest = error.config;
+        // Si error es 401 y no es un retry y NO es la ruta de login ni refresh
+        const isAuthPath = originalRequest.url.includes('/auth/login') || originalRequest.url.includes('/auth/refresh');
 
-        // Si error es 401 y no es un retry
-        if (error.response?.status === 401 && !originalRequest._retry) {
+        if (error.response?.status === 401 && !originalRequest._retry && !isAuthPath) {
             originalRequest._retry = true;
 
             try {

@@ -1,9 +1,15 @@
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
+import { useThemeEffect } from './hooks/useThemeColor';
 import { Component, type ReactNode, type ErrorInfo } from 'react';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import UsersPage from './pages/UsersPage';
 import RolesPage from './pages/RolesPage';
+import ClientsPage from './pages/ClientsPage';
+import ZonasPage from './pages/ZonasPage';
+import SedesPage from './pages/SedesPage';
+import VehiculosPage from './pages/VehiculosPage';
+import MaterialesPage from './pages/MaterialesPage';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import DashboardLayout from './components/layout/DashboardLayout';
 import './App.css';
@@ -53,11 +59,21 @@ function DashboardWrapper({ children }: { children: React.ReactNode }) {
     if (id === 'dashboard') navigate('/dashboard');
     if (id === 'usuarios') navigate('/dashboard/users');
     if (id === 'roles') navigate('/dashboard/roles');
+    if (id === 'clientes') navigate('/dashboard/clients');
+    if (id === 'zonas') navigate('/dashboard/zones');
+    if (id === 'sedes') navigate('/dashboard/sedes');
+    if (id === 'vehiculos') navigate('/dashboard/vehicles');
+    if (id === 'materiales') navigate('/dashboard/materials');
   };
 
   const getPageInfo = (path: string) => {
     if (path.includes('users')) return { id: 'usuarios', label: 'Usuarios' };
     if (path.includes('roles')) return { id: 'roles', label: 'Roles' };
+    if (path.includes('clients')) return { id: 'clientes', label: 'Clientes', parentLabel: 'Administración' };
+    if (path.includes('zones')) return { id: 'zonas', label: 'Zonas', parentLabel: 'Administración' };
+    if (path.includes('sedes')) return { id: 'sedes', label: 'Sedes', parentLabel: 'Administración' };
+    if (path.includes('vehicles')) return { id: 'vehiculos', label: 'Vehículos', parentLabel: 'Administración' };
+    if (path.includes('materials')) return { id: 'materiales', label: 'Materiales', parentLabel: 'Catálogo' };
     return { id: 'dashboard', label: 'Dashboard' };
   };
 
@@ -72,6 +88,7 @@ function DashboardWrapper({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
+  useThemeEffect();
   return (
     <ErrorBoundary>
       <Routes>
@@ -86,6 +103,21 @@ export default function App() {
           } />
           <Route path="/dashboard/roles" element={
             <DashboardWrapper><RolesPage /></DashboardWrapper>
+          } />
+          <Route path="/dashboard/clients" element={
+            <DashboardWrapper><ClientsPage /></DashboardWrapper>
+          } />
+          <Route path="/dashboard/zones" element={
+            <DashboardWrapper><ZonasPage /></DashboardWrapper>
+          } />
+          <Route path="/dashboard/sedes" element={
+            <DashboardWrapper><SedesPage /></DashboardWrapper>
+          } />
+          <Route path="/dashboard/vehicles" element={
+            <DashboardWrapper><VehiculosPage /></DashboardWrapper>
+          } />
+          <Route path="/dashboard/materials" element={
+            <DashboardWrapper><MaterialesPage /></DashboardWrapper>
           } />
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
         </Route>

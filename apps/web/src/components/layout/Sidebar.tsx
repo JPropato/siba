@@ -23,6 +23,7 @@ const menuPermissions: Record<string, string | null> = {
   comercial: 'comercial:leer',
   finanzas: 'finanzas:leer',
   administracion: 'admin:leer',
+  catalogo: 'admin:leer',
   seguridad: 'seguridad:leer',
   configuracion: null, // Siempre visible
 };
@@ -56,6 +57,14 @@ const allNavItems: NavItem[] = [
       { id: 'sedes', label: 'Sedes' },
       { id: 'vehiculos', label: 'Vehículos' },
       { id: 'zonas', label: 'Zonas' },
+    ],
+  },
+  {
+    id: 'catalogo',
+    label: 'Catálogo',
+    icon: 'inventory_2',
+    subItems: [
+      { id: 'materiales', label: 'Materiales' },
     ],
   },
   {
@@ -258,7 +267,7 @@ export function Sidebar({
     <>
       {/* Desktop Sidebar */}
       <aside
-        className={`hidden lg:flex flex-shrink-0 bg-[var(--surface)] dark:bg-surface-dark border-r border-[var(--border)] flex-col z-20 transition-[width] duration-300 ease-in-out overflow-x-hidden
+        className={`hidden lg:flex flex-shrink-0 bg-[var(--surface)] dark:bg-surface-dark border-r border-[var(--border)] flex-col z-40 transition-[width] duration-300 ease-in-out overflow-x-hidden
           ${isCollapsed ? 'w-16' : 'w-[260px]'}
         `}
       >
