@@ -6,15 +6,26 @@ RUN apk add --no-cache openssl libc6-compat
 WORKDIR /app
 
 # Copiar archivos de configuración del monorepo
-COPY package.json package-lock.json* ./
+COPY package.json package-lock.json ./
+
+# Copiar package.json de los workspaces
 COPY apps/api/package.json ./apps/api/
+COPY packages/ ./packages/
 
-# Instalar dependencias del monorepo y del api
-RUN npm install
+# Instalar dependencias
+RUN npm ci --ignore-scripts
 
-# Exponer puertos (API y Prisma Studio)
+# Copiar el código fuente de la API
+COPY apps/api/ ./apps/api/
+
+# Generar Prisma Client
+RUN npx prisma generate --schema=./apps/api/prisma/schema.prisma
+
+# Compilar TypeScript
+RUN npm run build -w @siba/api
+
+# Exponer puerto de la API
 EXPOSE 3001
-EXPOSE 5555
 
-# El comando se define en el docker-compose.yml
-CMD ["npm", "run", "dev", "-w", "@siba/api"]
+# Comando para producción
+CMD ["node", "apps/api/dist/index.js"]
