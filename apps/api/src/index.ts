@@ -24,7 +24,11 @@ app.use(cors({
     'http://127.0.0.1:5173',
     'http://127.0.0.1:5174',
     'http://127.0.0.1:5175',
-  ],
+    // Dokploy UAT domains
+    'http://siba-dev-sibaweb-tfmrbz-e3ea43-148-230-79-241.traefik.me',
+    // También permitir cualquier origen de traefik.me para desarrollo
+    ...(process.env.CORS_ORIGINS?.split(',') || []),
+  ].filter(Boolean),
   credentials: true,
 }));
 app.use(express.json());
