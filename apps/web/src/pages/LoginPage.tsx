@@ -2,6 +2,7 @@ import { useState } from 'react';
 import api from '../lib/api';
 import { useAuthStore } from '../stores/auth-store';
 import { useNavigate } from 'react-router-dom';
+import logoBauman from '../assets/logo-bauman.png';
 
 export function LoginPage() {
   const [email, setEmail] = useState('');
@@ -44,7 +45,7 @@ export function LoginPage() {
           {/* Logo Section - Same Line */}
           <div className="w-full flex items-center justify-center gap-6 mb-12 px-2">
             <img
-              src="/src/assets/logo-bauman.png"
+              src={logoBauman}
               alt="Bauman"
               className="h-16 w-auto object-contain dark:brightness-0 dark:invert flex-shrink-0"
             />
