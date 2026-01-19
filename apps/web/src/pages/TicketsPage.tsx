@@ -15,6 +15,8 @@ import {
   RUBRO_LABELS,
 } from '../types/tickets';
 import TicketDialog from '../components/tickets/TicketDialog';
+import KanbanBoard from '../components/tickets/KanbanBoard';
+import { OTDialog } from '../features/ordenes-trabajo';
 
 export default function TicketsPage() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -29,6 +31,8 @@ export default function TicketsPage() {
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingTicket, setEditingTicket] = useState<Ticket | null>(null);
+  const [viewMode, setViewMode] = useState<'table' | 'kanban'>('table');
+  const [otTicket, setOtTicket] = useState<Ticket | null>(null);
 
   const fetchTickets = useCallback(async () => {
     try {
@@ -108,13 +112,41 @@ export default function TicketsPage() {
             {total} tickets en total
           </p>
         </div>
-        <button
-          onClick={handleCreate}
-          className="px-4 py-2.5 bg-brand hover:bg-brand-dark text-white text-sm font-bold rounded-lg shadow-lg shadow-brand/20 transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
-        >
-          <span className="material-symbols-outlined text-[20px]">add</span>
-          NUEVO TICKET
-        </button>
+        <div className="flex items-center gap-3">
+          {/* Toggle Vista */}
+          <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
+            <button
+              onClick={() => setViewMode('table')}
+              className={`p-2 rounded-md transition-all ${
+                viewMode === 'table'
+                  ? 'bg-white dark:bg-slate-700 shadow-sm text-gold'
+                  : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+              }`}
+              title="Vista Tabla"
+            >
+              <span className="material-symbols-outlined text-[20px]">view_list</span>
+            </button>
+            <button
+              onClick={() => setViewMode('kanban')}
+              className={`p-2 rounded-md transition-all ${
+                viewMode === 'kanban'
+                  ? 'bg-white dark:bg-slate-700 shadow-sm text-gold'
+                  : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+              }`}
+              title="Vista Kanban"
+            >
+              <span className="material-symbols-outlined text-[20px]">view_kanban</span>
+            </button>
+          </div>
+
+          <button
+            onClick={handleCreate}
+            className="px-4 py-2.5 bg-brand hover:bg-brand-dark text-white text-sm font-bold rounded-lg shadow-lg shadow-brand/20 transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
+          >
+            <span className="material-symbols-outlined text-[20px]">add</span>
+            NUEVO TICKET
+          </button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -180,126 +212,146 @@ export default function TicketsPage() {
         </div>
       </div>
 
-      {/* Table */}
-      <div className="w-full overflow-hidden rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm border-collapse">
-            <thead className="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
-              <tr>
-                <th className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">
-                  Código
-                </th>
-                <th className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">
-                  Descripción
-                </th>
-                <th className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">
-                  Sucursal
-                </th>
-                <th className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">
-                  Técnico
-                </th>
-                <th className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">
-                  Estado
-                </th>
-                <th className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">
-                  Prioridad
-                </th>
-                <th className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">
-                  Fecha
-                </th>
-                <th className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100 text-right">
-                  Acciones
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200 dark:divide-slate-800 bg-white dark:bg-slate-950">
-              {isLoading ? (
+      {/* Vista Tabla o Kanban */}
+      {viewMode === 'table' ? (
+        <div className="w-full overflow-hidden rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm border-collapse">
+              <thead className="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
                 <tr>
-                  <td colSpan={8} className="px-4 py-12 text-center text-slate-400">
-                    <span className="material-symbols-outlined animate-spin text-3xl">
-                      progress_activity
-                    </span>
-                  </td>
+                  <th className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">
+                    Código
+                  </th>
+                  <th className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">
+                    Descripción
+                  </th>
+                  <th className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">
+                    Sucursal
+                  </th>
+                  <th className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">
+                    Técnico
+                  </th>
+                  <th className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">
+                    Estado
+                  </th>
+                  <th className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">
+                    Prioridad
+                  </th>
+                  <th className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">
+                    Fecha
+                  </th>
+                  <th className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100 text-right">
+                    Acciones
+                  </th>
                 </tr>
-              ) : tickets.length === 0 ? (
-                <tr>
-                  <td colSpan={8} className="px-4 py-12 text-center text-slate-400">
-                    No se encontraron tickets
-                  </td>
-                </tr>
-              ) : (
-                tickets.map((t) => (
-                  <tr
-                    key={t.id}
-                    className="hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors"
-                  >
-                    <td className="px-4 py-3">
-                      <div className="font-mono font-semibold text-brand">
-                        {formatCode(t.codigoInterno)}
-                      </div>
-                      {t.codigoCliente && (
-                        <div className="text-xs text-slate-400">{t.codigoCliente}</div>
-                      )}
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="font-medium text-slate-900 dark:text-white max-w-xs truncate">
-                        {t.descripcion}
-                      </div>
-                      <div className="text-xs text-slate-400">{RUBRO_LABELS[t.rubro]}</div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="text-slate-900 dark:text-white">
-                        {t.sucursal?.nombre || '-'}
-                      </div>
-                      <div className="text-xs text-slate-400">
-                        {t.sucursal?.cliente?.razonSocial || '-'}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-slate-600 dark:text-slate-400">
-                      {t.tecnico ? `${t.tecnico.nombre} ${t.tecnico.apellido}` : '-'}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs font-semibold ${ESTADO_COLORS[t.estado]}`}
-                      >
-                        {ESTADO_LABELS[t.estado]}
+              </thead>
+              <tbody className="divide-y divide-slate-200 dark:divide-slate-800 bg-white dark:bg-slate-950">
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={8} className="px-4 py-12 text-center text-slate-400">
+                      <span className="material-symbols-outlined animate-spin text-3xl">
+                        progress_activity
                       </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs font-semibold ${PRIORIDAD_COLORS[t.prioridad]}`}
-                      >
-                        {PRIORIDAD_LABELS[t.prioridad]}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-slate-600 dark:text-slate-400 text-sm">
-                      {formatDate(t.fechaCreacion)}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <button
-                          onClick={() => handleEdit(t)}
-                          className="p-2 text-slate-400 hover:text-brand hover:bg-brand/10 rounded-lg transition-colors"
-                          title="Editar"
-                        >
-                          <span className="material-symbols-outlined text-[20px]">edit</span>
-                        </button>
-                        <button
-                          onClick={() => handleDelete(t)}
-                          className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
-                          title="Eliminar"
-                        >
-                          <span className="material-symbols-outlined text-[20px]">delete</span>
-                        </button>
-                      </div>
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : tickets.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="px-4 py-12 text-center text-slate-400">
+                      No se encontraron tickets
+                    </td>
+                  </tr>
+                ) : (
+                  tickets.map((t) => (
+                    <tr
+                      key={t.id}
+                      className="hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors"
+                    >
+                      <td className="px-4 py-3">
+                        <div className="font-mono font-semibold text-brand">
+                          {formatCode(t.codigoInterno)}
+                        </div>
+                        {t.codigoCliente && (
+                          <div className="text-xs text-slate-400">{t.codigoCliente}</div>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="font-medium text-slate-900 dark:text-white max-w-xs truncate">
+                          {t.descripcion}
+                        </div>
+                        <div className="text-xs text-slate-400">{RUBRO_LABELS[t.rubro]}</div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="text-slate-900 dark:text-white">
+                          {t.sucursal?.nombre || '-'}
+                        </div>
+                        <div className="text-xs text-slate-400">
+                          {t.sucursal?.cliente?.razonSocial || '-'}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-slate-600 dark:text-slate-400">
+                        {t.tecnico ? `${t.tecnico.nombre} ${t.tecnico.apellido}` : '-'}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs font-semibold ${ESTADO_COLORS[t.estado]}`}
+                        >
+                          {ESTADO_LABELS[t.estado]}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs font-semibold ${PRIORIDAD_COLORS[t.prioridad]}`}
+                        >
+                          {PRIORIDAD_LABELS[t.prioridad]}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-slate-600 dark:text-slate-400 text-sm">
+                        {formatDate(t.fechaCreacion)}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            onClick={() => handleEdit(t)}
+                            className="p-2 text-slate-400 hover:text-brand hover:bg-brand/10 rounded-lg transition-colors"
+                            title="Editar"
+                          >
+                            <span className="material-symbols-outlined text-[20px]">edit</span>
+                          </button>
+                          {t.estado !== 'FINALIZADO' && (
+                            <button
+                              onClick={() => setOtTicket(t)}
+                              className="p-2 text-slate-400 hover:text-gold hover:bg-gold/10 rounded-lg transition-colors"
+                              title="Orden de Trabajo"
+                            >
+                              <span className="material-symbols-outlined text-[20px]">
+                                assignment
+                              </span>
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handleDelete(t)}
+                            className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
+                            title="Eliminar"
+                          >
+                            <span className="material-symbols-outlined text-[20px]">delete</span>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      ) : (
+        <KanbanBoard
+          tickets={tickets}
+          isLoading={isLoading}
+          onEditTicket={handleEdit}
+          onDeleteTicket={handleDelete}
+        />
+      )}
 
       {/* Pagination */}
       {totalPages > 1 && (
@@ -331,6 +383,16 @@ export default function TicketsPage() {
         onSave={handleSave}
         initialData={editingTicket}
       />
+
+      {/* OT Dialog */}
+      {otTicket && (
+        <OTDialog
+          isOpen={!!otTicket}
+          onClose={() => setOtTicket(null)}
+          ticket={otTicket}
+          onSuccess={fetchTickets}
+        />
+      )}
     </div>
   );
 }

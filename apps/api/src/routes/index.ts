@@ -9,6 +9,8 @@ import vehiculoRoutes from './vehiculo.routes.js';
 import materialRoutes from './material.routes.js';
 import empleadoRoutes from './empleado.routes.js';
 import ticketRoutes from './ticket.routes.js';
+import uploadRoutes from './upload.routes.js';
+import otRoutes from './ot.routes.js';
 
 const router = Router();
 
@@ -23,5 +25,7 @@ router.use('/vehiculos', vehiculoRoutes);
 router.use('/materials', materialRoutes);
 router.use('/empleados', empleadoRoutes);
 router.use('/tickets', ticketRoutes);
+router.use('/upload', uploadRoutes);
+router.use('/ordenes-trabajo', otRoutes);
 
 export default router;

@@ -334,6 +334,27 @@ model OrdenTrabajo {
   cliente                Cliente   @relation(fields: [clienteId], references: [id])
   sucursal               Sucursal  @relation(fields: [sucursalId], references: [id])
   tecnico                Empleado  @relation("OrdenTrabajoTecnico", fields: [tecnicoId], references: [id])
+  archivos               Archivo[]
 
   @@map("ordenes_trabajo")
 }
+
+model Archivo {
+  id              Int       @id @default(autoincrement())
+  nombreOriginal  String    @map("nombre_original")
+  nombreStorage   String    @unique @map("nombre_storage")
+  mimeType        String    @map("mime_type")
+  tamanio         Int       // bytes
+  bucket          String    @default("siba-files")
+  url             String?
+  
+  ordenTrabajoId  Int?      @map("orden_trabajo_id")
+  ticketId        Int?      @map("ticket_id")
+  
+  fechaCreacion   DateTime  @default(now()) @map("fecha_creacion")
+  
+  ordenTrabajo    OrdenTrabajo? @relation(fields: [ordenTrabajoId], references: [id])
+
+  @@map("archivos")
+}
+

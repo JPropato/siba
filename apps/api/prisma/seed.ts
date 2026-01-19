@@ -93,8 +93,11 @@ async function main() {
   const zonas = [];
 
   // Create zones strictly
-  // Deletion order: Empleado/Vehiculo/Sucursal -> Zona
+  // Deletion order: ordenTrabajo/historial -> Tickets -> Empleado/Vehiculo/Sucursal -> Zona
   console.log('🧹 Limpiando datos antiguos...');
+  await prisma.ordenTrabajo.deleteMany({});
+  await prisma.ticketHistorial.deleteMany({});
+  await prisma.ticket.deleteMany({});
   await prisma.empleado.deleteMany({});
   await prisma.vehiculo.deleteMany({});
   await prisma.sucursal.deleteMany({});
@@ -267,6 +270,82 @@ async function main() {
         tipo: faker.helpers.arrayElement(tiposEmpleado),
         contratacion: 'CONTRATO_MARCO',
         zonaId: zonaAleatoria,
+      },
+    });
+  }
+
+  // ----------------------------------------------------
+  // 7. Tickets de Servicio
+  // ----------------------------------------------------
+  console.log('🎫  Creando Tickets de Servicio...');
+
+  const rubrosTicket: ('CIVIL' | 'ELECTRICIDAD' | 'SANITARIOS' | 'VARIOS')[] = [
+    'CIVIL',
+    'ELECTRICIDAD',
+    'SANITARIOS',
+    'VARIOS',
+  ];
+  const prioridadesTicket: ('PROGRAMADO' | 'EMERGENCIA' | 'URGENCIA')[] = [
+    'PROGRAMADO',
+    'EMERGENCIA',
+    'URGENCIA',
+  ];
+  const estadosTicket: ('NUEVO' | 'PROGRAMADO' | 'EN_CURSO' | 'FINALIZADO')[] = [
+    'NUEVO',
+    'PROGRAMADO',
+    'EN_CURSO',
+    'FINALIZADO',
+  ];
+
+  const sucursales = await prisma.sucursal.findMany({ take: 20 });
+  const empleados = await prisma.empleado.findMany({ where: { tipo: 'TECNICO' } });
+
+  const descripciones = [
+    'Reparación de aire acondicionado',
+    'Fuga de agua en baño principal',
+    'Instalación de luminarias LED',
+    'Mantenimiento preventivo eléctrico',
+    'Reparación de piso dañado',
+    'Cambio de cerraduras de seguridad',
+    'Pintura de oficina',
+    'Instalación de cámaras de seguridad',
+    'Reparación de portón eléctrico',
+    'Limpieza de tanque de agua',
+    'Arreglo de filtraciones en techo',
+    'Instalación de tomacorrientes adicionales',
+    'Reparación de sanitarios',
+    'Cambio de vidrios rotos',
+    'Mantenimiento de ascensor',
+    'Reparación de sistema de alarma',
+    'Instalación de extractores de aire',
+    'Reparación de cañerías',
+    'Cambio de tablero eléctrico',
+    'Impermeabilización de terraza',
+  ];
+
+  const TOTAL_TICKETS = 25;
+
+  for (let i = 0; i < TOTAL_TICKETS; i++) {
+    const sucursalAleatoria = faker.helpers.arrayElement(sucursales);
+    const tecnicoAleatorio = faker.datatype.boolean(0.7)
+      ? faker.helpers.arrayElement(empleados)
+      : null;
+    const estadoAleatorio = faker.helpers.arrayElement(estadosTicket);
+
+    await prisma.ticket.create({
+      data: {
+        descripcion: faker.helpers.arrayElement(descripciones),
+        codigoCliente: faker.datatype.boolean(0.3) ? `CLI-${faker.string.numeric(4)}` : null,
+        trabajo: faker.datatype.boolean(0.5) ? faker.lorem.sentence() : null,
+        observaciones: faker.datatype.boolean(0.4) ? faker.lorem.sentences(2) : null,
+        rubro: faker.helpers.arrayElement(rubrosTicket),
+        prioridad: faker.helpers.arrayElement(prioridadesTicket),
+        estado: estadoAleatorio,
+        fechaProgramada: estadoAleatorio !== 'NUEVO' ? faker.date.soon({ days: 14 }) : null,
+        fechaFinalizacion: estadoAleatorio === 'FINALIZADO' ? faker.date.recent({ days: 7 }) : null,
+        sucursalId: sucursalAleatoria.id,
+        tecnicoId: tecnicoAleatorio?.id ?? null,
+        creadoPorId: adminUser.id,
       },
     });
   }
