@@ -6,9 +6,10 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "concurrently -n \"API,WEB\" -c \"blue,green\" \"npm run dev:api\" \"npm run dev:web\"",
+    "dev": "echo [DB Studio] http://localhost:5555 - Run 'npm run db:studio' to open && concurrently -n \"API,WEB\" -c \"blue,green\" \"npm run dev:api\" \"npm run dev:web\"",
     "dev:web": "npm run dev -w @siba/web",
     "dev:api": "npm run dev -w @siba/api",
+    "db:studio": "npm run db:studio -w @siba/api",
     "build": "npm run build --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
