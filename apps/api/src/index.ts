@@ -24,9 +24,12 @@ app.use(cors({
     'http://127.0.0.1:5173',
     'http://127.0.0.1:5174',
     'http://127.0.0.1:5175',
-    // Dokploy UAT domains
+    // Dokploy UAT domains (traefik.me)
     'http://siba-dev-sibaweb-tfmrbz-e3ea43-148-230-79-241.traefik.me',
-    // También permitir cualquier origen de traefik.me para desarrollo
+    // Dominio personalizado (julianpropato.com.ar)
+    'https://siba-dev.julianpropato.com.ar',
+    'http://siba-dev.julianpropato.com.ar',
+    // Variable de entorno para orígenes adicionales
     ...(process.env.CORS_ORIGINS?.split(',') || []),
   ].filter(Boolean),
   credentials: true,
