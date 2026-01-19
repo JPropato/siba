@@ -12,16 +12,18 @@ COPY package.json package-lock.json ./
 COPY apps/api/package.json ./apps/api/
 COPY packages/ ./packages/
 
-# Instalar dependencias
-RUN npm ci --ignore-scripts
+# Instalar TODAS las dependencias (incluyendo workspaces)
+RUN npm ci
 
 # Copiar el código fuente de la API
 COPY apps/api/ ./apps/api/
 
 # Generar Prisma Client
-RUN npx prisma generate --schema=./apps/api/prisma/schema.prisma
+WORKDIR /app/apps/api
+RUN npx prisma generate
 
-# Compilar TypeScript
+# Volver al directorio raíz y compilar TypeScript
+WORKDIR /app
 RUN npm run build -w @siba/api
 
 # Exponer puerto de la API
