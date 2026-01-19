@@ -26,8 +26,12 @@ RUN npx prisma generate
 WORKDIR /app
 RUN npm run build -w @siba/api
 
+# Copiar script de inicio
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+
 # Exponer puerto de la API
 EXPOSE 3001
 
-# Comando para producción
-CMD ["node", "apps/api/dist/index.js"]
+# Usar el script de inicio que ejecuta migraciones y luego inicia la app
+ENTRYPOINT ["/docker-entrypoint.sh"]
