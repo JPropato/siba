@@ -1,7 +1,18 @@
 import axios from 'axios';
 import { useAuthStore } from '../stores/auth-store';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+// Runtime config (generado por docker-entrypoint.sh) o fallback a env/localhost
+declare global {
+    interface Window {
+        __RUNTIME_CONFIG__?: {
+            VITE_API_URL?: string;
+        };
+    }
+}
+
+const API_URL = window.__RUNTIME_CONFIG__?.VITE_API_URL
+    || import.meta.env.VITE_API_URL
+    || 'http://localhost:3001';
 
 const api = axios.create({
     baseURL: `${API_URL}/api`,

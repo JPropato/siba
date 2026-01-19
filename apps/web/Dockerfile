@@ -14,11 +14,7 @@ RUN npm ci
 # Copiar código fuente del frontend
 COPY apps/web/ ./apps/web/
 
-# Build argument para la URL de la API
-ARG VITE_API_URL
-ENV VITE_API_URL=$VITE_API_URL
-
-# Compilar el frontend
+# Compilar el frontend (sin necesidad de VITE_API_URL en build time)
 RUN npm run build -w @siba/web
 
 # Production stage - servir con nginx
@@ -30,7 +26,12 @@ COPY apps/web/nginx.conf /etc/nginx/conf.d/default.conf
 # Copiar archivos compilados
 COPY --from=builder /app/apps/web/dist /usr/share/nginx/html
 
+# Copiar script de entrada que genera config en runtime
+COPY apps/web/docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+
 # Exponer puerto 80
 EXPOSE 80
 
-CMD ["nginx", "-g", "daemon off;"]
+# Usar entrypoint que genera config.js con variables de entorno
+ENTRYPOINT ["/docker-entrypoint.sh"]
