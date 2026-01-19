@@ -14,8 +14,8 @@ RUN npm ci
 # Copiar código fuente del frontend
 COPY apps/web/ ./apps/web/
 
-# Build argument para la URL de la API (default para UAT)
-ARG VITE_API_URL=http://siba-dev-esdwim-2588f1-148-230-79-241.traefik.me
+# Build argument para la URL de la API
+ARG VITE_API_URL
 ENV VITE_API_URL=$VITE_API_URL
 
 # Compilar el frontend
