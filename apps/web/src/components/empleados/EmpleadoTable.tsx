@@ -101,7 +101,7 @@ export default function EmpleadoTable({
                       {e.tipo}
                     </span>
                     <span className="text-[10px] text-slate-400">
-                      {e.contratacion.replace('_', ' ')}
+                      {e.contratacion?.replace('_', ' ') || 'N/A'}
                     </span>
                   </div>
                 </td>

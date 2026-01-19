@@ -20,7 +20,7 @@ export default function MaterialDialog({ isOpen, onClose, onSave, initialData }:
 
     // Pricing
     const [precioCosto, setPrecioCosto] = useState<number | ''>('');
-    const [porcentajeRentabilidad, setPorcentajeRentabilidad] = useState<number>('');
+    const [porcentajeRentabilidad, setPorcentajeRentabilidad] = useState<number | ''>('');
     const [precioVenta, setPrecioVenta] = useState<number | ''>('');
 
     const [isLoading, setIsLoading] = useState(false);
@@ -50,7 +50,7 @@ export default function MaterialDialog({ isOpen, onClose, onSave, initialData }:
                 setCategoria('');
                 setStockMinimo('');
                 setPrecioCosto('');
-                setPorcentajeRentabilidad('');
+                setPorcentajeRentabilidad(0);
                 setPrecioVenta('');
             }
             setError(null);
@@ -58,7 +58,7 @@ export default function MaterialDialog({ isOpen, onClose, onSave, initialData }:
         } else {
             document.body.style.overflow = 'unset';
             setPrecioCosto('');
-            setPorcentajeRentabilidad('');
+            setPorcentajeRentabilidad(0);
             setPrecioVenta('');
         }
         return () => { document.body.style.overflow = 'unset'; };
@@ -81,7 +81,7 @@ export default function MaterialDialog({ isOpen, onClose, onSave, initialData }:
 
     const handleRentabilidadChange = (val: string) => {
         const rentabilidad = val === '' ? '' : Number(val);
-        setPorcentajeRentabilidad(rentabilidad === '' ? '' : rentabilidad); // permitir vacio para borrar
+        setPorcentajeRentabilidad(rentabilidad === '' ? 0 : rentabilidad);
         if (precioCosto !== '' && rentabilidad !== '') {
             setPrecioVenta(calculatePrecioVenta(Number(precioCosto), rentabilidad));
         }
