@@ -2,6 +2,7 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import path from 'path';
 import { PrismaClient } from '@prisma/client';
 
 import cookieParser from 'cookie-parser';
@@ -15,27 +16,32 @@ const PORT = process.env.API_PORT || 3001;
 
 // Middleware
 app.use(helmet());
-app.use(cors({
-  origin: [
-    'http://localhost:5173',
-    'http://localhost:5174',
-    'http://localhost:5175',
-    'http://localhost:5176',
-    'http://127.0.0.1:5173',
-    'http://127.0.0.1:5174',
-    'http://127.0.0.1:5175',
-    // Dokploy UAT domains (traefik.me)
-    'http://siba-dev-sibaweb-tfmrbz-e3ea43-148-230-79-241.traefik.me',
-    // Dominio personalizado (julianpropato.com.ar)
-    'https://siba-dev.julianpropato.com.ar',
-    'http://siba-dev.julianpropato.com.ar',
-    // Variable de entorno para orígenes adicionales
-    ...(process.env.CORS_ORIGINS?.split(',') || []),
-  ].filter(Boolean),
-  credentials: true,
-}));
+app.use(
+  cors({
+    origin: [
+      'http://localhost:5173',
+      'http://localhost:5174',
+      'http://localhost:5175',
+      'http://localhost:5176',
+      'http://127.0.0.1:5173',
+      'http://127.0.0.1:5174',
+      'http://127.0.0.1:5175',
+      // Dokploy UAT domains (traefik.me)
+      'http://siba-dev-sibaweb-tfmrbz-e3ea43-148-230-79-241.traefik.me',
+      // Dominio personalizado (julianpropato.com.ar)
+      'https://siba-dev.julianpropato.com.ar',
+      'http://siba-dev.julianpropato.com.ar',
+      // Variable de entorno para orígenes adicionales
+      ...(process.env.CORS_ORIGINS?.split(',') || []),
+    ].filter(Boolean),
+    credentials: true,
+  })
+);
 app.use(express.json());
 app.use(cookieParser());
+
+// Servir archivos subidos
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 // Rutas API
 app.use('/api', routes);

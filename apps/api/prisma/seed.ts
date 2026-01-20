@@ -1,4 +1,11 @@
-import { PrismaClient } from '@prisma/client';
+import {
+  PrismaClient,
+  TipoMovimiento,
+  MedioPago,
+  CategoriaIngreso,
+  CategoriaEgreso,
+  EstadoMovimiento,
+} from '@prisma/client';
 import { fakerES as faker } from '@faker-js/faker';
 
 const prisma = new PrismaClient();
@@ -93,11 +100,23 @@ async function main() {
   const zonas = [];
 
   // Create zones strictly
-  // Deletion order: ordenTrabajo/historial -> Tickets -> Empleado/Vehiculo/Sucursal -> Zona
+  // Deletion order: finanzas -> obras -> ordenTrabajo/historial -> Tickets -> Empleado/Vehiculo/Sucursal -> Zona
   console.log('🧹 Limpiando datos antiguos...');
+  // Finanzas
+  await prisma.movimiento.deleteMany({});
+  await prisma.cuentaFinanciera.deleteMany({});
+  // Obras
+  await prisma.comentarioObra.deleteMany({});
+  await prisma.historialEstadoObra.deleteMany({});
+  await prisma.archivoObra.deleteMany({});
+  await prisma.itemPresupuesto.deleteMany({});
+  await prisma.versionPresupuesto.deleteMany({});
+  await prisma.obra.deleteMany({});
+  // Tickets
   await prisma.ordenTrabajo.deleteMany({});
   await prisma.ticketHistorial.deleteMany({});
   await prisma.ticket.deleteMany({});
+  // Maestros
   await prisma.empleado.deleteMany({});
   await prisma.vehiculo.deleteMany({});
   await prisma.sucursal.deleteMany({});
@@ -349,6 +368,433 @@ async function main() {
       },
     });
   }
+
+  // ----------------------------------------------------
+  // 8. Finanzas: Bancos y Cuentas
+  // ----------------------------------------------------
+  console.log('🏦  Creando Bancos y Cuentas Financieras...');
+
+  // Bancos argentinos principales
+  const bancosData = [
+    { codigo: '011', nombre: 'Banco de la Nación Argentina', nombreCorto: 'Banco Nación' },
+    {
+      codigo: '007',
+      nombre: 'Banco de Galicia y Buenos Aires S.A.U.',
+      nombreCorto: 'Banco Galicia',
+    },
+    {
+      codigo: '014',
+      nombre: 'Banco de la Provincia de Buenos Aires',
+      nombreCorto: 'Banco Provincia',
+    },
+    { codigo: '017', nombre: 'BBVA Argentina S.A.', nombreCorto: 'BBVA' },
+    { codigo: '027', nombre: 'Banco Supervielle S.A.', nombreCorto: 'Supervielle' },
+    { codigo: '034', nombre: 'Banco Patagonia S.A.', nombreCorto: 'Banco Patagonia' },
+    { codigo: '044', nombre: 'Banco Credicoop Cooperativo Limitado', nombreCorto: 'Credicoop' },
+    { codigo: '072', nombre: 'Banco Santander Argentina S.A.', nombreCorto: 'Santander' },
+    { codigo: '083', nombre: 'Banco Itaú Argentina S.A.', nombreCorto: 'Itaú' },
+    { codigo: '093', nombre: 'Banco ICBC Argentina S.A.', nombreCorto: 'ICBC' },
+    { codigo: '191', nombre: 'Banco Hipotecario S.A.', nombreCorto: 'Hipotecario' },
+    { codigo: '285', nombre: 'Banco Macro S.A.', nombreCorto: 'Banco Macro' },
+    { codigo: '999', nombre: 'Mercado Pago', nombreCorto: 'Mercado Pago' },
+  ];
+
+  for (const bancoData of bancosData) {
+    await prisma.banco.upsert({
+      where: { codigo: bancoData.codigo },
+      update: {},
+      create: bancoData,
+    });
+  }
+
+  // Cuentas financieras demo
+  const bancoNacion = await prisma.banco.findUnique({ where: { codigo: '011' } });
+  const bancoGalicia = await prisma.banco.findUnique({ where: { codigo: '007' } });
+  const mercadoPago = await prisma.banco.findUnique({ where: { codigo: '999' } });
+
+  // Caja Chica
+  await prisma.cuentaFinanciera.upsert({
+    where: { cbu: 'CAJA-CHICA-001' },
+    update: {},
+    create: {
+      nombre: 'Caja Chica Oficina',
+      tipo: 'CAJA_CHICA',
+      cbu: 'CAJA-CHICA-001',
+      saldoInicial: 50000,
+      saldoActual: 50000,
+    },
+  });
+
+  // Cuenta Corriente Banco Nación
+  if (bancoNacion) {
+    await prisma.cuentaFinanciera.upsert({
+      where: { cbu: '01100012345678901234' },
+      update: {},
+      create: {
+        nombre: 'Banco Nación - Cuenta Corriente',
+        tipo: 'CUENTA_CORRIENTE',
+        bancoId: bancoNacion.id,
+        numeroCuenta: '123456789',
+        cbu: '01100012345678901234',
+        alias: 'bauman.nacion',
+        saldoInicial: 500000,
+        saldoActual: 500000,
+      },
+    });
+  }
+
+  // Caja de Ahorro Galicia
+  if (bancoGalicia) {
+    await prisma.cuentaFinanciera.upsert({
+      where: { cbu: '00700098765432109876' },
+      update: {},
+      create: {
+        nombre: 'Banco Galicia - Caja de Ahorro',
+        tipo: 'CAJA_AHORRO',
+        bancoId: bancoGalicia.id,
+        numeroCuenta: '987654321',
+        cbu: '00700098765432109876',
+        alias: 'bauman.galicia',
+        saldoInicial: 250000,
+        saldoActual: 250000,
+      },
+    });
+  }
+  // Mercado Pago
+  if (mercadoPago) {
+    await prisma.cuentaFinanciera.upsert({
+      where: { cbu: '00000000000000000001' },
+      update: {},
+      create: {
+        nombre: 'Mercado Pago',
+        tipo: 'BILLETERA_VIRTUAL',
+        bancoId: mercadoPago.id,
+        cbu: '00000000000000000001',
+        alias: 'bauman.mp',
+        saldoInicial: 100000,
+        saldoActual: 100000,
+      },
+    });
+  }
+
+  // Inversiones Demo
+  console.log('📈 Creando inversiones de demo...');
+
+  // Plazo Fijo Banco Nación
+  if (bancoNacion) {
+    await prisma.cuentaFinanciera.upsert({
+      where: { cbu: 'PF-NACION-001' },
+      update: {},
+      create: {
+        nombre: 'Plazo Fijo Banco Nación',
+        tipo: 'INVERSION',
+        tipoInversion: 'PLAZO_FIJO',
+        bancoId: bancoNacion.id,
+        cbu: 'PF-NACION-001',
+        saldoInicial: 500000,
+        saldoActual: 500000,
+        tasaAnual: 78.5,
+        fechaVencimiento: new Date('2026-02-15'),
+      },
+    });
+  }
+
+  // FCI Galicia
+  if (bancoGalicia) {
+    await prisma.cuentaFinanciera.upsert({
+      where: { cbu: 'FCI-GALICIA-001' },
+      update: {},
+      create: {
+        nombre: 'FCI Galicia Ahorro Plus',
+        tipo: 'INVERSION',
+        tipoInversion: 'FCI',
+        bancoId: bancoGalicia.id,
+        cbu: 'FCI-GALICIA-001',
+        saldoInicial: 300000,
+        saldoActual: 318500,
+        tasaAnual: 65,
+        // FCI no tiene vencimiento fijo
+      },
+    });
+  }
+
+  // Cauciones Bursátiles
+  await prisma.cuentaFinanciera.upsert({
+    where: { cbu: 'CAUCION-001' },
+    update: {},
+    create: {
+      nombre: 'Cauciones Colocadoras 7 días',
+      tipo: 'INVERSION',
+      tipoInversion: 'CAUCIONES',
+      cbu: 'CAUCION-001',
+      saldoInicial: 200000,
+      saldoActual: 200000,
+      tasaAnual: 72,
+      fechaVencimiento: new Date('2026-01-27'),
+    },
+  });
+
+  console.log('✅ Inversiones de demo creadas.');
+
+  // ----------------------------------------------------
+  // 10. Movimientos Financieros Demo
+  // ----------------------------------------------------
+  console.log('💰 Creando movimientos financieros de demo...');
+
+  // Obtener cuentas creadas
+  const cajaChica = await prisma.cuentaFinanciera.findFirst({ where: { tipo: 'CAJA_CHICA' } });
+  const ctaCorriente = await prisma.cuentaFinanciera.findFirst({
+    where: { tipo: 'CUENTA_CORRIENTE' },
+  });
+  const cajaAhorro = await prisma.cuentaFinanciera.findFirst({ where: { tipo: 'CAJA_AHORRO' } });
+  const billeteraVirtual = await prisma.cuentaFinanciera.findFirst({
+    where: { tipo: 'BILLETERA_VIRTUAL' },
+  });
+
+  // Obtener algunos clientes para vincular
+  const clientesParaVincular = await prisma.cliente.findMany({ take: 5 });
+
+  // Movimientos de demostración
+  const movimientosDemo = [
+    // INGRESOS
+    {
+      tipo: 'INGRESO',
+      monto: 85000,
+      fechaMovimiento: new Date('2026-01-15'),
+      medioPago: 'TRANSFERENCIA',
+      categoriaIngreso: 'COBRO_FACTURA',
+      descripcion: 'Cobro Factura FC-001234 - Instalación aire acondicionado',
+      comprobante: 'FC-001234',
+      cuentaId: ctaCorriente?.id,
+      clienteId: clientesParaVincular[0]?.id,
+      estado: 'CONFIRMADO',
+    },
+    {
+      tipo: 'INGRESO',
+      monto: 120000,
+      fechaMovimiento: new Date('2026-01-14'),
+      medioPago: 'TRANSFERENCIA',
+      categoriaIngreso: 'COBRO_FACTURA',
+      descripcion: 'Cobro Factura FC-001233 - Servicio de mantenimiento mensual',
+      comprobante: 'FC-001233',
+      cuentaId: ctaCorriente?.id,
+      clienteId: clientesParaVincular[1]?.id,
+      estado: 'CONFIRMADO',
+    },
+    {
+      tipo: 'INGRESO',
+      monto: 50000,
+      fechaMovimiento: new Date('2026-01-13'),
+      medioPago: 'EFECTIVO',
+      categoriaIngreso: 'ANTICIPO_CLIENTE',
+      descripcion: 'Anticipo para obra de refrigeración industrial',
+      cuentaId: cajaChica?.id,
+      clienteId: clientesParaVincular[2]?.id,
+      estado: 'CONFIRMADO',
+    },
+    {
+      tipo: 'INGRESO',
+      monto: 35000,
+      fechaMovimiento: new Date('2026-01-10'),
+      medioPago: 'MERCADOPAGO',
+      categoriaIngreso: 'COBRO_FACTURA',
+      descripcion: 'Cobro por reparación urgente - domicilio particular',
+      comprobante: 'FC-001230',
+      cuentaId: billeteraVirtual?.id,
+      estado: 'CONFIRMADO',
+    },
+    {
+      tipo: 'INGRESO',
+      monto: 250000,
+      fechaMovimiento: new Date('2026-01-08'),
+      medioPago: 'CHEQUE',
+      categoriaIngreso: 'COBRO_FACTURA',
+      descripcion: 'Cobro parcial proyecto climatización edificio corporativo',
+      comprobante: 'FC-001228',
+      cuentaId: cajaAhorro?.id,
+      clienteId: clientesParaVincular[3]?.id,
+      estado: 'CONFIRMADO',
+    },
+    {
+      tipo: 'INGRESO',
+      monto: 15000,
+      fechaMovimiento: new Date('2026-01-05'),
+      medioPago: 'EFECTIVO',
+      categoriaIngreso: 'REINTEGRO',
+      descripcion: 'Reintegro por devolución de materiales no utilizados',
+      cuentaId: cajaChica?.id,
+      estado: 'CONFIRMADO',
+    },
+    // EGRESOS
+    {
+      tipo: 'EGRESO',
+      monto: 45000,
+      fechaMovimiento: new Date('2026-01-16'),
+      medioPago: 'TRANSFERENCIA',
+      categoriaEgreso: 'MATERIALES',
+      descripcion: 'Compra de gas refrigerante R410A - 10 kg',
+      comprobante: 'FC-PROV-5678',
+      cuentaId: ctaCorriente?.id,
+      estado: 'CONFIRMADO',
+    },
+    {
+      tipo: 'EGRESO',
+      monto: 80000,
+      fechaMovimiento: new Date('2026-01-15'),
+      medioPago: 'TRANSFERENCIA',
+      categoriaEgreso: 'MANO_DE_OBRA',
+      descripcion: 'Pago a cuadrilla instalación - Obra edificio Libertador',
+      cuentaId: ctaCorriente?.id,
+      estado: 'CONFIRMADO',
+    },
+    {
+      tipo: 'EGRESO',
+      monto: 25000,
+      fechaMovimiento: new Date('2026-01-14'),
+      medioPago: 'EFECTIVO',
+      categoriaEgreso: 'COMBUSTIBLE',
+      descripcion: 'Combustible para flota de vehículos - semana 2',
+      cuentaId: cajaChica?.id,
+      estado: 'CONFIRMADO',
+    },
+    {
+      tipo: 'EGRESO',
+      monto: 12500,
+      fechaMovimiento: new Date('2026-01-12'),
+      medioPago: 'TARJETA_DEBITO',
+      categoriaEgreso: 'HERRAMIENTAS',
+      descripcion: 'Compra juego de llaves torque y manómetro digital',
+      comprobante: 'TK-45678',
+      cuentaId: ctaCorriente?.id,
+      estado: 'CONFIRMADO',
+    },
+    {
+      tipo: 'EGRESO',
+      monto: 8000,
+      fechaMovimiento: new Date('2026-01-11'),
+      medioPago: 'EFECTIVO',
+      categoriaEgreso: 'VIATICOS',
+      descripcion: 'Viáticos técnicos - instalación zona norte',
+      cuentaId: cajaChica?.id,
+      estado: 'CONFIRMADO',
+    },
+    {
+      tipo: 'EGRESO',
+      monto: 150000,
+      fechaMovimiento: new Date('2026-01-10'),
+      medioPago: 'TRANSFERENCIA',
+      categoriaEgreso: 'SUBCONTRATISTA',
+      descripcion: 'Pago subcontratista - instalación ductos obra industrial',
+      comprobante: 'FC-SUB-234',
+      cuentaId: ctaCorriente?.id,
+      estado: 'CONFIRMADO',
+    },
+    {
+      tipo: 'EGRESO',
+      monto: 35000,
+      fechaMovimiento: new Date('2026-01-08'),
+      medioPago: 'TRANSFERENCIA',
+      categoriaEgreso: 'IMPUESTOS',
+      descripcion: 'Pago IIBB período diciembre 2025',
+      comprobante: 'VEP-AFIP-123',
+      cuentaId: ctaCorriente?.id,
+      estado: 'CONFIRMADO',
+    },
+    {
+      tipo: 'EGRESO',
+      monto: 18500,
+      fechaMovimiento: new Date('2026-01-05'),
+      medioPago: 'MERCADOPAGO',
+      categoriaEgreso: 'SERVICIOS',
+      descripcion: 'Suscripción software gestión + telefonía',
+      cuentaId: billeteraVirtual?.id,
+      estado: 'CONFIRMADO',
+    },
+    {
+      tipo: 'EGRESO',
+      monto: 22000,
+      fechaMovimiento: new Date('2026-01-03'),
+      medioPago: 'TRANSFERENCIA',
+      categoriaEgreso: 'MATERIALES',
+      descripcion: 'Compra de cañerías de cobre 1/4 y 3/8',
+      comprobante: 'FC-PROV-5670',
+      cuentaId: ctaCorriente?.id,
+      estado: 'CONFIRMADO',
+    },
+    // PENDIENTES
+    {
+      tipo: 'INGRESO',
+      monto: 180000,
+      fechaMovimiento: new Date('2026-01-20'),
+      medioPago: 'TRANSFERENCIA',
+      categoriaIngreso: 'COBRO_FACTURA',
+      descripcion: 'Factura FC-001240 pendiente de cobro',
+      comprobante: 'FC-001240',
+      cuentaId: ctaCorriente?.id,
+      clienteId: clientesParaVincular[4]?.id,
+      estado: 'PENDIENTE',
+    },
+    {
+      tipo: 'EGRESO',
+      monto: 95000,
+      fechaMovimiento: new Date('2026-01-22'),
+      medioPago: 'TRANSFERENCIA',
+      categoriaEgreso: 'MATERIALES',
+      descripcion: 'Orden de compra equipos split inverter x3',
+      comprobante: 'OC-789',
+      cuentaId: ctaCorriente?.id,
+      estado: 'PENDIENTE',
+    },
+  ];
+
+  for (const mov of movimientosDemo) {
+    if (mov.cuentaId) {
+      await prisma.movimiento.create({
+        data: {
+          tipo: mov.tipo as TipoMovimiento,
+          monto: mov.monto,
+          fechaMovimiento: mov.fechaMovimiento,
+          medioPago: mov.medioPago as MedioPago,
+          categoriaIngreso: mov.categoriaIngreso as CategoriaIngreso,
+          categoriaEgreso: mov.categoriaEgreso as CategoriaEgreso,
+          descripcion: mov.descripcion,
+          comprobante: mov.comprobante,
+          cuentaId: mov.cuentaId,
+          clienteId: mov.clienteId,
+          estado: mov.estado as EstadoMovimiento,
+          registradoPorId: adminUser.id,
+        },
+      });
+    }
+  }
+
+  // Actualizar saldos de las cuentas
+  const cuentasActualizar = [cajaChica, ctaCorriente, cajaAhorro, billeteraVirtual].filter(Boolean);
+  for (const cuenta of cuentasActualizar) {
+    if (!cuenta) continue;
+
+    const ingresos = await prisma.movimiento.aggregate({
+      where: { cuentaId: cuenta.id, tipo: 'INGRESO', estado: 'CONFIRMADO' },
+      _sum: { monto: true },
+    });
+
+    const egresos = await prisma.movimiento.aggregate({
+      where: { cuentaId: cuenta.id, tipo: 'EGRESO', estado: 'CONFIRMADO' },
+      _sum: { monto: true },
+    });
+
+    const saldoActual =
+      Number(cuenta.saldoInicial) +
+      Number(ingresos._sum.monto || 0) -
+      Number(egresos._sum.monto || 0);
+
+    await prisma.cuentaFinanciera.update({
+      where: { id: cuenta.id },
+      data: { saldoActual },
+    });
+  }
+
+  console.log('✅ Movimientos financieros creados.');
 
   console.log('🏁 Seed de prueba finalizado exitosamente.');
 }

@@ -119,6 +119,43 @@ export const storageService = {
     const port = minioConfig.port === 80 || minioConfig.port === 443 ? '' : `:${minioConfig.port}`;
     return `${protocol}://${minioConfig.endPoint}${port}/${bucket}/${nombreStorage}`;
   },
+
+  /**
+   * Upload a Buffer directly to MinIO
+   */
+  async uploadBuffer(
+    buffer: Buffer,
+    filename: string,
+    mimetype: string,
+    bucket: string = DEFAULT_BUCKET
+  ): Promise<{
+    nombreOriginal: string;
+    nombreStorage: string;
+    mimeType: string;
+    tamanio: number;
+    bucket: string;
+    url: string;
+  }> {
+    const ext = path.extname(filename);
+    const nombreStorage = `${uuidv4()}${ext}`;
+
+    await this.initBucket(bucket);
+
+    await minioClient.putObject(bucket, nombreStorage, buffer, buffer.length, {
+      'Content-Type': mimetype,
+    });
+
+    const url = this.getPublicUrl(nombreStorage, bucket);
+
+    return {
+      nombreOriginal: filename,
+      nombreStorage,
+      mimeType: mimetype,
+      tamanio: buffer.length,
+      bucket,
+      url,
+    };
+  },
 };
 
 export default storageService;

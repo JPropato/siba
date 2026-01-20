@@ -62,6 +62,15 @@ model Usuario {
   ticketsActualizadoPor   Ticket[]          @relation("TicketActualizadoPor")
   ticketHistorial         TicketHistorial[]
 
+  // Obras relations
+  obrasCreadas            Obra[]            @relation("ObraCreadoPor")
+  historialEstadosObra    HistorialEstadoObra[]
+  comentariosObra         ComentarioObra[]
+
+  // Finanzas relations
+  movimientosRegistrados  Movimiento[]
+  importacionesMasivas    ImportacionMasiva[]
+
   @@map("usuarios")
 }
 
@@ -130,6 +139,8 @@ model Cliente {
 
   sucursales     Sucursal[]
   ordenesTrabajo OrdenTrabajo[]
+  obras          Obra[]
+  movimientos    Movimiento[]
 
   @@map("clientes")
 }
@@ -170,6 +181,7 @@ model Sucursal {
   // Ticket relations
   tickets        Ticket[]
   ordenesTrabajo OrdenTrabajo[]
+  obras          Obra[]
 
   @@map("sucursales")
 }
@@ -211,6 +223,7 @@ model Material {
   precioVenta           Decimal   @default(0) @map("precio_venta") @db.Decimal(10, 2)
 
   historialPrecios HistorialPrecio[]
+  itemsPresupuesto ItemPresupuesto[]
   
   fechaCreacion   DateTime  @default(now()) @map("fecha_creacion")
   fechaActualizacion DateTime @updatedAt @map("fecha_actualizacion")
@@ -256,6 +269,7 @@ model Empleado {
   // Ticket relations
   ticketsAsignado Ticket[]       @relation("TicketTecnico")
   ordenesTrabajo  OrdenTrabajo[] @relation("OrdenTrabajoTecnico")
+  movimientos     Movimiento[]
 
   @@map("empleados")
 }
@@ -294,6 +308,8 @@ model Ticket {
   
   historial           TicketHistorial[]
   ordenTrabajo        OrdenTrabajo?
+  obra                Obra?
+  movimientos         Movimiento[]
 
   @@map("tickets")
 }
@@ -358,3 +374,347 @@ model Archivo {
   @@map("archivos")
 }
 
+// ============ OBRAS Y PRESUPUESTOS ============
+
+enum TipoObra {
+  OBRA_MAYOR      // Derivada de Ticket/OT (ej: Correo Argentino)
+  SERVICIO_MENOR  // Trabajo particular
+}
+
+enum EstadoObra {
+  BORRADOR
+  PRESUPUESTADO
+  APROBADO
+  RECHAZADO
+  EN_EJECUCION
+  FINALIZADO
+  FACTURADO
+}
+
+enum TipoItemPresupuesto {
+  MATERIAL
+  MANO_DE_OBRA
+  TERCERO
+  OTRO
+}
+
+enum ModoEjecucion {
+  CON_PRESUPUESTO
+  EJECUCION_DIRECTA
+}
+
+model Obra {
+  id                 Int           @id @default(autoincrement())
+  codigo             String        @unique  // OBR-00001
+  tipo               TipoObra
+  modoEjecucion      ModoEjecucion @default(CON_PRESUPUESTO) @map("modo_ejecucion")
+  estado             EstadoObra    @default(BORRADOR)
+  
+  titulo             String
+  descripcion        String?       @db.Text
+  
+  fechaSolicitud     DateTime      @map("fecha_solicitud")
+  fechaInicioEstimada DateTime?    @map("fecha_inicio_estimada")
+  fechaFinEstimada   DateTime?     @map("fecha_fin_estimada")
+  fechaInicioReal    DateTime?     @map("fecha_inicio_real")
+  fechaFinReal       DateTime?     @map("fecha_fin_real")
+  
+  clienteId          Int           @map("cliente_id")
+  sucursalId         Int?          @map("sucursal_id")
+  ticketId           Int?          @unique @map("ticket_id")
+  
+  montoPresupuestado Decimal       @default(0) @map("monto_presupuestado") @db.Decimal(12, 2)
+  montoGastado       Decimal       @default(0) @map("monto_gastado") @db.Decimal(12, 2)
+  
+  condicionesPago    String?       @map("condiciones_pago")
+  validezDias        Int?          @default(30) @map("validez_dias")
+  
+  numeroFactura      String?       @map("numero_factura")
+  fechaFacturacion   DateTime?     @map("fecha_facturacion")
+  
+  creadoPorId        Int           @map("creado_por_id")
+  fechaCreacion      DateTime      @default(now()) @map("fecha_creacion")
+  fechaActualizacion DateTime      @updatedAt @map("fecha_actualizacion")
+  
+  cliente            Cliente       @relation(fields: [clienteId], references: [id])
+  sucursal           Sucursal?     @relation(fields: [sucursalId], references: [id])
+  ticket             Ticket?       @relation(fields: [ticketId], references: [id])
+  creadoPor          Usuario       @relation("ObraCreadoPor", fields: [creadoPorId], references: [id])
+  
+  versiones          VersionPresupuesto[]
+  archivos           ArchivoObra[]
+  historialEstados   HistorialEstadoObra[]
+  comentarios        ComentarioObra[]
+  movimientos        Movimiento[]
+  
+  @@index([clienteId])
+  @@index([estado])
+  @@index([fechaSolicitud])
+  @@map("obras")
+}
+
+model VersionPresupuesto {
+  id              Int       @id @default(autoincrement())
+  obraId          Int       @map("obra_id")
+  version         Int       @default(1)
+  esVigente       Boolean   @default(true) @map("es_vigente")
+  
+  subtotal        Decimal   @default(0) @db.Decimal(12, 2)
+  total           Decimal   @default(0) @db.Decimal(12, 2)
+  
+  notas           String?   @db.Text
+  
+  archivoPdfId    Int?      @map("archivo_pdf_id")
+  
+  fechaCreacion   DateTime  @default(now()) @map("fecha_creacion")
+  
+  obra            Obra      @relation(fields: [obraId], references: [id], onDelete: Cascade)
+  items           ItemPresupuesto[]
+  
+  @@unique([obraId, version])
+  @@map("versiones_presupuesto")
+}
+
+model ItemPresupuesto {
+  id                Int                 @id @default(autoincrement())
+  versionId         Int                 @map("version_id")
+  tipo              TipoItemPresupuesto
+  orden             Int                 @default(0)
+  
+  descripcion       String
+  
+  cantidad          Decimal             @db.Decimal(10, 2)
+  unidad            String
+  
+  costoUnitario     Decimal             @map("costo_unitario") @db.Decimal(12, 2)
+  precioUnitario    Decimal             @map("precio_unitario") @db.Decimal(12, 2)
+  subtotal          Decimal             @db.Decimal(12, 2)
+  
+  materialId        Int?                @map("material_id")
+  
+  version           VersionPresupuesto  @relation(fields: [versionId], references: [id], onDelete: Cascade)
+  material          Material?           @relation(fields: [materialId], references: [id])
+  
+  @@index([versionId])
+  @@map("items_presupuesto")
+}
+
+model ArchivoObra {
+  id              Int       @id @default(autoincrement())
+  obraId          Int       @map("obra_id")
+  
+  tipoArchivo     String    @map("tipo_archivo")  // PLANO, FOTO_ANTES, FOTO_DESPUES, PRESUPUESTO_PDF, OTRO
+  nombreOriginal  String    @map("nombre_original")
+  nombreStorage   String    @unique @map("nombre_storage")
+  mimeType        String    @map("mime_type")
+  tamanio         Int
+  url             String?
+  
+  fechaCreacion   DateTime  @default(now()) @map("fecha_creacion")
+  
+  obra            Obra      @relation(fields: [obraId], references: [id], onDelete: Cascade)
+  
+  @@map("archivos_obra")
+}
+
+model HistorialEstadoObra {
+  id              Int        @id @default(autoincrement())
+  obraId          Int        @map("obra_id")
+  estadoAnterior  EstadoObra @map("estado_anterior")
+  estadoNuevo     EstadoObra @map("estado_nuevo")
+  usuarioId       Int        @map("usuario_id")
+  fechaCambio     DateTime   @default(now()) @map("fecha_cambio")
+  observacion     String?
+
+  obra            Obra       @relation(fields: [obraId], references: [id], onDelete: Cascade)
+  usuario         Usuario    @relation(fields: [usuarioId], references: [id])
+
+  @@index([obraId])
+  @@map("historial_estados_obra")
+}
+
+model ComentarioObra {
+  id              Int       @id @default(autoincrement())
+  obraId          Int       @map("obra_id")
+  usuarioId       Int       @map("usuario_id")
+  contenido       String    @db.Text
+  fechaCreacion   DateTime  @default(now()) @map("fecha_creacion")
+
+  obra            Obra      @relation(fields: [obraId], references: [id], onDelete: Cascade)
+  usuario         Usuario   @relation(fields: [usuarioId], references: [id])
+
+  @@index([obraId])
+  @@map("comentarios_obra")
+}
+
+// ============ FINANZAS ENUMS ============
+
+enum TipoMovimiento {
+  INGRESO
+  EGRESO
+}
+
+enum TipoCuenta {
+  CAJA_CHICA
+  CUENTA_CORRIENTE
+  CAJA_AHORRO
+  BILLETERA_VIRTUAL
+  INVERSION
+}
+
+enum MedioPago {
+  EFECTIVO
+  TRANSFERENCIA
+  CHEQUE
+  TARJETA_DEBITO
+  TARJETA_CREDITO
+  MERCADOPAGO
+}
+
+enum CategoriaIngreso {
+  COBRO_FACTURA
+  ANTICIPO_CLIENTE
+  REINTEGRO
+  RENDIMIENTO_INVERSION
+  RESCATE_INVERSION
+  OTRO_INGRESO
+}
+
+enum CategoriaEgreso {
+  MATERIALES
+  MANO_DE_OBRA
+  COMBUSTIBLE
+  HERRAMIENTAS
+  VIATICOS
+  SUBCONTRATISTA
+  IMPUESTOS
+  SERVICIOS
+  TRASPASO_INVERSION
+  OTRO_EGRESO
+}
+
+enum EstadoMovimiento {
+  PENDIENTE
+  CONFIRMADO
+  CONCILIADO
+  ANULADO
+}
+
+// ============ FINANZAS MODELOS ============
+
+model Banco {
+  id              Int       @id @default(autoincrement())
+  codigo          String    @unique  // "011" (Nación), "007" (Galicia), etc.
+  nombre          String    @unique  // "Banco de la Nación Argentina"
+  nombreCorto     String    @map("nombre_corto")  // "Banco Nación"
+  logo            String?   // URL del logo
+  activo          Boolean   @default(true)
+  
+  cuentas         CuentaFinanciera[]
+  
+  @@map("bancos")
+}
+
+model CuentaFinanciera {
+  id              Int         @id @default(autoincrement())
+  nombre          String      // "Caja Chica Oficina", "Banco Nación CC"
+  tipo            TipoCuenta
+  bancoId         Int?        @map("banco_id")
+  numeroCuenta    String?     @map("numero_cuenta")
+  cbu             String?     @unique
+  alias           String?
+  saldoInicial    Decimal     @default(0) @map("saldo_inicial") @db.Decimal(12, 2)
+  saldoActual     Decimal     @default(0) @map("saldo_actual") @db.Decimal(12, 2)
+  moneda          String      @default("ARS")
+  activa          Boolean     @default(true)
+  
+  // Campos específicos para inversiones
+  tipoInversion   String?     @map("tipo_inversion")  // "PLAZO_FIJO", "FCI", "CAUCIONES"
+  tasaAnual       Decimal?    @map("tasa_anual") @db.Decimal(6, 4)  // 0.4500 = 45% TNA
+  fechaVencimiento DateTime?  @map("fecha_vencimiento")
+  
+  fechaCreacion   DateTime    @default(now()) @map("fecha_creacion")
+  fechaActualizacion DateTime @updatedAt @map("fecha_actualizacion")
+  
+  banco           Banco?      @relation(fields: [bancoId], references: [id])
+  movimientos     Movimiento[]
+  
+  @@map("cuentas_financieras")
+}
+
+model Movimiento {
+  id                Int               @id @default(autoincrement())
+  codigo            String            @unique @default(cuid()) // MOV-xxxxx
+  
+  // Clasificación
+  tipo              TipoMovimiento
+  categoriaIngreso  CategoriaIngreso?  @map("categoria_ingreso")
+  categoriaEgreso   CategoriaEgreso?   @map("categoria_egreso")
+  medioPago         MedioPago          @map("medio_pago")
+  
+  // Montos
+  monto             Decimal           @db.Decimal(12, 2)
+  moneda            String            @default("ARS")
+  
+  // Contexto
+  descripcion       String
+  comprobante       String?           // Nro factura, recibo, etc.
+  
+  // Fechas
+  fechaMovimiento   DateTime          @map("fecha_movimiento")
+  fechaRegistro     DateTime          @default(now()) @map("fecha_registro")
+  
+  // Origen/Cuenta
+  cuentaId          Int               @map("cuenta_id")
+  cuenta            CuentaFinanciera  @relation(fields: [cuentaId], references: [id])
+  
+  // Vinculaciones opcionales (contexto)
+  clienteId         Int?              @map("cliente_id")
+  ticketId          Int?              @map("ticket_id")
+  obraId            Int?              @map("obra_id")
+  empleadoId        Int?              @map("empleado_id")  // Quien recibió viático, etc.
+  
+  // Estado y auditoría
+  estado            EstadoMovimiento  @default(PENDIENTE)
+  registradoPorId   Int               @map("registrado_por_id")
+  
+  // Carga masiva
+  importacionId     Int?              @map("importacion_id")
+  
+  fechaActualizacion DateTime         @updatedAt @map("fecha_actualizacion")
+  
+  // Relations
+  cliente           Cliente?          @relation(fields: [clienteId], references: [id])
+  ticket            Ticket?           @relation(fields: [ticketId], references: [id])
+  obra              Obra?             @relation(fields: [obraId], references: [id])
+  empleado          Empleado?         @relation(fields: [empleadoId], references: [id])
+  registradoPor     Usuario           @relation(fields: [registradoPorId], references: [id])
+  importacion       ImportacionMasiva? @relation(fields: [importacionId], references: [id])
+  
+  @@index([fechaMovimiento])
+  @@index([cuentaId])
+  @@index([tipo])
+  @@index([estado])
+  @@map("movimientos")
+}
+
+model ImportacionMasiva {
+  id              Int       @id @default(autoincrement())
+  nombreArchivo   String    @map("nombre_archivo")
+  cuentaId        Int       @map("cuenta_id")
+  
+  totalRegistros  Int       @map("total_registros")
+  registrosOk     Int       @default(0) @map("registros_ok")
+  registrosError  Int       @default(0) @map("registros_error")
+  
+  estado          String    @default("PROCESANDO") // PROCESANDO, COMPLETADO, ERROR
+  errores         String?   @db.Text  // JSON con detalle de errores
+  
+  fechaImportacion DateTime @default(now()) @map("fecha_importacion")
+  usuarioId       Int       @map("usuario_id")
+  
+  movimientos     Movimiento[]
+  usuario         Usuario   @relation(fields: [usuarioId], references: [id])
+  
+  @@map("importaciones_masivas")
+}

@@ -11,6 +11,8 @@ import empleadoRoutes from './empleado.routes.js';
 import ticketRoutes from './ticket.routes.js';
 import uploadRoutes from './upload.routes.js';
 import otRoutes from './ot.routes.js';
+import obraRoutes from './obra.routes.js';
+import finanzasRoutes from './finanzas.routes.js';
 
 const router = Router();
 
@@ -27,5 +29,7 @@ router.use('/empleados', empleadoRoutes);
 router.use('/tickets', ticketRoutes);
 router.use('/upload', uploadRoutes);
 router.use('/ordenes-trabajo', otRoutes);
+router.use('/obras', obraRoutes);
+router.use('/finanzas', finanzasRoutes);
 
 export default router;

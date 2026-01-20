@@ -15,6 +15,13 @@ import VacacionesPage from './pages/VacacionesPage';
 import SueldosPage from './pages/SueldosPage';
 import AusenciasPage from './pages/AusenciasPage';
 import TicketsPage from './pages/TicketsPage';
+import { ObrasPage } from './features/obras';
+import {
+  FinanzasDashboard,
+  MovimientosPage,
+  CuentasPage,
+  InversionesPage,
+} from './features/finanzas';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import DashboardLayout from './components/layout/DashboardLayout';
 import './App.css';
@@ -77,6 +84,11 @@ function DashboardWrapper({ children }: { children: React.ReactNode }) {
     if (id === 'sueldos') navigate('/dashboard/sueldos');
     if (id === 'ausencias') navigate('/dashboard/ausencias');
     if (id === 'tickets') navigate('/dashboard/tickets');
+    if (id === 'obras') navigate('/dashboard/obras');
+    if (id === 'finanzas-dashboard') navigate('/dashboard/finanzas');
+    if (id === 'finanzas-movimientos') navigate('/dashboard/finanzas/movimientos');
+    if (id === 'finanzas-cuentas') navigate('/dashboard/finanzas/cuentas');
+    if (id === 'finanzas-inversiones') navigate('/dashboard/finanzas/inversiones');
   };
 
   const getPageInfo = (path: string) => {
@@ -102,6 +114,15 @@ function DashboardWrapper({ children }: { children: React.ReactNode }) {
       return { id: 'ausencias', label: 'Ausencias', parentLabel: 'Recursos Humanos' };
     if (path.includes('tickets'))
       return { id: 'tickets', label: 'Tickets', parentLabel: 'Comercial' };
+    if (path.includes('obras')) return { id: 'obras', label: 'Obras', parentLabel: 'Comercial' };
+    if (path.includes('finanzas/movimientos'))
+      return { id: 'finanzas-movimientos', label: 'Movimientos', parentLabel: 'Finanzas' };
+    if (path.includes('finanzas/cuentas'))
+      return { id: 'finanzas-cuentas', label: 'Cuentas/Bancos', parentLabel: 'Finanzas' };
+    if (path.includes('finanzas/inversiones'))
+      return { id: 'finanzas-inversiones', label: 'Inversiones', parentLabel: 'Finanzas' };
+    if (path.includes('finanzas'))
+      return { id: 'finanzas-dashboard', label: 'Dashboard', parentLabel: 'Finanzas' };
     return { id: 'dashboard', label: 'Dashboard' };
   };
 
@@ -221,6 +242,46 @@ export default function App() {
             element={
               <DashboardWrapper>
                 <TicketsPage />
+              </DashboardWrapper>
+            }
+          />
+          <Route
+            path="/dashboard/obras"
+            element={
+              <DashboardWrapper>
+                <ObrasPage />
+              </DashboardWrapper>
+            }
+          />
+          <Route
+            path="/dashboard/finanzas"
+            element={
+              <DashboardWrapper>
+                <FinanzasDashboard />
+              </DashboardWrapper>
+            }
+          />
+          <Route
+            path="/dashboard/finanzas/movimientos"
+            element={
+              <DashboardWrapper>
+                <MovimientosPage />
+              </DashboardWrapper>
+            }
+          />
+          <Route
+            path="/dashboard/finanzas/cuentas"
+            element={
+              <DashboardWrapper>
+                <CuentasPage />
+              </DashboardWrapper>
+            }
+          />
+          <Route
+            path="/dashboard/finanzas/inversiones"
+            element={
+              <DashboardWrapper>
+                <InversionesPage />
               </DashboardWrapper>
             }
           />

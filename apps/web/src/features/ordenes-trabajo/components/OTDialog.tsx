@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { OrdenTrabajo, Archivo, CreateOTPayload, UpdateOTPayload } from '../types';
 import type { Ticket } from '../../../types/tickets';
 import { otApi } from '../api/otApi';
@@ -33,6 +34,7 @@ export default function OTDialog({
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]); // Files to upload on save
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const navigate = useNavigate();
 
   // Reset state when dialog opens/closes
   useEffect(() => {
@@ -143,6 +145,31 @@ export default function OTDialog({
       await otApi.finalizar(ot.id, {});
       onSuccess?.();
       onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al finalizar');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleGenerarObra = async () => {
+    if (!ot) return;
+
+    if (
+      !confirm(
+        '¿Cerrar ticket y generar obra/presupuesto?\n\nEl ticket será marcado como FINALIZADO y se abrirá el módulo de Obras.'
+      )
+    ) {
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      await otApi.finalizar(ot.id, {});
+      onSuccess?.();
+      onClose();
+      // Navegar a obras con ticketId como parámetro para crear nueva obra
+      navigate(`/dashboard/obras?createFrom=ticket&ticketId=${ticket.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al finalizar');
     } finally {
@@ -425,23 +452,7 @@ export default function OTDialog({
                   </span>
                 </button>
                 <button
-                  onClick={() => {
-                    if (
-                      confirm(
-                        '¿Cerrar ticket y generar obra/presupuesto?\n\nEl ticket será marcado como FINALIZADO y se abrirá el módulo de Obras.'
-                      )
-                    ) {
-                      // TODO: Implementar navegación a módulo de obras
-                      otApi
-                        .finalizar(ot.id, {})
-                        .then(() => {
-                          onSuccess?.();
-                          onClose();
-                          // Aquí iría la navegación a obras
-                        })
-                        .catch((err) => setError(err.message));
-                    }
-                  }}
+                  onClick={handleGenerarObra}
                   disabled={isSaving}
                   className="px-4 py-2 text-sm font-bold text-blue-600 bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 rounded-lg transition-colors disabled:opacity-50"
                 >
