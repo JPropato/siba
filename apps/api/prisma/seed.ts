@@ -537,6 +537,92 @@ async function main() {
   console.log('✅ Inversiones de demo creadas.');
 
   // ----------------------------------------------------
+  // 9. Obras y Presupuestos Demo
+  // ----------------------------------------------------
+  console.log('🏗️  Creando Obras y Presupuestos de demo...');
+
+  const clientes = await prisma.cliente.findMany({ take: 10 });
+  const ticketsFinalizados = await prisma.ticket.findMany({
+    where: { estado: 'FINALIZADO' },
+    take: 5,
+  });
+
+  const tiposObra: ('OBRA_MAYOR' | 'SERVICIO_MENOR')[] = ['OBRA_MAYOR', 'SERVICIO_MENOR'];
+  const estadosObra: (
+    | 'BORRADOR'
+    | 'PRESUPUESTADO'
+    | 'APROBADO'
+    | 'EN_EJECUCION'
+    | 'FINALIZADO'
+    | 'FACTURADO'
+  )[] = ['BORRADOR', 'PRESUPUESTADO', 'APROBADO', 'EN_EJECUCION', 'FINALIZADO', 'FACTURADO'];
+
+  for (let i = 0; i < 8; i++) {
+    const clienteAleatorio = faker.helpers.arrayElement(clientes);
+    const tipoAleatorio = faker.helpers.arrayElement(tiposObra);
+    const estadoAleatorio = faker.helpers.arrayElement(estadosObra);
+    const ticketAsociado = i < ticketsFinalizados.length ? ticketsFinalizados[i] : null;
+
+    const obra = await prisma.obra.create({
+      data: {
+        codigo: `OBR-${String(i + 1).padStart(5, '0')}`,
+        tipo: tipoAleatorio,
+        estado: estadoAleatorio,
+        titulo: `${faker.commerce.productName()} - ${clienteAleatorio.razonSocial}`,
+        descripcion: faker.lorem.paragraph(),
+        fechaSolicitud: faker.date.past({ years: 1 }),
+        fechaInicioEstimada: faker.date.soon({ days: 30 }),
+        clienteId: clienteAleatorio.id,
+        sucursalId: faker.helpers.arrayElement(
+          await prisma.sucursal.findMany({ where: { clienteId: clienteAleatorio.id } })
+        )?.id,
+        ticketId: ticketAsociado?.id,
+        montoPresupuestado: Number(faker.commerce.price({ min: 50000, max: 500000 })),
+        creadoPorId: adminUser.id,
+      },
+    });
+
+    // Versión de Presupuesto
+    const version = await prisma.versionPresupuesto.create({
+      data: {
+        obraId: obra.id,
+        version: 1,
+        esVigente: true,
+        subtotal: obra.montoPresupuestado,
+        total: obra.montoPresupuestado,
+        notas: 'Presupuesto inicial generado automáticamente por el seed.',
+      },
+    });
+
+    // Items del Presupuesto
+    for (let j = 0; j < 3; j++) {
+      const materialAleatorio = faker.helpers.arrayElement(
+        await prisma.material.findMany({ take: 20 })
+      );
+      const cantidad = faker.number.int({ min: 1, max: 10 });
+      const costoUnitario = Number(materialAleatorio.precioCosto);
+      const precioUnitario = Number(materialAleatorio.precioVenta);
+
+      await prisma.itemPresupuesto.create({
+        data: {
+          versionId: version.id,
+          tipo: 'MATERIAL',
+          orden: j,
+          descripcion: materialAleatorio.nombre,
+          cantidad: cantidad,
+          unidad: materialAleatorio.unidadMedida,
+          costoUnitario: costoUnitario,
+          precioUnitario: precioUnitario,
+          subtotal: precioUnitario * cantidad,
+          materialId: materialAleatorio.id,
+        },
+      });
+    }
+  }
+
+  console.log('✅ Obras y Presupuestos de demo creadas.');
+
+  // ----------------------------------------------------
   // 10. Movimientos Financieros Demo
   // ----------------------------------------------------
   console.log('💰 Creando movimientos financieros de demo...');
@@ -744,6 +830,41 @@ async function main() {
       comprobante: 'OC-789',
       cuentaId: ctaCorriente?.id,
       estado: 'PENDIENTE',
+    },
+    // MOVIMIENTOS VINCULADOS A OBRAS Y TICKETS
+    {
+      tipo: 'EGRESO',
+      monto: 15000,
+      fechaMovimiento: new Date('2026-01-18'),
+      medioPago: 'EFECTIVO',
+      categoriaEgreso: 'VIATICOS',
+      descripcion: 'Viáticos para inicio de Obra OBR-00001',
+      cuentaId: cajaChica?.id,
+      obraId: (await prisma.obra.findFirst({ where: { codigo: 'OBR-00001' } }))?.id,
+      estado: 'CONFIRMADO',
+    },
+    {
+      tipo: 'INGRESO',
+      monto: 300000,
+      fechaMovimiento: faker.date.recent({ days: 5 }),
+      medioPago: 'TRANSFERENCIA',
+      categoriaIngreso: 'COBRO_FACTURA',
+      descripcion: 'Cobro total Obra OBR-00002',
+      comprobante: 'FC-001245',
+      cuentaId: ctaCorriente?.id,
+      obraId: (await prisma.obra.findFirst({ where: { codigo: 'OBR-00002' } }))?.id,
+      estado: 'CONFIRMADO',
+    },
+    {
+      tipo: 'EGRESO',
+      monto: 5000,
+      fechaMovimiento: faker.date.recent({ days: 3 }),
+      medioPago: 'EFECTIVO',
+      categoriaEgreso: 'MATERIALES',
+      descripcion: 'Compra repuestos urgentes para Ticket Finalizado',
+      cuentaId: cajaChica?.id,
+      ticketId: (await prisma.ticket.findFirst({ where: { estado: 'FINALIZADO' } }))?.id,
+      estado: 'CONFIRMADO',
     },
   ];
 
