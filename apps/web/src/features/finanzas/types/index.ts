@@ -142,8 +142,8 @@ export interface MovimientosListResponse {
 
 export type CreateCuentaDto = Omit<
   CuentaFinanciera,
-  'id' | 'saldoActual' | 'fechaCreacion' | 'fechaActualizacion' | 'banco'
->;
+  'id' | 'saldoActual' | 'fechaCreacion' | 'fechaActualizacion' | 'banco' | 'activa'
+> & { activa?: boolean };
 export type UpdateCuentaDto = Partial<CreateCuentaDto>;
 
 export type CreateMovimientoDto = Omit<
@@ -159,7 +159,8 @@ export type CreateMovimientoDto = Omit<
   | 'obra'
   | 'ticket'
   | 'registradoPor'
->;
+  | 'moneda'
+> & { moneda?: string };
 export type UpdateMovimientoDto = Partial<CreateMovimientoDto>;
 
 // Configs para UI
