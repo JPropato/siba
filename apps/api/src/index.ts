@@ -19,6 +19,7 @@ app.use(helmet());
 app.use(
   cors({
     origin: [
+      // Local development
       'http://localhost:5173',
       'http://localhost:5174',
       'http://localhost:5175',
@@ -26,11 +27,17 @@ app.use(
       'http://127.0.0.1:5173',
       'http://127.0.0.1:5174',
       'http://127.0.0.1:5175',
-      // Dokploy UAT domains (traefik.me)
+      // Dokploy dev domains (traefik.me)
       'http://siba-dev-sibaweb-tfmrbz-e3ea43-148-230-79-241.traefik.me',
-      // Dominio personalizado (julianpropato.com.ar)
+      // Dominio personalizado DEV (julianpropato.com.ar)
       'https://siba-dev.julianpropato.com.ar',
       'http://siba-dev.julianpropato.com.ar',
+      // UAT - Bauman QAS
+      'https://siba-qas.bauman.com.ar',
+      'http://siba-qas.bauman.com.ar',
+      // PROD - Bauman
+      'https://siba.bauman.com.ar',
+      'http://siba.bauman.com.ar',
       // Variable de entorno para orígenes adicionales
       ...(process.env.CORS_ORIGINS?.split(',') || []),
     ].filter(Boolean),
