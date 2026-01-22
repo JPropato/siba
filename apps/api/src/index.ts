@@ -81,7 +81,7 @@ app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 app.use('/api', routes);
 
 // Catch-all para 404 en /api
-app.use('/api/*', (req, res) => {
+app.use('/api', (req, res) => {
   console.log(`[404] Route not found: ${req.originalUrl}`);
   res.status(404).json({
     success: false,
