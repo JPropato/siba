@@ -19,10 +19,10 @@ import {
   History,
   Briefcase,
 } from 'lucide-react';
-import api from '@/lib/api';
-import { Button } from '@/components/ui/core/Button';
-import { Select } from '@/components/ui/core/Select';
-import { DatePicker } from '@/components/ui/core/DatePicker';
+import api from '../../../lib/api';
+import { Button } from '../../../components/ui/core/Button';
+import { Select } from '../../../components/ui/core/Select';
+import { DatePicker } from '../../../components/ui/core/DatePicker';
 import TabPresupuesto from './TabPresupuesto';
 import TabArchivos from './TabArchivos';
 import TabHistorial from './TabHistorial';

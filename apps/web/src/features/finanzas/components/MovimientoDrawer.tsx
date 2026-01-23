@@ -12,11 +12,11 @@ import type {
   CategoriaEgreso,
 } from '../types';
 import { CATEGORIA_INGRESO_LABELS, CATEGORIA_EGRESO_LABELS, MEDIO_PAGO_LABELS } from '../types';
-import { DialogBase } from '@/components/ui/core/DialogBase';
-import { Input } from '@/components/ui/core/Input';
-import { Button } from '@/components/ui/core/Button';
-import { Select } from '@/components/ui/core/Select';
-import { DatePicker } from '@/components/ui/core/DatePicker';
+import { DialogBase } from '../../../components/ui/core/DialogBase';
+import { Input } from '../../../components/ui/core/Input';
+import { Button } from '../../../components/ui/core/Button';
+import { Select } from '../../../components/ui/core/Select';
+import { DatePicker } from '../../../components/ui/core/DatePicker';
 import {
   ArrowUpCircle,
   ArrowDownCircle,
@@ -27,7 +27,7 @@ import {
   Wrench,
   User,
 } from 'lucide-react';
-import api from '@/lib/api';
+import api from '../../../lib/api';
 
 interface MovimientoDrawerProps {
   isOpen: boolean;

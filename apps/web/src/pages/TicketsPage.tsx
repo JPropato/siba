@@ -13,7 +13,7 @@ import {
   PRIORIDAD_COLORS,
   RUBRO_LABELS,
 } from '../types/tickets';
-import TicketDrawer from '../components/tickets/TicketDrawer';
+import TicketDialog from '../components/tickets/TicketDialog';
 import KanbanBoard from '../components/tickets/KanbanBoard';
 import { OTDialog } from '../features/ordenes-trabajo';
 import { Select } from '../components/ui/core/Select';
@@ -155,7 +155,7 @@ export default function TicketsPage() {
             />
           </div>
           <Select
-            className="h-10"
+            label="Estado"
             value={estadoFilter}
             onChange={(val) => {
               setEstadoFilter(val as EstadoTicket | '');
@@ -168,7 +168,7 @@ export default function TicketsPage() {
             icon={<AlertCircle className="h-4 w-4" />}
           />
           <Select
-            className="h-10"
+            label="Rubro"
             value={rubroFilter}
             onChange={(val) => {
               setRubroFilter(val as RubroTicket | '');
@@ -181,7 +181,7 @@ export default function TicketsPage() {
             icon={<LayoutGrid className="h-4 w-4" />}
           />
           <Select
-            className="h-10"
+            label="Prioridad"
             value={prioridadFilter}
             onChange={(val) => {
               setPrioridadFilter(val as PrioridadTicket | '');
@@ -360,8 +360,8 @@ export default function TicketsPage() {
         </div>
       )}
 
-      {/* Drawer */}
-      <TicketDrawer
+      {/* Dialog */}
+      <TicketDialog
         isOpen={isDrawerOpen}
         onClose={() => setIsDrawerOpen(false)}
         ticket={selectedTicket}

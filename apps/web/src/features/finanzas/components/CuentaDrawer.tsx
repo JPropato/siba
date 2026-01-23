@@ -6,11 +6,11 @@ import { toast } from 'sonner';
 import { finanzasApi } from '../api/finanzasApi';
 import type { CuentaFinanciera, TipoCuenta, Banco } from '../types';
 import { TIPO_CUENTA_CONFIG } from '../types';
-import { DialogBase } from '@/components/ui/core/DialogBase';
-import { Input } from '@/components/ui/core/Input';
-import { Button } from '@/components/ui/core/Button';
-import { Select } from '@/components/ui/core/Select';
-import { DatePicker } from '@/components/ui/core/DatePicker';
+import { DialogBase } from '../../../components/ui/core/DialogBase';
+import { Input } from '../../../components/ui/core/Input';
+import { Button } from '../../../components/ui/core/Button';
+import { Select } from '../../../components/ui/core/Select';
+import { DatePicker } from '../../../components/ui/core/DatePicker';
 import {
   Building2,
   Wallet,
