@@ -4,7 +4,8 @@ import { obrasApi } from '../api/obrasApi';
 import type { Obra, EstadoObra, TipoObra, ObraFilters } from '../types';
 import { ESTADO_OBRA_CONFIG, TIPO_OBRA_CONFIG } from '../types';
 import ObraDrawer from './ObraDrawer';
-import { Building2, Plus, Search, Filter, Wrench } from 'lucide-react';
+import { Building2, Plus, Search, Filter, Wrench, LayoutGrid, Activity } from 'lucide-react';
+import { Select } from '@/components/ui/core/Select';
 
 export default function ObrasPage() {
   const [obras, setObras] = useState<Obra[]>([]);
@@ -142,36 +143,38 @@ export default function ObrasPage() {
               className="w-full h-10 pl-10 pr-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none focus:border-brand transition-all"
             />
           </div>
-          <select
+          <Select
+            className="h-10"
             value={estadoFilter}
-            onChange={(e) => {
-              setEstadoFilter(e.target.value as EstadoObra | '');
+            onChange={(val) => {
+              setEstadoFilter(val as EstadoObra | '');
               setPage(1);
             }}
-            className="h-10 px-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none focus:border-brand"
-          >
-            <option value="">Todos los estados</option>
-            {Object.entries(ESTADO_OBRA_CONFIG).map(([key, { label }]) => (
-              <option key={key} value={key}>
-                {label}
-              </option>
-            ))}
-          </select>
-          <select
+            options={[
+              { value: '', label: 'Todos los estados' },
+              ...Object.entries(ESTADO_OBRA_CONFIG).map(([key, { label }]) => ({
+                value: key,
+                label,
+              })),
+            ]}
+            icon={<Activity className="h-4 w-4" />}
+          />
+          <Select
+            className="h-10"
             value={tipoFilter}
-            onChange={(e) => {
-              setTipoFilter(e.target.value as TipoObra | '');
+            onChange={(val) => {
+              setTipoFilter(val as TipoObra | '');
               setPage(1);
             }}
-            className="h-10 px-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none focus:border-brand"
-          >
-            <option value="">Todos los tipos</option>
-            {Object.entries(TIPO_OBRA_CONFIG).map(([key, { label }]) => (
-              <option key={key} value={key}>
-                {label}
-              </option>
-            ))}
-          </select>
+            options={[
+              { value: '', label: 'Todos los tipos' },
+              ...Object.entries(TIPO_OBRA_CONFIG).map(([key, { label }]) => ({
+                value: key,
+                label,
+              })),
+            ]}
+            icon={<LayoutGrid className="h-4 w-4" />}
+          />
         </div>
       </div>
 

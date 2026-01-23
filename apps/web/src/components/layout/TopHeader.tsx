@@ -45,15 +45,24 @@ export function TopHeader({
         </button>
 
         {/* Search Bar */}
-        <div className="relative hidden md:block">
-          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">
+        <div className="relative hidden md:block group">
+          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg transition-colors group-focus-within:text-brand">
             search
           </span>
           <input
             type="text"
             placeholder="Buscar reportes o datos..."
-            className="bg-slate-100 dark:bg-white/5 border border-[var(--border)] rounded-lg pl-10 pr-4 py-1.5 w-64 text-sm focus:ring-1 focus:ring-brand focus:border-brand transition-all outline-none text-[var(--foreground)]"
+            className="bg-slate-100 dark:bg-white/5 border border-[var(--border)] rounded-lg pl-10 pr-16 py-1.5 w-64 text-sm focus:ring-1 focus:ring-brand focus:border-brand transition-all outline-none text-[var(--foreground)]"
+            readOnly
+            onClick={() => {
+              const event = new KeyboardEvent('keydown', { key: 'k', ctrlKey: true, bubbles: true });
+              document.dispatchEvent(event);
+            }}
           />
+          <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1 pointer-events-none">
+            <kbd className="px-1.5 py-0.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded text-[9px] font-bold text-slate-400">Ctrl</kbd>
+            <kbd className="px-1.5 py-0.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded text-[9px] font-bold text-slate-400">K</kbd>
+          </div>
         </div>
       </div>
 

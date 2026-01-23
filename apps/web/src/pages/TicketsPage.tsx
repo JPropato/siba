@@ -5,7 +5,6 @@ import type {
   EstadoTicket,
   RubroTicket,
   PrioridadTicket,
-  TicketFormData,
 } from '../types/tickets';
 import {
   ESTADO_LABELS,
@@ -14,9 +13,11 @@ import {
   PRIORIDAD_COLORS,
   RUBRO_LABELS,
 } from '../types/tickets';
-import TicketDialog from '../components/tickets/TicketDialog';
+import TicketDrawer from '../components/tickets/TicketDrawer';
 import KanbanBoard from '../components/tickets/KanbanBoard';
 import { OTDialog } from '../features/ordenes-trabajo';
+import { Select } from '../components/ui/core/Select';
+import { Search, LayoutGrid, AlertCircle, TrendingUp } from 'lucide-react';
 
 export default function TicketsPage() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -29,8 +30,8 @@ export default function TicketsPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
 
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingTicket, setEditingTicket] = useState<Ticket | null>(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [viewMode, setViewMode] = useState<'table' | 'kanban'>('table');
   const [otTicket, setOtTicket] = useState<Ticket | null>(null);
 
@@ -62,13 +63,13 @@ export default function TicketsPage() {
   }, [fetchTickets]);
 
   const handleCreate = () => {
-    setEditingTicket(null);
-    setIsDialogOpen(true);
+    setSelectedTicket(null);
+    setIsDrawerOpen(true);
   };
 
   const handleEdit = (ticket: Ticket) => {
-    setEditingTicket(ticket);
-    setIsDialogOpen(true);
+    setSelectedTicket(ticket);
+    setIsDrawerOpen(true);
   };
 
   const handleDelete = async (ticket: Ticket) => {
@@ -80,16 +81,6 @@ export default function TicketsPage() {
     } catch (error) {
       console.error('Error deleting ticket:', error);
     }
-  };
-
-  const handleSave = async (data: TicketFormData) => {
-    if (editingTicket) {
-      await api.put(`/tickets/${editingTicket.id}`, data);
-    } else {
-      await api.post('/tickets', data);
-    }
-    setIsDialogOpen(false);
-    fetchTickets();
   };
 
   const formatCode = (code: number) => `TKT-${String(code).padStart(5, '0')}`;
@@ -117,22 +108,20 @@ export default function TicketsPage() {
           <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
             <button
               onClick={() => setViewMode('table')}
-              className={`p-2 rounded-md transition-all ${
-                viewMode === 'table'
-                  ? 'bg-white dark:bg-slate-700 shadow-sm text-gold'
-                  : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
-              }`}
+              className={`p-2 rounded-md transition-all ${viewMode === 'table'
+                ? 'bg-white dark:bg-slate-700 shadow-sm text-gold'
+                : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                }`}
               title="Vista Tabla"
             >
               <span className="material-symbols-outlined text-[20px]">view_list</span>
             </button>
             <button
               onClick={() => setViewMode('kanban')}
-              className={`p-2 rounded-md transition-all ${
-                viewMode === 'kanban'
-                  ? 'bg-white dark:bg-slate-700 shadow-sm text-gold'
-                  : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
-              }`}
+              className={`p-2 rounded-md transition-all ${viewMode === 'kanban'
+                ? 'bg-white dark:bg-slate-700 shadow-sm text-gold'
+                : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                }`}
               title="Vista Kanban"
             >
               <span className="material-symbols-outlined text-[20px]">view_kanban</span>
@@ -152,7 +141,8 @@ export default function TicketsPage() {
       {/* Filters */}
       <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
             <input
               type="text"
               placeholder="Buscar por descripción, código..."
@@ -161,54 +151,48 @@ export default function TicketsPage() {
                 setSearch(e.target.value);
                 setPage(1);
               }}
-              className="w-full h-10 px-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none focus:border-brand transition-all"
+              className="w-full h-10 pl-10 pr-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none focus:border-brand transition-all"
             />
           </div>
-          <select
+          <Select
+            className="h-10"
             value={estadoFilter}
-            onChange={(e) => {
-              setEstadoFilter(e.target.value as EstadoTicket | '');
+            onChange={(val) => {
+              setEstadoFilter(val as EstadoTicket | '');
               setPage(1);
             }}
-            className="h-10 px-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none focus:border-brand"
-          >
-            <option value="">Todos los estados</option>
-            {Object.entries(ESTADO_LABELS).map(([k, v]) => (
-              <option key={k} value={k}>
-                {v}
-              </option>
-            ))}
-          </select>
-          <select
+            options={[
+              { value: '', label: 'Todos los estados' },
+              ...Object.entries(ESTADO_LABELS).map(([k, v]) => ({ value: k, label: v })),
+            ]}
+            icon={<AlertCircle className="h-4 w-4" />}
+          />
+          <Select
+            className="h-10"
             value={rubroFilter}
-            onChange={(e) => {
-              setRubroFilter(e.target.value as RubroTicket | '');
+            onChange={(val) => {
+              setRubroFilter(val as RubroTicket | '');
               setPage(1);
             }}
-            className="h-10 px-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none focus:border-brand"
-          >
-            <option value="">Todos los rubros</option>
-            {Object.entries(RUBRO_LABELS).map(([k, v]) => (
-              <option key={k} value={k}>
-                {v}
-              </option>
-            ))}
-          </select>
-          <select
+            options={[
+              { value: '', label: 'Todos los rubros' },
+              ...Object.entries(RUBRO_LABELS).map(([k, v]) => ({ value: k, label: v })),
+            ]}
+            icon={<LayoutGrid className="h-4 w-4" />}
+          />
+          <Select
+            className="h-10"
             value={prioridadFilter}
-            onChange={(e) => {
-              setPrioridadFilter(e.target.value as PrioridadTicket | '');
+            onChange={(val) => {
+              setPrioridadFilter(val as PrioridadTicket | '');
               setPage(1);
             }}
-            className="h-10 px-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none focus:border-brand"
-          >
-            <option value="">Todas las prioridades</option>
-            {Object.entries(PRIORIDAD_LABELS).map(([k, v]) => (
-              <option key={k} value={k}>
-                {v}
-              </option>
-            ))}
-          </select>
+            options={[
+              { value: '', label: 'Todas las prioridades' },
+              ...Object.entries(PRIORIDAD_LABELS).map(([k, v]) => ({ value: k, label: v })),
+            ]}
+            icon={<TrendingUp className="h-4 w-4" />}
+          />
         </div>
       </div>
 
@@ -376,12 +360,12 @@ export default function TicketsPage() {
         </div>
       )}
 
-      {/* Dialog */}
-      <TicketDialog
-        isOpen={isDialogOpen}
-        onClose={() => setIsDialogOpen(false)}
-        onSave={handleSave}
-        initialData={editingTicket}
+      {/* Drawer */}
+      <TicketDrawer
+        isOpen={isDrawerOpen}
+        onClose={() => setIsDrawerOpen(false)}
+        ticket={selectedTicket}
+        onSuccess={fetchTickets}
       />
 
       {/* OT Dialog */}

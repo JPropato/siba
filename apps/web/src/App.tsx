@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
+import { Toaster } from 'sonner';
 import { useThemeEffect } from './hooks/useThemeColor';
 import { Component, type ReactNode, type ErrorInfo } from 'react';
 import LoginPage from './pages/LoginPage';
@@ -62,7 +63,12 @@ class ErrorBoundary extends Component<
       );
     }
 
-    return this.props.children;
+    return (
+      <div className="contents">
+        <Toaster position="top-right" richColors closeButton />
+        {this.props.children}
+      </div>
+    );
   }
 }
 

@@ -1,4 +1,6 @@
 import type { Empleado } from '../../types/empleados';
+import { useSortableTable } from '../../hooks/useSortableTable';
+import { SortableHeader } from '../ui/core/SortableHeader';
 
 interface EmpleadoTableProps {
   empleados: Empleado[];
@@ -13,6 +15,8 @@ export default function EmpleadoTable({
   onDelete,
   isLoading,
 }: EmpleadoTableProps) {
+  const { items, requestSort, sortConfig } = useSortableTable(empleados);
+
   if (isLoading) {
     return (
       <div className="w-full h-40 flex items-center justify-center">
@@ -49,15 +53,21 @@ export default function EmpleadoTable({
         <table className="w-full text-left text-sm border-collapse">
           <thead className="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
             <tr>
-              <th className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">
-                Empleado
-              </th>
+              <SortableHeader<Empleado>
+                label="Empleado"
+                sortKey="apellido"
+                sortConfig={sortConfig}
+                onSort={requestSort}
+              />
               <th className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">
                 Contacto
               </th>
-              <th className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">
-                Tipo / Contratación
-              </th>
+              <SortableHeader<Empleado>
+                label="Tipo"
+                sortKey="tipo"
+                sortConfig={sortConfig}
+                onSort={requestSort}
+              />
               <th className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">
                 Zona Asignada
               </th>
@@ -67,7 +77,7 @@ export default function EmpleadoTable({
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200 dark:divide-slate-800 bg-white dark:bg-slate-950">
-            {empleados.map((e) => (
+            {items.map((e) => (
               <tr
                 key={e.id}
                 className="hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors"

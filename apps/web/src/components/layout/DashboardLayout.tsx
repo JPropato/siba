@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import Sidebar from './Sidebar';
 import TopHeader from './TopHeader';
+import { CommandMenu } from './CommandMenu';
 
 interface PageInfo {
   id: string;
@@ -55,6 +56,7 @@ export function DashboardLayout({ children, currentPage, onNavigate }: Dashboard
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-[var(--background)] text-[var(--foreground)] antialiased transition-colors duration-300">
+      <CommandMenu />
       {/* Sidebar */}
       <Sidebar
         isCollapsed={isSidebarCollapsed}

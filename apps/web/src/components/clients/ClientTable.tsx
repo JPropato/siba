@@ -1,3 +1,5 @@
+import { useSortableTable } from '../../hooks/useSortableTable';
+import { ChevronUp, ChevronDown, ArrowUpDown } from 'lucide-react';
 import type { Cliente } from '../../types/client';
 
 interface ClientTableProps {
@@ -8,6 +10,15 @@ interface ClientTableProps {
 }
 
 export default function ClientTable({ clients, onEdit, onDelete, isLoading }: ClientTableProps) {
+    const { items: sortedClients, requestSort, sortConfig } = useSortableTable(clients);
+
+    const getSortIcon = (key: keyof Cliente) => {
+        if (sortConfig.key !== key) return <ArrowUpDown className="h-3 w-3 opacity-30" />;
+        return sortConfig.direction === 'asc'
+            ? <ChevronUp className="h-3 w-3 text-brand" />
+            : <ChevronDown className="h-3 w-3 text-brand" />;
+    };
+
     if (isLoading) {
         return (
             <div className="w-full h-40 flex items-center justify-center">
@@ -30,15 +41,39 @@ export default function ClientTable({ clients, onEdit, onDelete, isLoading }: Cl
                 <table className="w-full text-left text-sm border-collapse">
                     <thead className="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
                         <tr>
-                            <th className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">Cód.</th>
-                            <th className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">Razón Social</th>
-                            <th className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">CUIT / ID Fiscal</th>
+                            <th
+                                className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors group"
+                                onClick={() => requestSort('codigo')}
+                            >
+                                <div className="flex items-center gap-2">
+                                    Cód.
+                                    {getSortIcon('codigo')}
+                                </div>
+                            </th>
+                            <th
+                                className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors group"
+                                onClick={() => requestSort('razonSocial')}
+                            >
+                                <div className="flex items-center gap-2">
+                                    Razón Social
+                                    {getSortIcon('razonSocial')}
+                                </div>
+                            </th>
+                            <th
+                                className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors group"
+                                onClick={() => requestSort('cuit')}
+                            >
+                                <div className="flex items-center gap-2">
+                                    CUIT / ID Fiscal
+                                    {getSortIcon('cuit')}
+                                </div>
+                            </th>
                             <th className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">Contacto</th>
                             <th className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100 text-right">Acciones</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200 dark:divide-slate-800 bg-white dark:bg-slate-950">
-                        {clients.map((client) => (
+                        {sortedClients.map((client) => (
                             <tr
                                 key={client.id}
                                 className="hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors"

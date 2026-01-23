@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { usePermissions } from '../../hooks/usePermissions';
+import { cn } from '../../lib/utils';
 import logoBauman from '../../assets/logo-bauman.png';
 
 interface SidebarProps {
@@ -146,10 +147,9 @@ export function Sidebar({
         <div
           onClick={() => handleItemClick(item)}
           className={`relative flex items-center gap-3 px-3 py-3 rounded-lg cursor-pointer transition-all
-            ${
-              isActive
-                ? 'bg-brand/10 text-brand'
-                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
+            ${isActive
+              ? 'bg-brand/10 text-brand'
+              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
             }
             ${hasSubItems && showLabels ? 'justify-between' : ''}
             ${!showLabels ? 'justify-center' : ''}
@@ -166,20 +166,46 @@ export function Sidebar({
           </div>
           {hasSubItems && showLabels && (
             <span
-              className={`material-symbols-outlined text-xs transition-transform ${
-                isExpanded ? 'rotate-180' : ''
-              }`}
+              className={`material-symbols-outlined text-xs transition-transform ${isExpanded ? 'rotate-180' : ''
+                }`}
             >
               expand_more
             </span>
           )}
         </div>
 
-        {/* Tooltip for collapsed state */}
+        {/* Tooltip or Flyout for collapsed state */}
         {!showLabels && (
-          <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-3 py-2 bg-charcoal dark:bg-white text-white dark:text-charcoal text-sm font-medium rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-50">
-            {item.label}
-            <div className="absolute right-full top-1/2 -translate-y-1/2 border-8 border-transparent border-r-charcoal dark:border-r-white" />
+          <div className="absolute left-full top-0 ml-2 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-50 min-w-[180px] animate-in slide-in-from-left-2">
+            <div className="px-4 py-2 border-b border-slate-100 dark:border-slate-800 mb-1">
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-widest leading-none">
+                {item.label}
+              </span>
+            </div>
+            {hasSubItems ? (
+              <div className="py-1">
+                {item.subItems!.map((subItem) => (
+                  <div
+                    key={subItem.id}
+                    onClick={() => handleSubItemClick(subItem, item.label)}
+                    className={cn(
+                      "px-4 py-2 text-sm transition-colors cursor-pointer",
+                      currentPage === subItem.id
+                        ? 'text-brand font-bold bg-brand/5'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                    )}
+                  >
+                    {subItem.label}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="px-4 py-1 text-sm text-slate-500 italic">
+                Click para ir a {item.label}
+              </div>
+            )}
+            <div className="absolute right-full top-4 border-8 border-transparent border-r-slate-200 dark:border-r-slate-800" />
+            <div className="absolute right-full top-4 translate-x-[1px] border-8 border-transparent border-r-white dark:border-r-slate-900" />
           </div>
         )}
 
@@ -191,10 +217,9 @@ export function Sidebar({
                 key={subItem.id}
                 onClick={() => handleSubItemClick(subItem, item.label)}
                 className={`px-3 py-2 rounded-lg cursor-pointer text-sm transition-all
-                  ${
-                    currentPage === subItem.id
-                      ? 'text-brand font-medium'
-                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  ${currentPage === subItem.id
+                    ? 'text-brand font-medium'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                   }
                 `}
               >
@@ -253,10 +278,9 @@ export function Sidebar({
                 onMobileClose?.();
               }}
               className={`flex items-center gap-3 px-3 py-2 cursor-pointer transition-colors rounded-lg
-                ${
-                  currentPage === item.id
-                    ? 'text-brand'
-                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'
+                ${currentPage === item.id
+                  ? 'text-brand'
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'
                 }
                 ${!isMobile && isCollapsed ? 'justify-center' : ''}
               `}

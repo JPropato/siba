@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '../lib/api';
+import { Plus, Shield, Pencil, Trash2, Loader2 } from 'lucide-react';
 import type { Role, PermissionsGrouped } from '../types/role';
 import RoleDialog from '../components/roles/RoleDialog';
 
@@ -86,9 +87,9 @@ export default function RolesPage() {
                 </div>
                 <button
                     onClick={handleCreate}
-                    className="flex items-center gap-2 px-4 py-2 bg-brand text-white rounded-lg hover:bg-brand-dark transition-colors font-medium"
+                    className="flex items-center gap-2 px-4 py-2 bg-brand text-white rounded-lg hover:bg-brand-dark transition-colors font-medium shadow-lg shadow-brand/20"
                 >
-                    <span className="material-symbols-outlined text-xl">add</span>
+                    <Plus className="h-5 w-5" />
                     Nuevo Rol
                 </button>
             </div>
@@ -97,13 +98,13 @@ export default function RolesPage() {
             <div className="bg-[var(--surface)] border border-[var(--border)] rounded-xl overflow-hidden">
                 {loading ? (
                     <div className="p-8 text-center text-[var(--muted)]">
-                        <span className="material-symbols-outlined text-4xl animate-spin">progress_activity</span>
-                        <p className="mt-2">Cargando roles...</p>
+                        <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2 text-brand" />
+                        <p className="mt-2 text-xs font-medium">Cargando roles...</p>
                     </div>
                 ) : roles.length === 0 ? (
                     <div className="p-8 text-center text-[var(--muted)]">
-                        <span className="material-symbols-outlined text-4xl">shield</span>
-                        <p className="mt-2">No hay roles configurados</p>
+                        <Shield className="h-8 w-8 mx-auto mb-2 text-slate-300" />
+                        <p className="mt-2 text-xs font-medium">No hay roles configurados</p>
                     </div>
                 ) : (
                     <table className="w-full">
@@ -155,18 +156,18 @@ export default function RolesPage() {
                                         <div className="flex items-center justify-end gap-2">
                                             <button
                                                 onClick={() => handleEdit(role)}
-                                                className="p-2 text-slate-400 hover:text-brand transition-colors"
+                                                className="p-2 text-slate-400 hover:text-brand transition-colors rounded-lg hover:bg-brand/10"
                                                 title="Editar"
                                             >
-                                                <span className="material-symbols-outlined">edit</span>
+                                                <Pencil className="h-4 w-4" />
                                             </button>
                                             {role.nombre !== 'Super Admin' && (
                                                 <button
                                                     onClick={() => handleDelete(role)}
-                                                    className="p-2 text-slate-400 hover:text-red-500 transition-colors"
+                                                    className="p-2 text-slate-400 hover:text-red-500 transition-colors rounded-lg hover:bg-red-500/10"
                                                     title="Eliminar"
                                                 >
-                                                    <span className="material-symbols-outlined">delete</span>
+                                                    <Trash2 className="h-4 w-4" />
                                                 </button>
                                             )}
                                         </div>

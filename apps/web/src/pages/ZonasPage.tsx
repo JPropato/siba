@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '../lib/api';
+import { Search } from 'lucide-react';
 import ZonaTable from '../components/zonas/ZonaTable';
 import ZonaDialog from '../components/zonas/ZonaDialog';
 import type { Zona, ZonaFormData } from '../types/zona';
@@ -89,7 +90,7 @@ export default function ZonasPage() {
 
             <div className="flex gap-4 items-center bg-white dark:bg-slate-900/50 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
                 <div className="relative flex-1 max-w-sm">
-                    <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                     <input
                         type="text"
                         placeholder="Buscar por nombre de zona..."

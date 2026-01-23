@@ -20,6 +20,8 @@ import {
   CATEGORIA_EGRESO_LABELS,
 } from '../types';
 import MovimientoDrawer from '../components/MovimientoDrawer';
+import { Select } from '@/components/ui/core/Select';
+import { LayoutGrid, AlertCircle } from 'lucide-react';
 
 export default function MovimientosPage() {
   const [movimientos, setMovimientos] = useState<Movimiento[]>([]);
@@ -122,33 +124,36 @@ export default function MovimientosPage() {
                 className="w-full h-10 pl-10 pr-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none focus:border-brand transition-all"
               />
             </div>
-            <select
+            <Select
+              className="h-10"
               value={tipoFilter}
-              onChange={(e) => {
-                setTipoFilter(e.target.value as TipoMovimiento | '');
+              onChange={(val) => {
+                setTipoFilter(val as TipoMovimiento | '');
                 setPage(1);
               }}
-              className="h-10 px-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none focus:border-brand"
-            >
-              <option value="">Todos los tipos</option>
-              <option value="INGRESO">Ingresos</option>
-              <option value="EGRESO">Egresos</option>
-            </select>
-            <select
+              options={[
+                { value: '', label: 'Todos los tipos' },
+                { value: 'INGRESO', label: 'Ingresos' },
+                { value: 'EGRESO', label: 'Egresos' },
+              ]}
+              icon={<LayoutGrid className="h-4 w-4" />}
+            />
+            <Select
+              className="h-10"
               value={estadoFilter}
-              onChange={(e) => {
-                setEstadoFilter(e.target.value as EstadoMovimiento | '');
+              onChange={(val) => {
+                setEstadoFilter(val as EstadoMovimiento | '');
                 setPage(1);
               }}
-              className="h-10 px-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none focus:border-brand"
-            >
-              <option value="">Todos los estados</option>
-              {Object.entries(ESTADO_MOVIMIENTO_CONFIG).map(([key, { label }]) => (
-                <option key={key} value={key}>
-                  {label}
-                </option>
-              ))}
-            </select>
+              options={[
+                { value: '', label: 'Todos los estados' },
+                ...Object.entries(ESTADO_MOVIMIENTO_CONFIG).map(([key, { label }]) => ({
+                  value: key,
+                  label,
+                })),
+              ]}
+              icon={<AlertCircle className="h-4 w-4" />}
+            />
           </div>
         </div>
 

@@ -1,8 +1,31 @@
-import { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
+import { useEffect, useState } from 'react';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { toast } from 'sonner';
 import api from '../../lib/api';
 import type { Vehiculo, VehiculoFormData } from '../../types/vehiculos';
 import type { Zona } from '../../types/zona';
+import { DialogBase } from '../ui/core/DialogBase';
+import { Input } from '../ui/core/Input';
+import { Button } from '../ui/core/Button';
+import { Select } from '../ui/core/Select';
+import { DatePicker } from '../ui/core/DatePicker';
+import { Activity, Car, MapPin, Wrench } from 'lucide-react';
+
+const vehiculoSchema = z.object({
+    patente: z.string().min(1, 'La patente es requerida'),
+    marca: z.string().optional().or(z.literal('')),
+    modelo: z.string().optional().or(z.literal('')),
+    anio: z.string().optional().or(z.literal('')),
+    tipo: z.string().optional().or(z.literal('')),
+    zonaId: z.string().optional().or(z.literal('')),
+    proximosKm: z.string().optional().or(z.literal('')),
+    proximoService: z.string().optional().or(z.literal('')),
+    estado: z.enum(['ACTIVO', 'TALLER', 'FUERA_SERVICIO']),
+});
+
+type VehiculoFormValues = z.infer<typeof vehiculoSchema>;
 
 interface VehiculoDialogProps {
     isOpen: boolean;
@@ -12,27 +35,25 @@ interface VehiculoDialogProps {
 }
 
 export default function VehiculoDialog({ isOpen, onClose, onSave, initialData }: VehiculoDialogProps) {
-    const [patente, setPatente] = useState('');
-    const [marca, setMarca] = useState('');
-    const [modelo, setModelo] = useState('');
-    const [anio, setAnio] = useState<number | ''>('');
-    const [tipo, setTipo] = useState('');
-    const [zonaId, setZonaId] = useState<number | ''>('');
-
-    // Nuevos campos
-    const [proximosKm, setProximosKm] = useState<number | ''>('');
-    const [proximoService, setProximoService] = useState('');
-    const [estado, setEstado] = useState<'ACTIVO' | 'TALLER' | 'FUERA_SERVICIO'>('ACTIVO');
-
     const [zonas, setZonas] = useState<Zona[]>([]);
-
-    const [isLoading, setIsLoading] = useState(false);
     const [isFetchingZonas, setIsFetchingZonas] = useState(false);
-    const [error, setError] = useState<string | string[] | null>(null);
+
+    const {
+        register,
+        handleSubmit,
+        reset,
+        control,
+        formState: { errors, isSubmitting },
+    } = useForm<VehiculoFormValues>({
+        resolver: zodResolver(vehiculoSchema),
+        defaultValues: {
+            patente: '', marca: '', modelo: '', anio: '', tipo: '',
+            zonaId: '', proximosKm: '', proximoService: '', estado: 'ACTIVO',
+        },
+    });
 
     useEffect(() => {
         if (isOpen) {
-            // Cargar zonas
             const fetchZonas = async () => {
                 setIsFetchingZonas(true);
                 try {
@@ -47,246 +68,160 @@ export default function VehiculoDialog({ isOpen, onClose, onSave, initialData }:
             fetchZonas();
 
             if (initialData) {
-                setPatente(initialData.patente);
-                setMarca(initialData.marca || '');
-                setModelo(initialData.modelo || '');
-                setAnio(initialData.anio || '');
-                setTipo(initialData.tipo || '');
-                setZonaId(initialData.zonaId || '');
-                setProximosKm(initialData.proximosKm || '');
-                setProximoService(initialData.proximoService ? new Date(initialData.proximoService).toISOString().split('T')[0] : '');
-                setEstado(initialData.estado || 'ACTIVO');
+                reset({
+                    patente: initialData.patente,
+                    marca: initialData.marca || '',
+                    modelo: initialData.modelo || '',
+                    anio: initialData.anio?.toString() || '',
+                    tipo: initialData.tipo || '',
+                    zonaId: initialData.zonaId?.toString() || '',
+                    proximosKm: initialData.proximosKm?.toString() || '',
+                    proximoService: initialData.proximoService ? new Date(initialData.proximoService).toISOString().split('T')[0] : '',
+                    estado: initialData.estado || 'ACTIVO',
+                });
             } else {
-                setPatente('');
-                setMarca('');
-                setModelo('');
-                setAnio('');
-                setTipo('');
-                setZonaId('');
-                setProximosKm('');
-                setProximoService('');
-                setEstado('ACTIVO');
+                reset({
+                    patente: '', marca: '', modelo: '', anio: '', tipo: '',
+                    zonaId: '', proximosKm: '', proximoService: '', estado: 'ACTIVO',
+                });
             }
-            setError(null);
-            document.body.style.overflow = 'hidden';
-        } else {
-            document.body.style.overflow = 'unset';
-            // Reset fields
-            setPatente('');
-            setMarca('');
-            setModelo('');
-            setAnio('');
-            setTipo('');
-            setZonaId('');
-            setProximosKm('');
-            setProximoService('');
-            setEstado('ACTIVO');
         }
-        return () => { document.body.style.overflow = 'unset'; };
-    }, [isOpen, initialData]);
+    }, [isOpen, initialData, reset]);
 
-    const formatError = (err: any) => {
-        if (Array.isArray(err)) {
-            return err.map((e: any) => e.message || e).join('. ');
-        }
-        return err?.toString() || 'Error desconocido';
-    };
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setIsLoading(true);
-        setError(null);
-
+    const onSubmit = async (values: VehiculoFormValues) => {
         try {
             await onSave({
-                patente: patente.trim().toUpperCase(),
-                marca: marca.trim() || undefined,
-                modelo: modelo.trim() || undefined,
-                anio: anio ? Number(anio) : undefined,
-                tipo: tipo.trim() || undefined,
-                zonaId: zonaId ? Number(zonaId) : undefined,
-                proximosKm: proximosKm ? Number(proximosKm) : undefined,
-                proximoService: proximoService ? new Date(proximoService).toISOString() : undefined,
-                estado: estado
+                patente: values.patente.trim().toUpperCase(),
+                marca: values.marca?.trim() || undefined,
+                modelo: values.modelo?.trim() || undefined,
+                anio: values.anio ? Number(values.anio) : undefined,
+                tipo: values.tipo?.trim() || undefined,
+                zonaId: values.zonaId ? Number(values.zonaId) : undefined,
+                proximosKm: values.proximosKm ? Number(values.proximosKm) : undefined,
+                proximoService: values.proximoService ? new Date(values.proximoService).toISOString() : undefined,
+                estado: values.estado,
             });
+            toast.success(initialData ? 'Vehículo actualizado' : 'Vehículo creado correctamente');
             onClose();
         } catch (err: any) {
             const backendError = err.response?.data?.error;
-            setError(backendError || 'Error al guardar el vehículo.');
-        } finally {
-            setIsLoading(false);
+            const message = Array.isArray(backendError)
+                ? backendError.map((e: any) => e.message || e).join('. ')
+                : backendError || 'Error al guardar el vehículo.';
+            toast.error(message);
         }
     };
 
-    if (!isOpen) return null;
-
-    return createPortal(
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl w-full max-w-2xl border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
-                <form onSubmit={handleSubmit}>
-                    <div className="sticky top-0 z-10 p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center text-slate-900 dark:text-white bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm rounded-t-xl">
-                        <h2 className="text-xl font-bold">
-                            {initialData ? 'Editar Vehículo' : 'Nuevo Vehículo'}
-                        </h2>
-                        <button type="button" onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
-                            <span className="material-symbols-outlined">close</span>
-                        </button>
-                    </div>
-
-                    <div className="p-6 space-y-6">
-                        {error && (
-                            <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm p-3 rounded-lg border border-red-100 dark:border-red-900/30">
-                                {formatError(error)}
-                            </div>
-                        )}
-
-                        {/* Datos Principales */}
-                        <div className="space-y-4">
-                            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 dark:border-slate-800 pb-2">Datos de Identificación</h3>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-1">
-                                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest text-brand">Patente *</label>
-                                    <input
-                                        type="text"
-                                        required
-                                        value={patente}
-                                        onChange={(e) => setPatente(e.target.value)}
-                                        className="w-full h-10 px-3 bg-slate-50 dark:bg-slate-950 border border-brand/20 dark:border-brand/30 rounded-lg text-sm outline-none focus:border-brand transition-all font-mono font-bold uppercase tracking-widest"
-                                        placeholder="AAA123"
-                                    />
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Estado</label>
-                                    <select
-                                        value={estado}
-                                        onChange={(e) => setEstado(e.target.value as any)}
-                                        className="w-full h-10 px-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none focus:border-brand transition-all font-semibold"
-                                    >
-                                        <option value="ACTIVO">✅ Activo</option>
-                                        <option value="TALLER">🔧 En Taller</option>
-                                        <option value="FUERA_SERVICIO">⛔ Fuera de Servicio</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-3 gap-4">
-                                <div className="space-y-1">
-                                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Marca</label>
-                                    <input
-                                        type="text"
-                                        value={marca}
-                                        onChange={(e) => setMarca(e.target.value)}
-                                        className="w-full h-10 px-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none focus:border-brand transition-all"
-                                        placeholder="Ej: Toyota"
-                                    />
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Modelo</label>
-                                    <input
-                                        type="text"
-                                        value={modelo}
-                                        onChange={(e) => setModelo(e.target.value)}
-                                        className="w-full h-10 px-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none focus:border-brand transition-all"
-                                        placeholder="Ej: Hilux"
-                                    />
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Año</label>
-                                    <input
-                                        type="number"
-                                        value={anio}
-                                        onChange={(e) => setAnio(e.target.value ? Number(e.target.value) : '')}
-                                        className="w-full h-10 px-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none focus:border-brand transition-all"
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Datos Operativos */}
-                        <div className="space-y-4">
-                            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 dark:border-slate-800 pb-2">Logística y Mantenimiento</h3>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-1">
-                                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Zona (Opcional)</label>
-                                    <select
-                                        disabled={isFetchingZonas}
-                                        value={zonaId}
-                                        onChange={(e) => setZonaId(e.target.value ? Number(e.target.value) : '')}
-                                        className="w-full h-10 px-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none focus:border-brand transition-all font-semibold"
-                                    >
-                                        <option value="">Sin Asignar</option>
-                                        {zonas.map(z => (
-                                            <option key={z.id} value={z.id}>{z.nombre}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Tipo</label>
-                                    <select
-                                        value={tipo}
-                                        onChange={(e) => setTipo(e.target.value)}
-                                        className="w-full h-10 px-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none focus:border-brand transition-all"
-                                    >
-                                        <option value="">Seleccione tipo...</option>
-                                        <option value="Camión">Camión</option>
-                                        <option value="Camioneta">Camioneta</option>
-                                        <option value="Furgón">Furgón</option>
-                                        <option value="Auto">Auto</option>
-                                        <option value="Utilitario">Utilitario</option>
-                                        <option value="Otro">Otro</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-1">
-                                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Próximo Service (Fecha)</label>
-                                    <input
-                                        type="date"
-                                        value={proximoService}
-                                        onChange={(e) => setProximoService(e.target.value)}
-                                        className="w-full h-10 px-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none focus:border-brand transition-all"
-                                    />
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Kms Próx. Revisión</label>
-                                    <input
-                                        type="number"
-                                        value={proximosKm}
-                                        onChange={(e) => setProximosKm(e.target.value ? Number(e.target.value) : '')}
-                                        className="w-full h-10 px-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none focus:border-brand transition-all"
-                                        placeholder="Ej: 50000"
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="p-6 bg-slate-50 dark:bg-slate-800/50 rounded-b-xl border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3 text-slate-900 dark:text-white sticky bottom-0 z-10 backdrop-blur-sm">
-                        <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors">
-                            Cancelar
-                        </button>
-                        <button
-                            type="submit"
-                            disabled={isLoading}
-                            className="px-6 py-2 bg-brand hover:bg-brand-dark text-white text-sm font-bold rounded-lg shadow-lg shadow-brand/20 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100 flex items-center gap-2"
-                        >
-                            {isLoading ? (
-                                <>
-                                    <span className="material-symbols-outlined animate-spin text-[20px]">progress_activity</span>
-                                    Guardando...
-                                </>
-                            ) : (
-                                <>
-                                    <span className="material-symbols-outlined text-[20px]">save</span>
-                                    GUARDAR VEHÍCULO
-                                </>
+    return (
+        <DialogBase
+            isOpen={isOpen}
+            onClose={onClose}
+            title={initialData ? 'Editar Vehículo' : 'Nuevo Vehículo'}
+            description="Gestione los datos de flota."
+            maxWidth="2xl"
+            footer={
+                <>
+                    <Button variant="ghost" onClick={onClose} disabled={isSubmitting}>
+                        Cancelar
+                    </Button>
+                    <Button
+                        type="submit"
+                        form="vehiculo-form"
+                        isLoading={isSubmitting}
+                        leftIcon={<span className="material-symbols-outlined text-[18px]">save</span>}
+                    >
+                        Guardar Vehículo
+                    </Button>
+                </>
+            }
+        >
+            <form id="vehiculo-form" onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                <div className="space-y-4">
+                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 dark:border-slate-800 pb-2">Datos de Identificación</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                        <Input label="Patente *" placeholder="AAA123" {...register('patente')} error={errors.patente?.message} className="font-mono font-bold uppercase" />
+                        <Controller
+                            name="estado"
+                            control={control}
+                            render={({ field }) => (
+                                <Select
+                                    label="Estado"
+                                    options={[
+                                        { value: 'ACTIVO', label: '✅ Activo' },
+                                        { value: 'TALLER', label: '🔧 En Taller' },
+                                        { value: 'FUERA_SERVICIO', label: '⛔ Fuera de Servicio' },
+                                    ]}
+                                    value={field.value}
+                                    onChange={field.onChange}
+                                    icon={<Activity className="h-4 w-4" />}
+                                />
                             )}
-                        </button>
+                        />
                     </div>
-                </form>
-            </div>
-        </div>,
-        document.body
+                    <div className="grid grid-cols-3 gap-4">
+                        <Input label="Marca" placeholder="Ej: Toyota" {...register('marca')} />
+                        <Input label="Modelo" placeholder="Ej: Hilux" {...register('modelo')} />
+                        <Input label="Año" type="number" {...register('anio')} />
+                    </div>
+                </div>
+
+                <div className="space-y-4">
+                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 dark:border-slate-800 pb-2">Logística y Mantenimiento</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                        <Controller
+                            name="zonaId"
+                            control={control}
+                            render={({ field }) => (
+                                <Select
+                                    label="Zona (Opcional)"
+                                    options={zonas.map(z => ({ value: z.id.toString(), label: z.nombre }))}
+                                    value={field.value}
+                                    onChange={field.onChange}
+                                    isLoading={isFetchingZonas}
+                                    placeholder="Sin Asignar"
+                                    icon={<MapPin className="h-4 w-4" />}
+                                />
+                            )}
+                        />
+                        <Controller
+                            name="tipo"
+                            control={control}
+                            render={({ field }) => (
+                                <Select
+                                    label="Tipo"
+                                    options={[
+                                        { value: 'Camión', label: 'Camión' },
+                                        { value: 'Camioneta', label: 'Camioneta' },
+                                        { value: 'Furgón', label: 'Furgón' },
+                                        { value: 'Auto', label: 'Auto' },
+                                        { value: 'Utilitario', label: 'Utilitario' },
+                                        { value: 'Otro', label: 'Otro' },
+                                    ]}
+                                    value={field.value}
+                                    onChange={field.onChange}
+                                    placeholder="Seleccione tipo..."
+                                    icon={<Car className="h-4 w-4" />}
+                                />
+                            )}
+                        />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <Controller
+                            name="proximoService"
+                            control={control}
+                            render={({ field }) => (
+                                <DatePicker
+                                    label="Próximo Service (Fecha)"
+                                    value={field.value || ''}
+                                    onChange={field.onChange}
+                                    icon={<Wrench className="h-4 w-4" />}
+                                />
+                            )}
+                        />
+                        <Input label="Kms Próx. Revisión" type="number" placeholder="Ej: 50000" {...register('proximosKm')} />
+                    </div>
+                </div>
+            </form>
+        </DialogBase>
     );
 }

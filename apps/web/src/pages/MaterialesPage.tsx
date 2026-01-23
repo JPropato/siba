@@ -3,6 +3,8 @@ import api from '../lib/api';
 import MaterialTable from '../components/materiales/MaterialTable';
 import MaterialDialog from '../components/materiales/MaterialDialog';
 import type { Material, MaterialFormData } from '../types/materiales';
+import { Select } from '../components/ui/core/Select';
+import { Search, LayoutGrid } from 'lucide-react';
 
 export default function MaterialesPage() {
     const [materiales, setMateriales] = useState<Material[]>([]);
@@ -94,30 +96,33 @@ export default function MaterialesPage() {
 
             <div className="flex flex-col sm:flex-row gap-4 bg-white dark:bg-slate-900/50 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
                 <div className="relative flex-1">
-                    <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                     <input
                         type="text"
                         placeholder="Buscar por SKU, nombre o descripción..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        className="w-full h-10 pl-10 pr-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 transition-all text-slate-900 dark:text-white"
+                        className="w-full h-10 pl-10 pr-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none focus:border-brand transition-all text-slate-900 dark:text-white"
                     />
                 </div>
-                <div className="w-full sm:w-48">
-                    <select
-                        value={categoriaFilter}
-                        onChange={(e) => setCategoriaFilter(e.target.value)}
-                        className="w-full h-10 px-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none focus:border-brand transition-all text-slate-700 dark:text-slate-300"
-                    >
-                        <option value="">Todas las categorías</option>
-                        <option value="Limpieza">Limpieza</option>
-                        <option value="Construcción">Construcción</option>
-                        <option value="Oficina">Oficina</option>
-                        <option value="Seguridad">Seguridad</option>
-                        <option value="Electrónica">Electrónica</option>
-                        <option value="Otros">Otros</option>
-                    </select>
-                </div>
+                <Select
+                    className="w-full sm:w-48 h-10"
+                    value={categoriaFilter}
+                    onChange={(val) => {
+                        setCategoriaFilter(val as string);
+                        setPage(1);
+                    }}
+                    options={[
+                        { value: '', label: 'Todas las categorías' },
+                        { value: 'Limpieza', label: 'Limpieza' },
+                        { value: 'Construcción', label: 'Construcción' },
+                        { value: 'Oficina', label: 'Oficina' },
+                        { value: 'Seguridad', label: 'Seguridad' },
+                        { value: 'Electrónica', label: 'Electrónica' },
+                        { value: 'Otros', label: 'Otros' },
+                    ]}
+                    icon={<LayoutGrid className="h-4 w-4" />}
+                />
             </div>
 
             <MaterialTable

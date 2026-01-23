@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import { toast } from 'sonner';
 import { obrasApi } from '../api/obrasApi';
 import type { Obra, CreateObraDto, TipoObra, ModoEjecucion, EstadoObra } from '../types';
 import { ESTADO_OBRA_CONFIG, TIPO_OBRA_CONFIG, MODO_EJECUCION_CONFIG } from '../types';
@@ -6,8 +8,6 @@ import {
   X,
   Building2,
   Wrench,
-  Calendar,
-  User,
   MapPin,
   FileText,
   Clock,
@@ -17,8 +17,12 @@ import {
   Check,
   Paperclip,
   History,
+  Briefcase,
 } from 'lucide-react';
 import api from '@/lib/api';
+import { Button } from '@/components/ui/core/Button';
+import { Select } from '@/components/ui/core/Select';
+import { DatePicker } from '@/components/ui/core/DatePicker';
 import TabPresupuesto from './TabPresupuesto';
 import TabArchivos from './TabArchivos';
 import TabHistorial from './TabHistorial';
@@ -163,7 +167,7 @@ export default function ObraDrawer({
 
   const handleSave = async () => {
     if (!titulo || !clienteId || !fechaSolicitud) {
-      alert('Complete los campos obligatorios: Título, Cliente y Fecha de Solicitud');
+      toast.error('Complete los campos obligatorios: Título, Cliente y Fecha de Solicitud');
       return;
     }
 
@@ -195,9 +199,10 @@ export default function ObraDrawer({
         await obrasApi.create(data);
       }
       onSuccess();
+      toast.success(isEditing ? 'Obra actualizada correctamente' : 'Obra creada correctamente');
     } catch (error) {
       console.error('Error saving obra:', error);
-      alert('Error al guardar la obra');
+      toast.error('Error al guardar la obra');
     } finally {
       setIsLoading(false);
     }
@@ -219,7 +224,7 @@ export default function ObraDrawer({
         const hasValidItems = items.length > 0 && items.some((item) => Number(item.cantidad) > 0);
 
         if (!hasValidItems) {
-          alert('No se puede presupuestar: Debe agregar al menos un item con cantidad mayor a 0');
+          toast.error('No se puede presupuestar: Debe agregar al menos un item con cantidad mayor a 0');
           setIsLoading(false);
           return;
         }
@@ -227,10 +232,11 @@ export default function ObraDrawer({
 
       await obrasApi.cambiarEstado(obra.id, nuevoEstado);
       await loadObraDetail(obra.id);
-      onSuccess(); // Refrescar la lista
+      onSuccess();
+      toast.success('Estado actualizado correctamente');
     } catch (error) {
       console.error('Error changing estado:', error);
-      alert('Error al cambiar el estado');
+      toast.error('Error al cambiar el estado');
     } finally {
       setIsLoading(false);
     }
@@ -242,28 +248,28 @@ export default function ObraDrawer({
     modo: ModoEjecucion
   ): { estado: EstadoObra; label: string; color: string }[] => {
     const transiciones: Record<EstadoObra, { estado: EstadoObra; label: string; color: string }[]> =
-      {
-        BORRADOR:
-          modo === 'CON_PRESUPUESTO'
-            ? [
-                {
-                  estado: 'PRESUPUESTADO',
-                  label: 'Generar PDF y Presupuestar',
-                  color: 'text-blue-600',
-                },
-              ]
-            : [{ estado: 'EN_EJECUCION', label: 'Iniciar Ejecución', color: 'text-amber-600' }],
-        PRESUPUESTADO: [
-          { estado: 'APROBADO', label: 'Aprobar', color: 'text-green-600' },
-          { estado: 'RECHAZADO', label: 'Rechazar', color: 'text-red-600' },
-          { estado: 'BORRADOR', label: 'Reabrir para Edición', color: 'text-slate-600' },
-        ],
-        APROBADO: [{ estado: 'EN_EJECUCION', label: 'Iniciar Ejecución', color: 'text-amber-600' }],
-        RECHAZADO: [{ estado: 'BORRADOR', label: 'Reabrir para Edición', color: 'text-slate-600' }],
-        EN_EJECUCION: [{ estado: 'FINALIZADO', label: 'Finalizar Obra', color: 'text-purple-600' }],
-        FINALIZADO: [{ estado: 'FACTURADO', label: 'Marcar Facturado', color: 'text-emerald-600' }],
-        FACTURADO: [],
-      };
+    {
+      BORRADOR:
+        modo === 'CON_PRESUPUESTO'
+          ? [
+            {
+              estado: 'PRESUPUESTADO',
+              label: 'Generar PDF y Presupuestar',
+              color: 'text-blue-600',
+            },
+          ]
+          : [{ estado: 'EN_EJECUCION', label: 'Iniciar Ejecución', color: 'text-amber-600' }],
+      PRESUPUESTADO: [
+        { estado: 'APROBADO', label: 'Aprobar', color: 'text-green-600' },
+        { estado: 'RECHAZADO', label: 'Rechazar', color: 'text-red-600' },
+        { estado: 'BORRADOR', label: 'Reabrir para Edición', color: 'text-slate-600' },
+      ],
+      APROBADO: [{ estado: 'EN_EJECUCION', label: 'Iniciar Ejecución', color: 'text-amber-600' }],
+      RECHAZADO: [{ estado: 'BORRADOR', label: 'Reabrir para Edición', color: 'text-slate-600' }],
+      EN_EJECUCION: [{ estado: 'FINALIZADO', label: 'Finalizar Obra', color: 'text-purple-600' }],
+      FINALIZADO: [{ estado: 'FACTURADO', label: 'Marcar Facturado', color: 'text-emerald-600' }],
+      FACTURADO: [],
+    };
     return transiciones[estadoActual] || [];
   };
 
@@ -296,13 +302,18 @@ export default function ObraDrawer({
 
   if (!isOpen) return null;
 
-  return (
+  const drawerContent = (
     <>
       {/* Backdrop */}
-      <div className="fixed inset-0 bg-black/50 z-40 transition-opacity" onClick={onClose} />
+      <div
+        className="fixed inset-0 bg-black/50 z-[100] transition-opacity backdrop-blur-sm"
+        onClick={onClose}
+      />
 
       {/* Drawer */}
-      <div className="fixed inset-y-0 right-0 w-full sm:max-w-2xl z-50 bg-white dark:bg-slate-950 border-l border-slate-200 dark:border-slate-800 shadow-xl flex flex-col">
+      <div
+        className="fixed inset-y-0 right-0 w-full sm:max-w-2xl z-[101] bg-white dark:bg-slate-950 border-l border-slate-200 dark:border-slate-800 shadow-xl flex flex-col animate-in slide-in-from-right duration-300"
+      >
         {/* Header */}
         <div className="sticky top-0 z-10 bg-white dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800">
           <div className="flex items-center justify-between p-4">
@@ -338,10 +349,10 @@ export default function ObraDrawer({
                   {estadoConfig.label}
                   {getTransicionesPermitidas(displayObra.estado, displayObra.modoEjecucion).length >
                     0 && (
-                    <ChevronDown
-                      className={`h-4 w-4 transition-transform ${showEstadoDropdown ? 'rotate-180' : ''}`}
-                    />
-                  )}
+                      <ChevronDown
+                        className={`h-4 w-4 transition-transform ${showEstadoDropdown ? 'rotate-180' : ''}`}
+                      />
+                    )}
                 </button>
 
                 {/* Dropdown Menu */}
@@ -394,11 +405,10 @@ export default function ObraDrawer({
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
-                    activeTab === tab.id
-                      ? 'border-gold text-gold'
-                      : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
-                  }`}
+                  className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === tab.id
+                    ? 'border-gold text-gold'
+                    : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                    }`}
                 >
                   <tab.icon className="h-4 w-4" />
                   {tab.label}
@@ -420,40 +430,20 @@ export default function ObraDrawer({
             <div className="space-y-6">
               {/* Tipo y Modo */}
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    Tipo de Obra *
-                  </label>
-                  <select
-                    value={tipo}
-                    onChange={(e) => setTipo(e.target.value as TipoObra)}
-                    disabled={!!isReadOnly}
-                    className="w-full h-10 px-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm outline-none focus:border-brand disabled:opacity-60"
-                  >
-                    {Object.entries(TIPO_OBRA_CONFIG).map(([key, { label }]) => (
-                      <option key={key} value={key}>
-                        {label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    Modo Ejecución
-                  </label>
-                  <select
-                    value={modoEjecucion}
-                    onChange={(e) => setModoEjecucion(e.target.value as ModoEjecucion)}
-                    disabled={!!isReadOnly}
-                    className="w-full h-10 px-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm outline-none focus:border-brand disabled:opacity-60"
-                  >
-                    {Object.entries(MODO_EJECUCION_CONFIG).map(([key, { label }]) => (
-                      <option key={key} value={key}>
-                        {label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                <Select
+                  label="Tipo de Obra *"
+                  options={Object.entries(TIPO_OBRA_CONFIG).map(([key, { label }]) => ({ value: key, label }))}
+                  value={tipo}
+                  onChange={(val) => setTipo(val as TipoObra)}
+                  disabled={!!isReadOnly}
+                />
+                <Select
+                  label="Modo Ejecución"
+                  options={Object.entries(MODO_EJECUCION_CONFIG).map(([key, { label }]) => ({ value: key, label }))}
+                  value={modoEjecucion}
+                  onChange={(val) => setModoEjecucion(val as ModoEjecucion)}
+                  disabled={!!isReadOnly}
+                />
               </div>
 
               {/* Título */}
@@ -488,85 +478,52 @@ export default function ObraDrawer({
 
               {/* Cliente y Sucursal */}
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    <User className="inline h-4 w-4 mr-1" />
-                    Cliente *
-                  </label>
-                  <select
-                    value={clienteId}
-                    onChange={(e) => setClienteId(e.target.value ? Number(e.target.value) : '')}
-                    disabled={!!isReadOnly}
-                    className="w-full h-10 px-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm outline-none focus:border-brand disabled:opacity-60"
-                  >
-                    <option value="">Seleccionar cliente...</option>
-                    {clientes.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.razonSocial}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    <MapPin className="inline h-4 w-4 mr-1" />
-                    Sucursal
-                  </label>
-                  <select
-                    value={sucursalId}
-                    onChange={(e) => setSucursalId(e.target.value ? Number(e.target.value) : '')}
-                    disabled={!!isReadOnly || !clienteId}
-                    className="w-full h-10 px-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm outline-none focus:border-brand disabled:opacity-60"
-                  >
-                    <option value="">Seleccionar sucursal...</option>
-                    {sucursales.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.nombre}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                <Select
+                  label="Cliente *"
+                  options={clientes.map(c => ({
+                    value: c.id,
+                    label: c.razonSocial,
+                    icon: <Briefcase className="h-4 w-4" />
+                  }))}
+                  value={clienteId}
+                  onChange={(val) => setClienteId(val ? Number(val) : '')}
+                  disabled={!!isReadOnly}
+                  placeholder="Seleccionar cliente..."
+                />
+                <Select
+                  label="Sucursal"
+                  options={sucursales.map(s => ({
+                    value: s.id,
+                    label: s.nombre,
+                    icon: <MapPin className="h-4 w-4" />
+                  }))}
+                  value={sucursalId}
+                  onChange={(val) => setSucursalId(val ? Number(val) : '')}
+                  disabled={!!isReadOnly || !clienteId}
+                  placeholder="Seleccionar sucursal..."
+                />
               </div>
 
               {/* Fechas */}
               <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    <Calendar className="inline h-4 w-4 mr-1" />
-                    Fecha Solicitud *
-                  </label>
-                  <input
-                    type="date"
-                    value={fechaSolicitud}
-                    onChange={(e) => setFechaSolicitud(e.target.value)}
-                    disabled={!!isReadOnly}
-                    className="w-full h-10 px-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm outline-none focus:border-brand disabled:opacity-60"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    Inicio Estimado
-                  </label>
-                  <input
-                    type="date"
-                    value={fechaInicioEstimada}
-                    onChange={(e) => setFechaInicioEstimada(e.target.value)}
-                    disabled={!!isReadOnly}
-                    className="w-full h-10 px-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm outline-none focus:border-brand disabled:opacity-60"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    Fin Estimado
-                  </label>
-                  <input
-                    type="date"
-                    value={fechaFinEstimada}
-                    onChange={(e) => setFechaFinEstimada(e.target.value)}
-                    disabled={!!isReadOnly}
-                    className="w-full h-10 px-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm outline-none focus:border-brand disabled:opacity-60"
-                  />
-                </div>
+                <DatePicker
+                  label="Fecha Solicitud *"
+                  value={fechaSolicitud}
+                  onChange={(val) => setFechaSolicitud(val || '')}
+                  disabled={!!isReadOnly}
+                />
+                <DatePicker
+                  label="Inicio Estimado"
+                  value={fechaInicioEstimada}
+                  onChange={(val) => setFechaInicioEstimada(val || '')}
+                  disabled={!!isReadOnly}
+                />
+                <DatePicker
+                  label="Fin Estimado"
+                  value={fechaFinEstimada}
+                  onChange={(val) => setFechaFinEstimada(val || '')}
+                  disabled={!!isReadOnly}
+                />
               </div>
 
               {/* Condiciones comerciales */}
@@ -688,24 +645,23 @@ export default function ObraDrawer({
         {(!isEditing || !isReadOnly) && activeTab === 'general' && (
           <div className="sticky bottom-0 bg-white dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800 p-4">
             <div className="flex justify-end gap-3">
-              <button
-                onClick={onClose}
-                className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-sm font-medium"
-              >
+              <Button variant="ghost" onClick={onClose}>
                 Cancelar
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={handleSave}
-                disabled={isLoading}
-                className="px-4 py-2 bg-brand hover:bg-brand-dark text-white rounded-lg text-sm font-bold flex items-center gap-2 disabled:opacity-50"
+                isLoading={isLoading}
+                leftIcon={<Save className="h-4 w-4" />}
               >
-                <Save className="h-4 w-4" />
                 {isEditing ? 'Guardar Cambios' : 'Crear Obra'}
-              </button>
+              </Button>
             </div>
           </div>
         )}
+
       </div>
     </>
   );
+
+  return createPortal(drawerContent, document.body);
 }

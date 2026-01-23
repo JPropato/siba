@@ -1,20 +1,32 @@
-import { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
+import { useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { toast } from 'sonner';
 import api from '../../lib/api';
 import type { Ticket, TicketFormData, RubroTicket, PrioridadTicket } from '../../types/tickets';
 import { RUBRO_LABELS, PRIORIDAD_LABELS } from '../../types/tickets';
+import { DialogBase } from '../ui/core/DialogBase';
+import { Input } from '../ui/core/Input';
+import { Button } from '../ui/core/Button';
 
-interface Sucursal {
-  id: number;
-  nombre: string;
-  cliente?: { razonSocial: string };
-}
+interface Sucursal { id: number; nombre: string; cliente?: { razonSocial: string }; }
+interface Tecnico { id: number; nombre: string; apellido: string; }
 
-interface Tecnico {
-  id: number;
-  nombre: string;
-  apellido: string;
-}
+const ticketSchema = z.object({
+  codigoCliente: z.string().optional().or(z.literal('')),
+  descripcion: z.string().min(3, 'La descripción es requerida'),
+  trabajo: z.string().optional().or(z.literal('')),
+  observaciones: z.string().optional().or(z.literal('')),
+  rubro: z.enum(['CIVIL', 'ELECTRICIDAD', 'SANITARIOS', 'VARIOS']),
+  prioridad: z.enum(['PROGRAMADO', 'EMERGENCIA', 'URGENCIA']),
+  fechaProgramada: z.string().optional().or(z.literal('')),
+  sucursalId: z.string().min(1, 'Debe seleccionar una sucursal'),
+  tecnicoId: z.string().optional().or(z.literal('')),
+});
+
+
+type TicketFormValues = z.infer<typeof ticketSchema>;
 
 interface TicketDialogProps {
   isOpen: boolean;
@@ -24,21 +36,23 @@ interface TicketDialogProps {
 }
 
 export default function TicketDialog({ isOpen, onClose, onSave, initialData }: TicketDialogProps) {
-  const [codigoCliente, setCodigoCliente] = useState('');
-  const [descripcion, setDescripcion] = useState('');
-  const [trabajo, setTrabajo] = useState('');
-  const [observaciones, setObservaciones] = useState('');
-  const [rubro, setRubro] = useState<RubroTicket>('CIVIL');
-  const [prioridad, setPrioridad] = useState<PrioridadTicket>('PROGRAMADO');
-  const [fechaProgramada, setFechaProgramada] = useState('');
-  const [sucursalId, setSucursalId] = useState<number | ''>('');
-  const [tecnicoId, setTecnicoId] = useState<number | ''>('');
-
   const [sucursales, setSucursales] = useState<Sucursal[]>([]);
   const [tecnicos, setTecnicos] = useState<Tecnico[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<TicketFormValues>({
+    resolver: zodResolver(ticketSchema),
+    defaultValues: {
+      codigoCliente: '', descripcion: '', trabajo: '', observaciones: '',
+      rubro: 'CIVIL', prioridad: 'PROGRAMADO', fechaProgramada: '',
+      sucursalId: '', tecnicoId: '',
+    },
+  });
 
   useEffect(() => {
     if (isOpen) {
@@ -46,7 +60,6 @@ export default function TicketDialog({ isOpen, onClose, onSave, initialData }: T
       Promise.all([api.get('/sedes?limit=100'), api.get('/empleados?limit=100')])
         .then(([sedesRes, empleadosRes]) => {
           setSucursales(sedesRes.data.data || []);
-          // Filter only TECNICO type employees
           const allEmpleados = empleadosRes.data.data || [];
           setTecnicos(allEmpleados.filter((e: { tipo: string }) => e.tipo === 'TECNICO'));
         })
@@ -54,287 +67,135 @@ export default function TicketDialog({ isOpen, onClose, onSave, initialData }: T
         .finally(() => setIsFetching(false));
 
       if (initialData) {
-        setCodigoCliente(initialData.codigoCliente || '');
-        setDescripcion(initialData.descripcion);
-        setTrabajo(initialData.trabajo || '');
-        setObservaciones(initialData.observaciones || '');
-        setRubro(initialData.rubro);
-        setPrioridad(initialData.prioridad);
-        setFechaProgramada(
-          initialData.fechaProgramada
-            ? new Date(initialData.fechaProgramada).toISOString().split('T')[0]
-            : ''
-        );
-        setSucursalId(initialData.sucursalId);
-        setTecnicoId(initialData.tecnicoId || '');
+        reset({
+          codigoCliente: initialData.codigoCliente || '',
+          descripcion: initialData.descripcion,
+          trabajo: initialData.trabajo || '',
+          observaciones: initialData.observaciones || '',
+          rubro: initialData.rubro,
+          prioridad: initialData.prioridad,
+          fechaProgramada: initialData.fechaProgramada ? new Date(initialData.fechaProgramada).toISOString().split('T')[0] : '',
+          sucursalId: initialData.sucursalId.toString(),
+          tecnicoId: initialData.tecnicoId?.toString() || '',
+        });
       } else {
-        setCodigoCliente('');
-        setDescripcion('');
-        setTrabajo('');
-        setObservaciones('');
-        setRubro('CIVIL');
-        setPrioridad('PROGRAMADO');
-        setFechaProgramada('');
-        setSucursalId('');
-        setTecnicoId('');
+        reset({
+          codigoCliente: '', descripcion: '', trabajo: '', observaciones: '',
+          rubro: 'CIVIL', prioridad: 'PROGRAMADO', fechaProgramada: '',
+          sucursalId: '', tecnicoId: '',
+        });
       }
-      setError(null);
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
     }
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, [isOpen, initialData]);
+  }, [isOpen, initialData, reset]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!sucursalId) {
-      setError('Debe seleccionar una sucursal');
-      return;
-    }
-    setIsLoading(true);
-    setError(null);
-
+  const onSubmit = async (values: TicketFormValues) => {
     try {
       await onSave({
-        codigoCliente: codigoCliente.trim() || null,
-        descripcion: descripcion.trim(),
-        trabajo: trabajo.trim() || null,
-        observaciones: observaciones.trim() || null,
-        rubro,
-        prioridad,
-        fechaProgramada: fechaProgramada ? new Date(fechaProgramada).toISOString() : null,
-        sucursalId: Number(sucursalId),
-        tecnicoId: tecnicoId ? Number(tecnicoId) : null,
+        codigoCliente: values.codigoCliente?.trim() || null,
+        descripcion: values.descripcion.trim(),
+        trabajo: values.trabajo?.trim() || null,
+        observaciones: values.observaciones?.trim() || null,
+        rubro: values.rubro as RubroTicket,
+        prioridad: values.prioridad as PrioridadTicket,
+        fechaProgramada: values.fechaProgramada ? new Date(values.fechaProgramada).toISOString() : null,
+        sucursalId: Number(values.sucursalId),
+        tecnicoId: values.tecnicoId ? Number(values.tecnicoId) : null,
       });
+      toast.success(initialData ? 'Ticket actualizado' : 'Ticket creado correctamente');
       onClose();
-    } catch (err: unknown) {
-      const axiosErr = err as { response?: { data?: { error?: string } } };
-      setError(axiosErr.response?.data?.error || 'Error al guardar el ticket.');
-    } finally {
-      setIsLoading(false);
+    } catch (err: any) {
+      const backendError = err.response?.data?.error;
+      toast.error(backendError || 'Error al guardar el ticket.');
     }
   };
 
-  if (!isOpen) return null;
-
-  return createPortal(
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl w-full max-w-2xl border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
-        <form onSubmit={handleSubmit}>
-          <div className="sticky top-0 z-10 p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center text-slate-900 dark:text-white bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm rounded-t-xl">
-            <h2 className="text-xl font-bold">{initialData ? 'Editar Ticket' : 'Nuevo Ticket'}</h2>
-            <button
-              type="button"
-              onClick={onClose}
-              className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
-            >
-              <span className="material-symbols-outlined">close</span>
-            </button>
-          </div>
-
-          <div className="p-6 space-y-6">
-            {error && (
-              <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm p-3 rounded-lg border border-red-100 dark:border-red-900/30">
-                {error}
-              </div>
-            )}
-
-            {/* Datos del Ticket */}
-            <div className="space-y-4">
-              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 dark:border-slate-800 pb-2">
-                Datos del Ticket
-              </h3>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                    Código Cliente
-                  </label>
-                  <input
-                    type="text"
-                    value={codigoCliente}
-                    onChange={(e) => setCodigoCliente(e.target.value)}
-                    className="w-full h-10 px-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none focus:border-brand transition-all"
-                    placeholder="1124-65005"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest text-brand">
-                    Sucursal *
-                  </label>
-                  <select
-                    required
-                    disabled={isFetching}
-                    value={sucursalId}
-                    onChange={(e) => setSucursalId(e.target.value ? Number(e.target.value) : '')}
-                    className="w-full h-10 px-3 bg-slate-50 dark:bg-slate-950 border border-brand/20 dark:border-brand/30 rounded-lg text-sm outline-none focus:border-brand transition-all font-semibold"
-                  >
-                    <option value="">Seleccionar...</option>
-                    {sucursales.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.nombre} {s.cliente ? `(${s.cliente.razonSocial})` : ''}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest text-brand">
-                  Descripción del Problema *
-                </label>
-                <textarea
-                  required
-                  rows={3}
-                  value={descripcion}
-                  onChange={(e) => setDescripcion(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-brand/20 dark:border-brand/30 rounded-lg text-sm outline-none focus:border-brand transition-all resize-none"
-                  placeholder="Descripción detallada del problema..."
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                  Trabajo a Realizar
-                </label>
-                <textarea
-                  rows={2}
-                  value={trabajo}
-                  onChange={(e) => setTrabajo(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none focus:border-brand transition-all resize-none"
-                  placeholder="Trabajo propuesto..."
-                />
-              </div>
-            </div>
-
-            {/* Clasificación */}
-            <div className="space-y-4">
-              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 dark:border-slate-800 pb-2">
-                Clasificación
-              </h3>
-
-              <div className="grid grid-cols-3 gap-4">
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest text-brand">
-                    Rubro *
-                  </label>
-                  <select
-                    value={rubro}
-                    onChange={(e) => setRubro(e.target.value as RubroTicket)}
-                    className="w-full h-10 px-3 bg-slate-50 dark:bg-slate-950 border border-brand/20 dark:border-brand/30 rounded-lg text-sm outline-none focus:border-brand transition-all font-semibold"
-                  >
-                    {Object.entries(RUBRO_LABELS).map(([k, v]) => (
-                      <option key={k} value={k}>
-                        {v}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest text-brand">
-                    Prioridad *
-                  </label>
-                  <select
-                    value={prioridad}
-                    onChange={(e) => setPrioridad(e.target.value as PrioridadTicket)}
-                    className="w-full h-10 px-3 bg-slate-50 dark:bg-slate-950 border border-brand/20 dark:border-brand/30 rounded-lg text-sm outline-none focus:border-brand transition-all font-semibold"
-                  >
-                    {Object.entries(PRIORIDAD_LABELS).map(([k, v]) => (
-                      <option key={k} value={k}>
-                        {v}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                    Fecha Programada
-                  </label>
-                  <input
-                    type="date"
-                    value={fechaProgramada}
-                    onChange={(e) => setFechaProgramada(e.target.value)}
-                    className="w-full h-10 px-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none focus:border-brand transition-all"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Asignación */}
-            <div className="space-y-4">
-              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 dark:border-slate-800 pb-2">
-                Asignación
-              </h3>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                    Técnico Asignado
-                  </label>
-                  <select
-                    disabled={isFetching}
-                    value={tecnicoId}
-                    onChange={(e) => setTecnicoId(e.target.value ? Number(e.target.value) : '')}
-                    className="w-full h-10 px-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none focus:border-brand transition-all font-semibold"
-                  >
-                    <option value="">Sin asignar</option>
-                    {tecnicos.map((t) => (
-                      <option key={t.id} value={t.id}>
-                        {t.nombre} {t.apellido}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                    Observaciones
-                  </label>
-                  <input
-                    type="text"
-                    value={observaciones}
-                    onChange={(e) => setObservaciones(e.target.value)}
-                    className="w-full h-10 px-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none focus:border-brand transition-all"
-                    placeholder="Notas adicionales..."
-                  />
-                </div>
-              </div>
+  return (
+    <DialogBase
+      isOpen={isOpen}
+      onClose={onClose}
+      title={initialData ? 'Editar Ticket' : 'Nuevo Ticket'}
+      description="Registre una solicitud de servicio."
+      maxWidth="2xl"
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose} disabled={isSubmitting}>
+            Cancelar
+          </Button>
+          <Button
+            type="submit"
+            form="ticket-form"
+            isLoading={isSubmitting}
+            leftIcon={<span className="material-symbols-outlined text-[18px]">save</span>}
+          >
+            Guardar Ticket
+          </Button>
+        </>
+      }
+    >
+      <form id="ticket-form" onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        {/* Datos del Ticket */}
+        <div className="space-y-4">
+          <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 dark:border-slate-800 pb-2">Datos del Ticket</h3>
+          <div className="grid grid-cols-2 gap-4">
+            <Input label="Código Cliente" placeholder="1124-65005" {...register('codigoCliente')} />
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Sucursal *</label>
+              <select disabled={isFetching} {...register('sucursalId')} className="w-full h-10 px-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none focus:border-brand transition-all font-semibold text-slate-900 dark:text-white">
+                <option value="">Seleccionar...</option>
+                {sucursales.map((s) => (<option key={s.id} value={s.id}>{s.nombre} {s.cliente ? `(${s.cliente.razonSocial})` : ''}</option>))}
+              </select>
+              {errors.sucursalId && <p className="text-[11px] font-medium text-red-500">{errors.sucursalId.message}</p>}
             </div>
           </div>
-
-          <div className="p-6 bg-slate-50 dark:bg-slate-800/50 rounded-b-xl border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3 text-slate-900 dark:text-white sticky bottom-0 z-10 backdrop-blur-sm">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="px-6 py-2 bg-brand hover:bg-brand-dark text-white text-sm font-bold rounded-lg shadow-lg shadow-brand/20 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100 flex items-center gap-2"
-            >
-              {isLoading ? (
-                <>
-                  <span className="material-symbols-outlined animate-spin text-[20px]">
-                    progress_activity
-                  </span>
-                  Guardando...
-                </>
-              ) : (
-                <>
-                  <span className="material-symbols-outlined text-[20px]">save</span>
-                  GUARDAR TICKET
-                </>
-              )}
-            </button>
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Descripción del Problema *</label>
+            <textarea rows={3} {...register('descripcion')} className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none focus:border-brand transition-all resize-none text-slate-900 dark:text-white" placeholder="Descripción detallada del problema..." />
+            {errors.descripcion && <p className="text-[11px] font-medium text-red-500">{errors.descripcion.message}</p>}
           </div>
-        </form>
-      </div>
-    </div>,
-    document.body
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Trabajo a Realizar</label>
+            <textarea rows={2} {...register('trabajo')} className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none focus:border-brand transition-all resize-none text-slate-900 dark:text-white" placeholder="Trabajo propuesto..." />
+          </div>
+        </div>
+
+        {/* Clasificación */}
+        <div className="space-y-4">
+          <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 dark:border-slate-800 pb-2">Clasificación</h3>
+          <div className="grid grid-cols-3 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Rubro *</label>
+              <select {...register('rubro')} className="w-full h-10 px-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none focus:border-brand transition-all font-semibold text-slate-900 dark:text-white">
+                {Object.entries(RUBRO_LABELS).map(([k, v]) => (<option key={k} value={k}>{v}</option>))}
+              </select>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Prioridad *</label>
+              <select {...register('prioridad')} className="w-full h-10 px-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none focus:border-brand transition-all font-semibold text-slate-900 dark:text-white">
+                {Object.entries(PRIORIDAD_LABELS).map(([k, v]) => (<option key={k} value={k}>{v}</option>))}
+              </select>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Fecha Programada</label>
+              <input type="date" {...register('fechaProgramada')} className="w-full h-10 px-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none focus:border-brand transition-all text-slate-900 dark:text-white" />
+            </div>
+          </div>
+        </div>
+
+        {/* Asignación */}
+        <div className="space-y-4">
+          <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 dark:border-slate-800 pb-2">Asignación</h3>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Técnico Asignado</label>
+              <select disabled={isFetching} {...register('tecnicoId')} className="w-full h-10 px-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none focus:border-brand transition-all font-semibold text-slate-900 dark:text-white">
+                <option value="">Sin asignar</option>
+                {tecnicos.map((t) => (<option key={t.id} value={t.id}>{t.nombre} {t.apellido}</option>))}
+              </select>
+            </div>
+            <Input label="Observaciones" placeholder="Notas adicionales..." {...register('observaciones')} />
+          </div>
+        </div>
+      </form>
+    </DialogBase>
   );
 }

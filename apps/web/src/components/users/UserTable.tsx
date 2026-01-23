@@ -1,4 +1,6 @@
 import type { User } from '../../types/user';
+import { useSortableTable } from '../../hooks/useSortableTable';
+import { SortableHeader } from '../ui/core/SortableHeader';
 
 interface UserTableProps {
     users: User[];
@@ -8,6 +10,8 @@ interface UserTableProps {
 }
 
 export default function UserTable({ users, onEdit, onDelete, isLoading }: UserTableProps) {
+    const { items, requestSort, sortConfig } = useSortableTable(users);
+
     if (isLoading) {
         return (
             <div className="w-full h-40 flex items-center justify-center">
@@ -29,14 +33,14 @@ export default function UserTable({ users, onEdit, onDelete, isLoading }: UserTa
             <table className="w-full text-left text-sm">
                 <thead className="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
                     <tr>
-                        <th className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">Usuario</th>
+                        <SortableHeader<User> label="Usuario" sortKey="apellido" sortConfig={sortConfig} onSort={requestSort} />
                         <th className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">Roles</th>
-                        <th className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">Último Acceso</th>
+                        <SortableHeader<User> label="Último Acceso" sortKey="ultimoAcceso" sortConfig={sortConfig} onSort={requestSort} />
                         <th className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100 text-right">Acciones</th>
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200 dark:divide-slate-800 bg-white dark:bg-slate-950">
-                    {users.map((user) => (
+                    {items.map((user) => (
                         <tr key={user.id} className="hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors">
                             <td className="px-4 py-3">
                                 <div className="flex flex-col">
@@ -62,18 +66,10 @@ export default function UserTable({ users, onEdit, onDelete, isLoading }: UserTa
                             </td>
                             <td className="px-4 py-3 text-right">
                                 <div className="flex items-center justify-end gap-2">
-                                    <button
-                                        onClick={() => onEdit(user)}
-                                        className="p-1.5 text-slate-400 hover:text-brand transition-colors rounded hover:bg-slate-100 dark:hover:bg-slate-800"
-                                        title="Editar"
-                                    >
+                                    <button onClick={() => onEdit(user)} className="p-1.5 text-slate-400 hover:text-brand transition-colors rounded hover:bg-slate-100 dark:hover:bg-slate-800" title="Editar">
                                         <span className="material-symbols-outlined text-[18px]">edit</span>
                                     </button>
-                                    <button
-                                        onClick={() => onDelete(user)}
-                                        className="p-1.5 text-slate-400 hover:text-red-500 transition-colors rounded hover:bg-red-50 dark:hover:bg-red-900/10"
-                                        title="Eliminar"
-                                    >
+                                    <button onClick={() => onDelete(user)} className="p-1.5 text-slate-400 hover:text-red-500 transition-colors rounded hover:bg-red-50 dark:hover:bg-red-900/10" title="Eliminar">
                                         <span className="material-symbols-outlined text-[18px]">delete</span>
                                     </button>
                                 </div>
