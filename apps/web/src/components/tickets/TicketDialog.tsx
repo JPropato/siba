@@ -159,13 +159,13 @@ export default function TicketDialog({
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Rubro *</label>
               <select {...register('rubro')} className="w-full h-10 px-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none focus:border-brand transition-all font-semibold text-slate-900 dark:text-white">
-                {Object.entries(RUBRO_LABELS).map(([k, v]) => (<option key={k} value={k}>{v}</option>))}
+                {Object.entries(RUBRO_LABELS).map(([k, v]) => (<option key={k} value={k}>{v as string}</option>))}
               </select>
             </div>
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Prioridad *</label>
               <select {...register('prioridad')} className="w-full h-10 px-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none focus:border-brand transition-all font-semibold text-slate-900 dark:text-white">
-                {Object.entries(PRIORIDAD_LABELS).map(([k, v]) => (<option key={k} value={k}>{v}</option>))}
+                {Object.entries(PRIORIDAD_LABELS).map(([k, v]) => (<option key={k} value={k}>{v as string}</option>))}
               </select>
             </div>
           </div>

@@ -163,7 +163,7 @@ export default function TicketsPage() {
             }}
             options={[
               { value: '', label: 'Todos los estados' },
-              ...Object.entries(ESTADO_LABELS).map(([k, v]) => ({ value: k, label: v })),
+              ...Object.entries(ESTADO_LABELS).map(([k, v]) => ({ value: k, label: v as string })),
             ]}
             icon={<AlertCircle className="h-4 w-4" />}
           />
@@ -176,7 +176,7 @@ export default function TicketsPage() {
             }}
             options={[
               { value: '', label: 'Todos los rubros' },
-              ...Object.entries(RUBRO_LABELS).map(([k, v]) => ({ value: k, label: v })),
+              ...Object.entries(RUBRO_LABELS).map(([k, v]) => ({ value: k, label: v as string })),
             ]}
             icon={<LayoutGrid className="h-4 w-4" />}
           />
@@ -189,7 +189,7 @@ export default function TicketsPage() {
             }}
             options={[
               { value: '', label: 'Todas las prioridades' },
-              ...Object.entries(PRIORIDAD_LABELS).map(([k, v]) => ({ value: k, label: v })),
+              ...Object.entries(PRIORIDAD_LABELS).map(([k, v]) => ({ value: k, label: v as string })),
             ]}
             icon={<TrendingUp className="h-4 w-4" />}
           />

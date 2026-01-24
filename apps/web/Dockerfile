@@ -14,7 +14,8 @@ RUN npm ci
 # Copiar código fuente del frontend
 COPY apps/web/ ./apps/web/
 
-# Compilar el frontend (sin necesidad de VITE_API_URL en build time)
+# Compilar la librería compartida y luego el frontend
+RUN npm run build -w @siba/shared
 RUN npm run build -w @siba/web
 
 # Production stage - servir con nginx
