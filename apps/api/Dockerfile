@@ -24,6 +24,7 @@ RUN npx prisma generate
 
 # Volver al directorio raíz y compilar TypeScript
 WORKDIR /app
+RUN npm run build -w @siba/shared
 RUN npm run build -w @siba/api
 
 # Copiar script de inicio
