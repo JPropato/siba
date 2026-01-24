@@ -1,7 +1,9 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
-import { Prisma, RubroTicket, PrioridadTicket, EstadoTicket } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { prisma } from '../index.js';
+import type { RubroTicket, PrioridadTicket, EstadoTicket } from '@siba/shared';
+import { ESTADO_LABELS } from '@siba/shared';
 
 // --- Schemas ---
 const createTicketSchema = z.object({
@@ -9,9 +11,9 @@ const createTicketSchema = z.object({
   descripcion: z.string().min(5).max(1000),
   trabajo: z.string().max(1000).optional().nullable(),
   observaciones: z.string().max(2000).optional().nullable(),
-  rubro: z.nativeEnum(RubroTicket),
-  prioridad: z.nativeEnum(PrioridadTicket),
-  estado: z.nativeEnum(EstadoTicket).optional(),
+  rubro: z.string().min(1), // Validated against RubroTicket
+  prioridad: z.string().min(1),
+  estado: z.string().optional(),
   fechaProgramada: z.string().datetime().optional().nullable(),
   sucursalId: z.number().int(),
   tecnicoId: z.number().int().optional().nullable(),
@@ -181,7 +183,14 @@ export const create = async (req: Request, res: Response) => {
 
     const newTicket = await prisma.ticket.create({
       data: {
-        ...body,
+        descripcion: body.descripcion,
+        codigoCliente: body.codigoCliente,
+        trabajo: body.trabajo,
+        observaciones: body.observaciones,
+        rubro: body.rubro as RubroTicket,
+        prioridad: body.prioridad as PrioridadTicket,
+        estado: (body.estado as EstadoTicket) || 'NUEVO',
+        sucursalId: body.sucursalId,
         fechaProgramada: body.fechaProgramada ? new Date(body.fechaProgramada) : null,
         creadoPorId: userId,
         tecnicoId: body.tecnicoId ?? null,
@@ -261,7 +270,14 @@ export const update = async (req: Request, res: Response) => {
     const updated = await prisma.ticket.update({
       where: { id },
       data: {
-        ...body,
+        descripcion: body.descripcion,
+        codigoCliente: body.codigoCliente,
+        trabajo: body.trabajo,
+        observaciones: body.observaciones,
+        rubro: body.rubro as RubroTicket,
+        prioridad: body.prioridad as PrioridadTicket,
+        estado: body.estado as EstadoTicket,
+        sucursalId: body.sucursalId,
         fechaProgramada:
           body.fechaProgramada !== undefined
             ? body.fechaProgramada
@@ -330,7 +346,7 @@ export const cambiarEstado = async (req: Request, res: Response) => {
     const { estado, observacion } = req.body;
     const userId = getUserId(req);
 
-    if (!estado || !Object.values(EstadoTicket).includes(estado)) {
+    if (!estado || !Object.keys(ESTADO_LABELS).includes(estado)) {
       return res.status(400).json({ error: 'Estado inválido' });
     }
 
@@ -346,7 +362,7 @@ export const cambiarEstado = async (req: Request, res: Response) => {
     const updated = await prisma.ticket.update({
       where: { id },
       data: {
-        estado,
+        estado: estado as EstadoTicket,
         fechaFinalizacion: estado === 'FINALIZADO' ? new Date() : undefined,
         actualizadoPorId: userId,
       },

@@ -26,12 +26,18 @@ enum RubroTicket {
   ELECTRICIDAD
   SANITARIOS
   VARIOS
+  REFRIGERACION
+  LIMPIEZA
+  TERMINACIONES
 }
 
 enum PrioridadTicket {
   PROGRAMADO
   EMERGENCIA
   URGENCIA
+  BAJA
+  MEDIA
+  ALTA
 }
 
 enum EstadoTicket {
@@ -39,6 +45,8 @@ enum EstadoTicket {
   PROGRAMADO
   EN_CURSO
   FINALIZADO
+  RECHAZADO
+  CANCELADO
 }
 
 // ============ SEGURIDAD ============

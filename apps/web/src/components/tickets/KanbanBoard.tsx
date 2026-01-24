@@ -19,7 +19,7 @@ export default function KanbanBoard({
 }: KanbanBoardProps) {
   // Agrupar tickets por estado
   const ticketsByEstado = useMemo(() => {
-    const grouped: Record<EstadoTicket, Ticket[]> = {
+    const grouped: Partial<Record<EstadoTicket, Ticket[]>> = {
       NUEVO: [],
       PROGRAMADO: [],
       EN_CURSO: [],
@@ -27,8 +27,9 @@ export default function KanbanBoard({
     };
 
     tickets.forEach((ticket) => {
-      if (grouped[ticket.estado]) {
-        grouped[ticket.estado].push(ticket);
+      const stateList = grouped[ticket.estado];
+      if (stateList) {
+        stateList.push(ticket);
       }
     });
 
@@ -55,7 +56,7 @@ export default function KanbanBoard({
           <KanbanColumn
             key={estado}
             estado={estado}
-            tickets={ticketsByEstado[estado]}
+            tickets={ticketsByEstado[estado] || []}
             onEditTicket={onEditTicket}
             onDeleteTicket={onDeleteTicket}
           />

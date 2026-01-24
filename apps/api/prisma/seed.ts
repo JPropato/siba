@@ -11,7 +11,14 @@ import { fakerES as faker } from '@faker-js/faker';
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🌱 Empezando el seed del ecosistema de prueba (SIBA)...');
+  /**
+   * ⚠️ ADVERTENCIA DE SEGURIDAD ⚠️
+   * Este script de SEED es DESTRUCTIVO y está diseñado solo para DESARROLLO LOCAL.
+   * Ejecutar este script borrará todos los datos de las tablas (tickets, clientes, finanzas, etc.).
+   *
+   * Para entornos de QAS o Producción, usar: npm run db:seed-essentials
+   */
+  console.log('🌱 Empezando el seed del ecosistema de DESTRUCCIÓN Y PRUEBA (SIBA)...');
 
   // ----------------------------------------------------
   // 1. Roles y Permisos (Base)
