@@ -2,6 +2,10 @@ import { PrismaClient, EstadoTicket, RubroTicket, PrioridadTicket } from '@prism
 import fs from 'fs';
 import path from 'path';
 import csv from 'csv-parser';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const prisma = new PrismaClient();
 const PATHS = {
