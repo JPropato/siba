@@ -5,10 +5,10 @@ import csv from 'csv-parser';
 
 const prisma = new PrismaClient();
 const PATHS = {
-  TICKETS: path.join(process.cwd(), '../../BAUMAN OPERACIONES - Ticket.csv'),
-  SUCURSALES: path.join(process.cwd(), '../../BAUMAN OPERACIONES - SUC.csv'),
-  TECNICOS: path.join(process.cwd(), '../../BAUMAN OPERACIONES - Tecnicos.csv'),
-  EDIFICIOS: path.join(process.cwd(), '../../BAUMAN OPERACIONES - EDIFICIOS.csv'),
+  TICKETS: path.join(__dirname, 'tickets.csv'),
+  SUCURSALES: path.join(__dirname, 'sucursales.csv'),
+  TECNICOS: path.join(__dirname, 'tecnicos.csv'),
+  EDIFICIOS: path.join(__dirname, 'edificios.csv'),
 };
 
 const ESTADO_MAPPER: Record<string, EstadoTicket> = {
