@@ -70,7 +70,9 @@ async function main() {
 
   // 1. Restaurar Cliente si no existe (Post-Cleanup)
   let cliente = await prisma.cliente.findFirst({
-    where: { OR: [{ cuit: '30546662428' }, { razonSocial: 'Correo Argentino S.A.' }] },
+    where: {
+      OR: [{ cuit: '30546662428' }, { razonSocial: 'Correo Argentino S.A.' }, { codigo: 1000 }],
+    },
   });
 
   if (!cliente) {
@@ -85,6 +87,8 @@ async function main() {
         direccionFiscal: 'Av. Paseo Colón 746, CABA',
       },
     });
+  } else {
+    console.log('✅ Cliente Correo Argentino S.A. ya existe.');
   }
 
   const admin = await prisma.usuario.findFirst({ where: { email: 'admin@bauman.com.ar' } });
