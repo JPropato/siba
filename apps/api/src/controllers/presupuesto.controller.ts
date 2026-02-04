@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
 import { TipoItemPresupuesto, Prisma, EstadoObra } from '@prisma/client';
-import { prisma } from '../index.js';
+import { prisma } from '../lib/prisma.js';
 import pdfService from '../services/pdf.service.js';
 import storageService from '../services/storage.service.js';
 

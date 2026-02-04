@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
 import { Prisma, TipoEmpleado, TipoContratacion } from '@prisma/client';
-import { prisma } from '../index.js';
+import { prisma } from '../lib/prisma.js';
 
 // --- Schemas ---
 const createEmpleadoSchema = z.object({

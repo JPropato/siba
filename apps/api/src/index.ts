@@ -14,7 +14,8 @@ const app = express();
 // Confiar en el proxy (Dokploy/Traefik) para detectar HTTPS correctamente
 app.set('trust proxy', 1);
 
-export const prisma = new PrismaClient();
+import { prisma } from './lib/prisma.js';
+// export const prisma = new PrismaClient(); // Removed to avoid circular dep
 const PORT = process.env.API_PORT || 3001;
 
 // Middleware logging (DEBUG)

@@ -1,4 +1,4 @@
-import { PrismaClient, EstadoTicket, RubroTicket, PrioridadTicket } from '@prisma/client';
+import { PrismaClient, EstadoTicket, RubroTicket, TipoTicket } from '@prisma/client';
 import fs from 'fs';
 import path from 'path';
 import csv from 'csv-parser';
@@ -10,18 +10,17 @@ const __dirname = path.dirname(__filename);
 const prisma = new PrismaClient();
 const PATHS = {
   TICKETS: path.join(__dirname, 'tickets.csv'),
-  SUCURSALES: path.join(__dirname, 'sucursales.csv'),
+  SUCURSALES: path.join(__dirname, 'sucursales-consolidado.csv'),
   TECNICOS: path.join(__dirname, 'tecnicos.csv'),
-  EDIFICIOS: path.join(__dirname, 'edificios.csv'),
 };
 
 const ESTADO_MAPPER: Record<string, EstadoTicket> = {
   REALIZADO: 'FINALIZADO',
-  'A REALIZAR': 'PROGRAMADO',
+  'A REALIZAR': 'ASIGNADO',
   PENDIENTE: 'NUEVO',
   'EN CURSO': 'EN_CURSO',
-  PROGRAMADO: 'PROGRAMADO',
-  RECHAZADO: 'RECHAZADO',
+  PROGRAMADO: 'ASIGNADO',
+  RECHAZADO: 'CANCELADO',
   CANCELADO: 'CANCELADO',
 };
 
@@ -36,15 +35,15 @@ const RUBRO_MAPPER: Record<string, RubroTicket> = {
   TERMINACIONES: 'TERMINACIONES',
 };
 
-const PRIORIDAD_MAPPER: Record<string, PrioridadTicket> = {
-  NORMAL: 'BAJA',
-  MODERADA: 'MEDIA',
-  ALTA: 'ALTA',
-  'EMERG. ALTA': 'EMERGENCIA',
-  'EMERG PROG': 'URGENCIA',
-  URGENTE: 'URGENCIA',
-  BAJA: 'BAJA',
-  MEDIA: 'MEDIA',
+const TIPO_MAPPER: Record<string, TipoTicket> = {
+  NORMAL: 'SN',
+  MODERADA: 'SN',
+  ALTA: 'SEP',
+  'EMERG. ALTA': 'SEA',
+  'EMERG PROG': 'SEP',
+  URGENTE: 'SEP',
+  BAJA: 'SN',
+  MEDIA: 'SN',
 };
 
 async function readCSV(filePath: string): Promise<Record<string, string>[]> {
@@ -100,12 +99,11 @@ async function main() {
   // 2. Restaurar Maestros (Zonas/Técnicos/Sucursales) si es la primera tanda
   if (START_INDEX === 0) {
     console.log('⏳ Cargando Maestros (Zonas, Técnicos, Sucursales)...');
-    const rawSucs = await readCSV(PATHS.SUCURSALES);
-    const rawEdificios = await readCSV(PATHS.EDIFICIOS);
-    const allSucsRaw = [...rawSucs, ...rawEdificios];
+    // Usar CSV consolidado con datos del pliego N° 040/2025
+    const allSucsRaw = await readCSV(PATHS.SUCURSALES);
 
     for (const z of Array.from(
-      new Set(allSucsRaw.map((s) => s['ZONAS']?.trim().toUpperCase()).filter(Boolean))
+      new Set(allSucsRaw.map((s) => s['ZONA']?.trim().toUpperCase()).filter(Boolean))
     )) {
       await prisma.zona.upsert({
         where: { nombre: z as string },
@@ -146,7 +144,7 @@ async function main() {
     }
 
     for (const s of allSucsRaw) {
-      const nombre = (s['SUCURSALES '] || s['SUCURSALES'])?.trim();
+      const nombre = s['NOMBRE']?.trim();
       if (!nombre) continue;
 
       const sucursalExistente = await prisma.sucursal.findFirst({
@@ -154,16 +152,27 @@ async function main() {
       });
 
       if (!sucursalExistente) {
-        const zonaNombre = s['ZONAS']?.trim().toUpperCase();
+        const zonaNombre = s['ZONA']?.trim().toUpperCase();
         const zona = await prisma.zona.findFirst({ where: { nombre: zonaNombre } });
+
+        // Nuevos campos del Pliego N° 040/2025 (Correo Argentino)
+        const m2Raw = s['METROS_CUADRADOS']?.trim();
+        const metrosCuadrados = m2Raw ? parseFloat(m2Raw) : null;
+
         await prisma.sucursal.create({
           data: {
             nombre,
             direccion: s['DIRECCION'] || 'Sin dirección',
-            codigoExterno: s['NIS'] || null,
+            telefono: s['TELEFONO'] || null,
             clienteId: cliente.id,
             zonaId:
               zona?.id || (await prisma.zona.findFirst({ where: { nombre: 'GENERAL' } }))?.id || 1,
+            // Campos específicos Correo Argentino
+            areaInterna: s['AREA_INTERNA'] || null,
+            regionOperativa: s['REGION_OPERATIVA'] || null,
+            usoDestino: s['USO_DESTINO'] || null,
+            metrosCuadrados: metrosCuadrados || null,
+            imagenSucursal: s['IMAGEN_SUCURSAL'] || null,
           },
         });
       }
@@ -212,7 +221,7 @@ async function main() {
         data: {
           descripcion: row['TRABAJO'] || 'Sin descripción',
           rubro: RUBRO_MAPPER[row['RUBRO']?.trim().toUpperCase()] || 'VARIOS',
-          prioridad: PRIORIDAD_MAPPER[row['PRIORIDAD']?.trim().toUpperCase()] || 'MEDIA',
+          tipoTicket: TIPO_MAPPER[row['PRIORIDAD']?.trim().toUpperCase()] || 'SN',
           estado: ESTADO_MAPPER[row['ESTADO']?.trim().toUpperCase()] || 'NUEVO',
           fechaCreacion: isNaN(fechaValida.getTime()) ? new Date() : fechaValida,
           sucursalId: sucursalMap.get(sucNombre) || sucFallbackId,

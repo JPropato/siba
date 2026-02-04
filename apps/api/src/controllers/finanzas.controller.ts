@@ -9,7 +9,7 @@ import {
   EstadoMovimiento,
   Prisma,
 } from '@prisma/client';
-import { prisma } from '../index.js';
+import { prisma } from '../lib/prisma.js';
 
 // =====================================================
 // SCHEMAS DE VALIDACIÓN

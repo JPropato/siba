@@ -15,7 +15,7 @@ const COLUMN_COLORS: Record<EstadoTicket, { border: string; bg: string; text: st
     bg: 'bg-slate-100 dark:bg-slate-800',
     text: 'text-slate-700 dark:text-slate-300',
   },
-  PROGRAMADO: {
+  ASIGNADO: {
     border: 'border-t-blue-500',
     bg: 'bg-blue-100 dark:bg-blue-900/30',
     text: 'text-blue-700 dark:text-blue-400',
@@ -25,15 +25,15 @@ const COLUMN_COLORS: Record<EstadoTicket, { border: string; bg: string; text: st
     bg: 'bg-amber-100 dark:bg-amber-900/30',
     text: 'text-amber-700 dark:text-amber-400',
   },
+  PENDIENTE_CLIENTE: {
+    border: 'border-t-purple-500',
+    bg: 'bg-purple-100 dark:bg-purple-900/30',
+    text: 'text-purple-700 dark:text-purple-400',
+  },
   FINALIZADO: {
     border: 'border-t-green-500',
     bg: 'bg-green-100 dark:bg-green-900/30',
     text: 'text-green-700 dark:text-green-400',
-  },
-  RECHAZADO: {
-    border: 'border-t-red-500',
-    bg: 'bg-red-100 dark:bg-red-900/30',
-    text: 'text-red-700 dark:text-red-400',
   },
   CANCELADO: {
     border: 'border-t-slate-300',
@@ -44,10 +44,10 @@ const COLUMN_COLORS: Record<EstadoTicket, { border: string; bg: string; text: st
 
 const COLUMN_ICONS: Record<EstadoTicket, string> = {
   NUEVO: 'fiber_new',
-  PROGRAMADO: 'schedule',
+  ASIGNADO: 'person_add',
   EN_CURSO: 'engineering',
+  PENDIENTE_CLIENTE: 'hourglass_top',
   FINALIZADO: 'check_circle',
-  RECHAZADO: 'cancel',
   CANCELADO: 'block',
 };
 

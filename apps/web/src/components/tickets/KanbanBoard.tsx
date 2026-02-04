@@ -9,7 +9,14 @@ interface KanbanBoardProps {
   onDeleteTicket: (ticket: Ticket) => void;
 }
 
-const ESTADOS_ORDEN: EstadoTicket[] = ['NUEVO', 'PROGRAMADO', 'EN_CURSO', 'FINALIZADO'];
+// Orden de estados según flujo validado
+const ESTADOS_ORDEN: EstadoTicket[] = [
+  'NUEVO',
+  'ASIGNADO',
+  'EN_CURSO',
+  'PENDIENTE_CLIENTE',
+  'FINALIZADO',
+];
 
 export default function KanbanBoard({
   tickets,
@@ -21,8 +28,9 @@ export default function KanbanBoard({
   const ticketsByEstado = useMemo(() => {
     const grouped: Partial<Record<EstadoTicket, Ticket[]>> = {
       NUEVO: [],
-      PROGRAMADO: [],
+      ASIGNADO: [],
       EN_CURSO: [],
+      PENDIENTE_CLIENTE: [],
       FINALIZADO: [],
     };
 

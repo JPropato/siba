@@ -1,5 +1,5 @@
 import type { Ticket } from '../../types/tickets';
-import { PRIORIDAD_LABELS, PRIORIDAD_COLORS, RUBRO_LABELS } from '../../types/tickets';
+import { TIPO_TICKET_LABELS, TIPO_TICKET_COLORS, RUBRO_LABELS } from '../../types/tickets';
 
 interface KanbanCardProps {
   ticket: Ticket;
@@ -28,15 +28,15 @@ export default function KanbanCard({ ticket, onEdit, onDelete }: KanbanCardProps
       className="group bg-white dark:bg-charcoal/30 rounded-xl border border-[#e5e5e3] dark:border-[#37322a] p-4 cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 hover:border-gold/30"
       onClick={() => onEdit(ticket)}
     >
-      {/* Header: Código + Prioridad */}
+      {/* Header: Código + Tipo Ticket (SLA) */}
       <div className="flex items-center justify-between mb-2">
         <span className="font-mono text-xs font-bold text-gold">
           {formatCode(ticket.codigoInterno)}
         </span>
         <span
-          className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${PRIORIDAD_COLORS[ticket.prioridad]}`}
+          className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${TIPO_TICKET_COLORS[ticket.tipoTicket]}`}
         >
-          {PRIORIDAD_LABELS[ticket.prioridad]}
+          {TIPO_TICKET_LABELS[ticket.tipoTicket]}
         </span>
       </div>
 

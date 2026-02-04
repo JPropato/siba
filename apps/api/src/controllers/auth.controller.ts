@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
+import { prisma } from '../lib/prisma.js';
 import { AuthService } from '../services/auth.service.js';
 
 // Schema de validación para Login

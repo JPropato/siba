@@ -1,23 +1,18 @@
 import { useState, useEffect, useCallback } from 'react';
 import api from '../lib/api';
-import type {
-  Ticket,
-  EstadoTicket,
-  RubroTicket,
-  PrioridadTicket,
-} from '../types/tickets';
+import type { Ticket, EstadoTicket, RubroTicket, TipoTicket } from '../types/tickets';
 import {
   ESTADO_LABELS,
   ESTADO_COLORS,
-  PRIORIDAD_LABELS,
-  PRIORIDAD_COLORS,
+  TIPO_TICKET_LABELS,
+  TIPO_TICKET_COLORS,
   RUBRO_LABELS,
 } from '../types/tickets';
-import TicketDialog from '../components/tickets/TicketDialog';
+import TicketDrawer from '../components/tickets/TicketDrawer';
 import KanbanBoard from '../components/tickets/KanbanBoard';
 import { OTDialog } from '../features/ordenes-trabajo';
 import { Select } from '../components/ui/core/Select';
-import { Search, LayoutGrid, AlertCircle, TrendingUp } from 'lucide-react';
+import { Search, LayoutGrid, AlertCircle, Clock } from 'lucide-react';
 
 export default function TicketsPage() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -25,13 +20,14 @@ export default function TicketsPage() {
   const [search, setSearch] = useState('');
   const [estadoFilter, setEstadoFilter] = useState<EstadoTicket | ''>('');
   const [rubroFilter, setRubroFilter] = useState<RubroTicket | ''>('');
-  const [prioridadFilter, setPrioridadFilter] = useState<PrioridadTicket | ''>('');
+  const [tipoTicketFilter, setTipoTicketFilter] = useState<TipoTicket | ''>('');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
 
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
+  const [detailTicketId, setDetailTicketId] = useState<number | null>(null);
   const [viewMode, setViewMode] = useState<'table' | 'kanban'>('table');
   const [otTicket, setOtTicket] = useState<Ticket | null>(null);
 
@@ -45,7 +41,7 @@ export default function TicketsPage() {
       if (search) params.append('search', search);
       if (estadoFilter) params.append('estado', estadoFilter);
       if (rubroFilter) params.append('rubro', rubroFilter);
-      if (prioridadFilter) params.append('prioridad', prioridadFilter);
+      if (tipoTicketFilter) params.append('tipoTicket', tipoTicketFilter);
 
       const res = await api.get(`/tickets?${params}`);
       setTickets(res.data.data || []);
@@ -56,7 +52,7 @@ export default function TicketsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [page, search, estadoFilter, rubroFilter, prioridadFilter]);
+  }, [page, search, estadoFilter, rubroFilter, tipoTicketFilter]);
 
   useEffect(() => {
     fetchTickets();
@@ -81,6 +77,13 @@ export default function TicketsPage() {
     } catch (error) {
       console.error('Error deleting ticket:', error);
     }
+  };
+
+  const handleTicketSuccess = (ticketId: number) => {
+    setIsDrawerOpen(false);
+    fetchTickets();
+    // Abrir drawer de detalle del ticket creado
+    setDetailTicketId(ticketId);
   };
 
   const formatCode = (code: number) => `TKT-${String(code).padStart(5, '0')}`;
@@ -108,20 +111,22 @@ export default function TicketsPage() {
           <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
             <button
               onClick={() => setViewMode('table')}
-              className={`p-2 rounded-md transition-all ${viewMode === 'table'
-                ? 'bg-white dark:bg-slate-700 shadow-sm text-gold'
-                : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
-                }`}
+              className={`p-2 rounded-md transition-all ${
+                viewMode === 'table'
+                  ? 'bg-white dark:bg-slate-700 shadow-sm text-gold'
+                  : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+              }`}
               title="Vista Tabla"
             >
               <span className="material-symbols-outlined text-[20px]">view_list</span>
             </button>
             <button
               onClick={() => setViewMode('kanban')}
-              className={`p-2 rounded-md transition-all ${viewMode === 'kanban'
-                ? 'bg-white dark:bg-slate-700 shadow-sm text-gold'
-                : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
-                }`}
+              className={`p-2 rounded-md transition-all ${
+                viewMode === 'kanban'
+                  ? 'bg-white dark:bg-slate-700 shadow-sm text-gold'
+                  : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+              }`}
               title="Vista Kanban"
             >
               <span className="material-symbols-outlined text-[20px]">view_kanban</span>
@@ -181,17 +186,20 @@ export default function TicketsPage() {
             icon={<LayoutGrid className="h-4 w-4" />}
           />
           <Select
-            label="Prioridad"
-            value={prioridadFilter}
+            label="Tipo (SLA)"
+            value={tipoTicketFilter}
             onChange={(val) => {
-              setPrioridadFilter(val as PrioridadTicket | '');
+              setTipoTicketFilter(val as TipoTicket | '');
               setPage(1);
             }}
             options={[
-              { value: '', label: 'Todas las prioridades' },
-              ...Object.entries(PRIORIDAD_LABELS).map(([k, v]) => ({ value: k, label: v as string })),
+              { value: '', label: 'Todos los tipos' },
+              ...Object.entries(TIPO_TICKET_LABELS).map(([k, v]) => ({
+                value: k,
+                label: v as string,
+              })),
             ]}
-            icon={<TrendingUp className="h-4 w-4" />}
+            icon={<Clock className="h-4 w-4" />}
           />
         </div>
       </div>
@@ -219,7 +227,7 @@ export default function TicketsPage() {
                     Estado
                   </th>
                   <th className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">
-                    Prioridad
+                    Tipo
                   </th>
                   <th className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">
                     Fecha
@@ -248,7 +256,8 @@ export default function TicketsPage() {
                   tickets.map((t) => (
                     <tr
                       key={t.id}
-                      className="hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors"
+                      className="hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors cursor-pointer"
+                      onClick={() => handleEdit(t)}
                     >
                       <td className="px-4 py-3">
                         <div className="font-mono font-semibold text-brand">
@@ -284,16 +293,19 @@ export default function TicketsPage() {
                       </td>
                       <td className="px-4 py-3">
                         <span
-                          className={`px-2 py-1 rounded-full text-xs font-semibold ${PRIORIDAD_COLORS[t.prioridad]}`}
+                          className={`px-2 py-1 rounded-full text-xs font-semibold ${TIPO_TICKET_COLORS[t.tipoTicket]}`}
                         >
-                          {PRIORIDAD_LABELS[t.prioridad]}
+                          {TIPO_TICKET_LABELS[t.tipoTicket]}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-slate-600 dark:text-slate-400 text-sm">
                         {formatDate(t.fechaCreacion)}
                       </td>
                       <td className="px-4 py-3 text-right">
-                        <div className="flex items-center justify-end gap-1">
+                        <div
+                          className="flex items-center justify-end gap-1"
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           <button
                             onClick={() => handleEdit(t)}
                             className="p-2 text-slate-400 hover:text-brand hover:bg-brand/10 rounded-lg transition-colors"
@@ -360,12 +372,12 @@ export default function TicketsPage() {
         </div>
       )}
 
-      {/* Dialog */}
-      <TicketDialog
+      {/* Drawer de Creación/Edición */}
+      <TicketDrawer
         isOpen={isDrawerOpen}
         onClose={() => setIsDrawerOpen(false)}
         ticket={selectedTicket}
-        onSuccess={fetchTickets}
+        onSuccess={handleTicketSuccess}
       />
 
       {/* OT Dialog */}
@@ -377,6 +389,9 @@ export default function TicketsPage() {
           onSuccess={fetchTickets}
         />
       )}
+
+      {/* TODO: TicketDetailDrawer para ver detalle después de crear */}
+      {/* Por ahora solo recargamos la lista, el drawer de detalle se implementará en siguiente iteración */}
     </div>
   );
 }

@@ -31,21 +31,19 @@ enum RubroTicket {
   TERMINACIONES
 }
 
-enum PrioridadTicket {
-  PROGRAMADO
-  EMERGENCIA
-  URGENCIA
-  BAJA
-  MEDIA
-  ALTA
+// TipoTicket define el SLA del ticket
+enum TipoTicket {
+  SEA  // Solicitud Emergencia Alta - Fin del día hábil siguiente
+  SEP  // Solicitud Emergencia Programable - 7 días corridos
+  SN   // Solicitud Normal - 15 días corridos
 }
 
 enum EstadoTicket {
   NUEVO
-  PROGRAMADO
+  ASIGNADO
   EN_CURSO
+  PENDIENTE_CLIENTE
   FINALIZADO
-  RECHAZADO
   CANCELADO
 }
 
@@ -179,6 +177,14 @@ model Sucursal {
   telefono         String?
   contactoNombre   String?   @map("contacto_nombre")
   contactoTelefono String?   @map("contacto_telefono")
+  
+  // Campos específicos Correo Argentino (Pliego N° 040/2025)
+  areaInterna      String?   @map("area_interna")
+  regionOperativa  String?   @map("region_operativa")
+  usoDestino       String?   @map("uso_destino")
+  metrosCuadrados  Float?    @map("metros_cuadrados")
+  imagenSucursal   String?   @map("imagen_sucursal")
+  
   fechaCreacion    DateTime  @default(now()) @map("fecha_creacion")
   fechaActualizacion DateTime @updatedAt @map("fecha_actualizacion")
   fechaEliminacion DateTime? @map("fecha_eliminacion")
@@ -292,14 +298,17 @@ model Ticket {
   trabajo             String?
   observaciones       String?
   rubro               RubroTicket
-  prioridad           PrioridadTicket
+  tipoTicket          TipoTicket      @default(SN) @map("tipo_ticket")
   estado              EstadoTicket    @default(NUEVO)
   
   fechaCreacion       DateTime        @default(now()) @map("fecha_creacion")
   fechaProgramada     DateTime?       @map("fecha_programada")
+  horaEjecucion       DateTime?       @map("hora_ejecucion")
   fechaFinalizacion   DateTime?       @map("fecha_finalizacion")
   fechaActualizacion  DateTime        @updatedAt @map("fecha_actualizacion")
   fechaEliminacion    DateTime?       @map("fecha_eliminacion")
+  
+  motivoRechazo       String?         @map("motivo_rechazo")
   
   sucursalId          Int             @map("sucursal_id")
   tecnicoId           Int?            @map("tecnico_id")

@@ -1,9 +1,9 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
 import { Prisma } from '@prisma/client';
-import { prisma } from '../index.js';
-import type { RubroTicket, PrioridadTicket, EstadoTicket } from '@siba/shared';
-import { ESTADO_LABELS } from '@siba/shared';
+import { prisma } from '../lib/prisma.js';
+import type { RubroTicket, TipoTicket, EstadoTicket } from '@siba/shared';
+import { ESTADO_LABELS, TRANSICIONES_VALIDAS, esTransicionValida } from '@siba/shared';
 
 // --- Schemas ---
 const createTicketSchema = z.object({
@@ -11,21 +11,29 @@ const createTicketSchema = z.object({
   descripcion: z.string().min(5).max(1000),
   trabajo: z.string().max(1000).optional().nullable(),
   observaciones: z.string().max(2000).optional().nullable(),
-  rubro: z.string().min(1), // Validated against RubroTicket
-  prioridad: z.string().min(1),
-  estado: z.string().optional(),
-  fechaProgramada: z.string().datetime().optional().nullable(),
+  rubro: z.string().min(1),
+  tipoTicket: z.enum(['SEA', 'SEP', 'SN']).default('SN'),
   sucursalId: z.number().int(),
   tecnicoId: z.number().int().optional().nullable(),
+  fechaProgramada: z.string().datetime().optional().nullable(),
+  horaEjecucion: z.string().datetime().optional().nullable(),
   ticketRelacionadoId: z.number().int().optional().nullable(),
 });
 
 const updateTicketSchema = createTicketSchema.partial();
 
-// Helper to get user ID from request (assumes auth middleware sets req.user)
+const cambiarEstadoSchema = z.object({
+  estado: z.enum(['NUEVO', 'ASIGNADO', 'EN_CURSO', 'PENDIENTE_CLIENTE', 'FINALIZADO', 'CANCELADO']),
+  observacion: z.string().optional(),
+  motivoRechazo: z.string().optional(),
+  tecnicoId: z.number().int().optional(),
+  fechaProgramada: z.string().datetime().optional().nullable(),
+});
+
+// Helper to get user ID from request
 const getUserId = (req: Request): number => {
   const user = (req as Request & { user?: { id: number } }).user;
-  return user?.id || 1; // Fallback to 1 for dev, should always have user in prod
+  return user?.id || 1;
 };
 
 // Helper to log ticket history
@@ -58,7 +66,7 @@ export const getAll = async (req: Request, res: Response) => {
     const search = req.query.search as string;
     const estado = req.query.estado as EstadoTicket;
     const rubro = req.query.rubro as RubroTicket;
-    const prioridad = req.query.prioridad as PrioridadTicket;
+    const tipoTicket = req.query.tipoTicket as TipoTicket;
 
     const skip = (page - 1) * limit;
 
@@ -76,7 +84,7 @@ export const getAll = async (req: Request, res: Response) => {
 
     if (estado) whereClause.estado = estado;
     if (rubro) whereClause.rubro = rubro;
-    if (prioridad) whereClause.prioridad = prioridad;
+    if (tipoTicket) whereClause.tipoTicket = tipoTicket;
 
     const [total, tickets] = await prisma.$transaction([
       prisma.ticket.count({ where: whereClause }),
@@ -84,7 +92,7 @@ export const getAll = async (req: Request, res: Response) => {
         where: whereClause,
         include: {
           sucursal: { select: { nombre: true, cliente: { select: { razonSocial: true } } } },
-          tecnico: { select: { nombre: true, apellido: true } },
+          tecnico: { select: { id: true, nombre: true, apellido: true } },
           creadoPor: { select: { nombre: true, apellido: true } },
         },
         skip,
@@ -151,12 +159,20 @@ export const create = async (req: Request, res: Response) => {
     const body = createTicketSchema.parse(req.body);
     const userId = getUserId(req);
 
-    // Validate sucursal exists
+    // Validate sucursal exists and check for Correo Argentino requirement
     const sucursal = await prisma.sucursal.findFirst({
       where: { id: body.sucursalId, fechaEliminacion: null },
+      include: { cliente: true },
     });
     if (!sucursal) {
       return res.status(400).json({ error: 'La sucursal seleccionada no existe.' });
+    }
+
+    // Validar Correo Argentino
+    if (sucursal.cliente?.razonSocial?.toLowerCase().includes('correo') && !body.codigoCliente) {
+      return res.status(400).json({
+        error: 'El N° de Ticket Externo es obligatorio para clientes Correo Argentino.',
+      });
     }
 
     // Validate tecnico if provided
@@ -188,17 +204,20 @@ export const create = async (req: Request, res: Response) => {
         trabajo: body.trabajo,
         observaciones: body.observaciones,
         rubro: body.rubro as RubroTicket,
-        prioridad: body.prioridad as PrioridadTicket,
-        estado: (body.estado as EstadoTicket) || 'NUEVO',
+        tipoTicket: body.tipoTicket as TipoTicket,
+        estado: 'NUEVO',
         sucursalId: body.sucursalId,
         fechaProgramada: body.fechaProgramada ? new Date(body.fechaProgramada) : null,
+        horaEjecucion: body.horaEjecucion ? new Date(body.horaEjecucion) : null,
         creadoPorId: userId,
         tecnicoId: body.tecnicoId ?? null,
         ticketRelacionadoId: body.ticketRelacionadoId ?? null,
       },
       include: {
-        sucursal: { select: { nombre: true } },
-        tecnico: { select: { nombre: true, apellido: true } },
+        sucursal: {
+          select: { id: true, nombre: true, cliente: { select: { razonSocial: true } } },
+        },
+        tecnico: { select: { id: true, nombre: true, apellido: true } },
       },
     });
 
@@ -228,13 +247,46 @@ export const update = async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Ticket no encontrado' });
     }
 
-    // Validate sucursal if changing
+    // Solo se puede editar en estados NUEVO o ASIGNADO
+    if (!['NUEVO', 'ASIGNADO'].includes(ticket.estado)) {
+      return res.status(400).json({
+        error: `No se puede editar un ticket en estado ${ESTADO_LABELS[ticket.estado as EstadoTicket]}`,
+      });
+    }
+
+    // Validate sucursal if changing or validate Correo rule if needed
     if (body.sucursalId && body.sucursalId !== ticket.sucursalId) {
       const sucursal = await prisma.sucursal.findFirst({
         where: { id: body.sucursalId, fechaEliminacion: null },
+        include: { cliente: true },
       });
       if (!sucursal) {
         return res.status(400).json({ error: 'La sucursal seleccionada no existe.' });
+      }
+
+      // Si cambia a una sucursal de Correo, validar codigoCliente
+      if (sucursal.cliente?.razonSocial?.toLowerCase().includes('correo')) {
+        const codigoCliente =
+          body.codigoCliente !== undefined ? body.codigoCliente : ticket.codigoCliente;
+        if (!codigoCliente) {
+          return res.status(400).json({
+            error: 'El N° de Ticket Externo es obligatorio para clientes Correo Argentino.',
+          });
+        }
+      }
+    } else {
+      // Si no cambia sucursal, pero quizás es de Correo y está borrando el codigoCliente
+      // O si el ticket ya era de Correo (chequeamos la sucursal actual)
+      if (body.codigoCliente === null || body.codigoCliente === '') {
+        const currentSucursal = await prisma.sucursal.findUnique({
+          where: { id: ticket.sucursalId },
+          include: { cliente: true },
+        });
+        if (currentSucursal?.cliente?.razonSocial?.toLowerCase().includes('correo')) {
+          return res.status(400).json({
+            error: 'El N° de Ticket Externo es obligatorio para clientes Correo Argentino.',
+          });
+        }
       }
     }
 
@@ -253,9 +305,6 @@ export const update = async (req: Request, res: Response) => {
     // Log changes
     const changes: { campo: string; anterior: string | null; nuevo: string | null }[] = [];
 
-    if (body.estado && body.estado !== ticket.estado) {
-      changes.push({ campo: 'estado', anterior: ticket.estado, nuevo: body.estado });
-    }
     if (body.tecnicoId !== undefined && body.tecnicoId !== ticket.tecnicoId) {
       changes.push({
         campo: 'tecnicoId',
@@ -263,8 +312,8 @@ export const update = async (req: Request, res: Response) => {
         nuevo: String(body.tecnicoId),
       });
     }
-    if (body.prioridad && body.prioridad !== ticket.prioridad) {
-      changes.push({ campo: 'prioridad', anterior: ticket.prioridad, nuevo: body.prioridad });
+    if (body.tipoTicket && body.tipoTicket !== ticket.tipoTicket) {
+      changes.push({ campo: 'tipoTicket', anterior: ticket.tipoTicket, nuevo: body.tipoTicket });
     }
 
     const updated = await prisma.ticket.update({
@@ -275,8 +324,7 @@ export const update = async (req: Request, res: Response) => {
         trabajo: body.trabajo,
         observaciones: body.observaciones,
         rubro: body.rubro as RubroTicket,
-        prioridad: body.prioridad as PrioridadTicket,
-        estado: body.estado as EstadoTicket,
+        tipoTicket: body.tipoTicket as TipoTicket,
         sucursalId: body.sucursalId,
         fechaProgramada:
           body.fechaProgramada !== undefined
@@ -284,8 +332,12 @@ export const update = async (req: Request, res: Response) => {
               ? new Date(body.fechaProgramada)
               : null
             : undefined,
-        fechaFinalizacion:
-          body.estado === 'FINALIZADO' && ticket.estado !== 'FINALIZADO' ? new Date() : undefined,
+        horaEjecucion:
+          body.horaEjecucion !== undefined
+            ? body.horaEjecucion
+              ? new Date(body.horaEjecucion)
+              : null
+            : undefined,
         actualizadoPorId: userId,
         tecnicoId: body.tecnicoId === undefined ? undefined : (body.tecnicoId ?? null),
         ticketRelacionadoId:
@@ -339,16 +391,12 @@ export const deleteOne = async (req: Request, res: Response) => {
   }
 };
 
-// --- Estado change endpoint ---
+// --- Cambiar Estado con validación de transiciones ---
 export const cambiarEstado = async (req: Request, res: Response) => {
   try {
     const id = Number(req.params.id);
-    const { estado, observacion } = req.body;
+    const body = cambiarEstadoSchema.parse(req.body);
     const userId = getUserId(req);
-
-    if (!estado || !Object.keys(ESTADO_LABELS).includes(estado)) {
-      return res.status(400).json({ error: 'Estado inválido' });
-    }
 
     const ticket = await prisma.ticket.findFirst({
       where: { id, fechaEliminacion: null },
@@ -357,21 +405,77 @@ export const cambiarEstado = async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Ticket no encontrado' });
     }
 
-    const estadoAnterior = ticket.estado;
+    const estadoActual = ticket.estado as EstadoTicket;
+    const estadoNuevo = body.estado as EstadoTicket;
+
+    // Validar transición
+    if (!esTransicionValida(estadoActual, estadoNuevo)) {
+      const transicionesPermitidas = TRANSICIONES_VALIDAS[estadoActual];
+      return res.status(400).json({
+        error: `Transición no permitida de ${ESTADO_LABELS[estadoActual]} a ${ESTADO_LABELS[estadoNuevo]}`,
+        transicionesPermitidas: transicionesPermitidas.map((e) => ({
+          estado: e,
+          label: ESTADO_LABELS[e],
+        })),
+      });
+    }
+
+    // Validaciones específicas por transición
+    const updateData: Prisma.TicketUpdateInput = {
+      estado: estadoNuevo,
+      actualizadoPor: { connect: { id: userId } },
+    };
+
+    // NUEVO → ASIGNADO: requiere técnico
+    if (estadoActual === 'NUEVO' && estadoNuevo === 'ASIGNADO') {
+      const tecnicoId = body.tecnicoId || ticket.tecnicoId;
+      if (!tecnicoId) {
+        return res.status(400).json({
+          error: 'Debe asignar un técnico para cambiar a estado ASIGNADO',
+        });
+      }
+      // Validar que el técnico existe
+      const tecnico = await prisma.empleado.findFirst({
+        where: { id: tecnicoId, fechaEliminacion: null, tipo: 'TECNICO' },
+      });
+      if (!tecnico) {
+        return res.status(400).json({ error: 'El técnico seleccionado no es válido.' });
+      }
+      updateData.tecnico = { connect: { id: tecnicoId } };
+      if (body.fechaProgramada) {
+        updateData.fechaProgramada = new Date(body.fechaProgramada);
+      }
+    }
+
+    // PENDIENTE_CLIENTE → NUEVO (rechazo): guardar motivo
+    if (estadoActual === 'PENDIENTE_CLIENTE' && estadoNuevo === 'NUEVO') {
+      updateData.motivoRechazo = body.motivoRechazo || body.observacion || null;
+      // Al rechazar, se desasigna el técnico
+      updateData.tecnico = { disconnect: true };
+      updateData.fechaProgramada = null;
+    }
+
+    // → FINALIZADO: registrar fecha de finalización
+    if (estadoNuevo === 'FINALIZADO') {
+      updateData.fechaFinalizacion = new Date();
+    }
 
     const updated = await prisma.ticket.update({
       where: { id },
-      data: {
-        estado: estado as EstadoTicket,
-        fechaFinalizacion: estado === 'FINALIZADO' ? new Date() : undefined,
-        actualizadoPorId: userId,
+      data: updateData,
+      include: {
+        sucursal: { select: { nombre: true, cliente: { select: { razonSocial: true } } } },
+        tecnico: { select: { id: true, nombre: true, apellido: true } },
       },
     });
 
-    await logHistorial(id, userId, 'estado', estadoAnterior, estado, observacion);
+    await logHistorial(id, userId, 'estado', estadoActual, estadoNuevo, body.observacion);
 
     res.json(updated);
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ error: error.errors });
+    }
     console.error('Error al cambiar estado:', error);
     res.status(500).json({ error: 'Error al cambiar estado' });
   }
