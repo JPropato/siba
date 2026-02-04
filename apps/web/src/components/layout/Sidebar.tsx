@@ -2,6 +2,18 @@ import { useState, useMemo } from 'react';
 import { usePermissions } from '../../hooks/usePermissions';
 import { cn } from '../../lib/utils';
 import logoBauman from '../../assets/logo-bauman.png';
+import {
+  LayoutDashboard,
+  TrendingUp,
+  Wallet,
+  Building2,
+  Package,
+  Users,
+  ShieldCheck,
+  Settings,
+  ChevronDown,
+  X,
+} from 'lucide-react';
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -18,6 +30,20 @@ interface NavItem {
   icon: string;
   subItems?: { id: string; label: string }[];
 }
+
+// Mapeo de iconos Material Symbols → Lucide
+const iconMap: Record<string, React.ElementType> = {
+  dashboard: LayoutDashboard,
+  trending_up: TrendingUp,
+  account_balance_wallet: Wallet,
+  corporate_fare: Building2,
+  inventory_2: Package,
+  groups: Users,
+  admin_panel_settings: ShieldCheck,
+  settings: Settings,
+  expand_more: ChevronDown,
+  close: X,
+};
 
 // Mapeo de permisos requeridos por cada menú
 const menuPermissions: Record<string, string | null> = {
@@ -141,15 +167,17 @@ export function Sidebar({
     const isExpanded = expandedMenus.includes(item.id);
     const hasSubItems = item.subItems && item.subItems.length > 0;
     const showLabels = isMobile || !isCollapsed;
+    const IconComponent = iconMap[item.icon];
 
     return (
       <div key={item.id} className="relative group">
         <div
           onClick={() => handleItemClick(item)}
           className={`relative flex items-center gap-3 px-3 py-3 rounded-lg cursor-pointer transition-all
-            ${isActive
-              ? 'bg-brand/10 text-brand'
-              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
+            ${
+              isActive
+                ? 'bg-brand/10 text-brand'
+                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
             }
             ${hasSubItems && showLabels ? 'justify-between' : ''}
             ${!showLabels ? 'justify-center' : ''}
@@ -157,7 +185,7 @@ export function Sidebar({
         >
           {isActive && <div className="sidebar-active-indicator" />}
           <div className={`flex items-center gap-3 ${!showLabels ? 'justify-center' : ''}`}>
-            <span className="material-symbols-outlined text-xl">{item.icon}</span>
+            {IconComponent && <IconComponent className="h-5 w-5" />}
             {showLabels && (
               <span className={`text-sm ${isActive ? 'font-semibold' : 'font-medium'}`}>
                 {item.label}
@@ -165,12 +193,9 @@ export function Sidebar({
             )}
           </div>
           {hasSubItems && showLabels && (
-            <span
-              className={`material-symbols-outlined text-xs transition-transform ${isExpanded ? 'rotate-180' : ''
-                }`}
-            >
-              expand_more
-            </span>
+            <ChevronDown
+              className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+            />
           )}
         </div>
 
@@ -189,7 +214,7 @@ export function Sidebar({
                     key={subItem.id}
                     onClick={() => handleSubItemClick(subItem, item.label)}
                     className={cn(
-                      "px-4 py-2 text-sm transition-colors cursor-pointer",
+                      'px-4 py-2 text-sm transition-colors cursor-pointer',
                       currentPage === subItem.id
                         ? 'text-brand font-bold bg-brand/5'
                         : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800/50'
@@ -217,9 +242,10 @@ export function Sidebar({
                 key={subItem.id}
                 onClick={() => handleSubItemClick(subItem, item.label)}
                 className={`px-3 py-2 rounded-lg cursor-pointer text-sm transition-all
-                  ${currentPage === subItem.id
-                    ? 'text-brand font-medium'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  ${
+                    currentPage === subItem.id
+                      ? 'text-brand font-medium'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                   }
                 `}
               >
@@ -270,35 +296,39 @@ export function Sidebar({
 
       {/* Bottom Navigation */}
       <div className="p-4 mt-auto border-t border-[var(--border)] space-y-1">
-        {bottomNavItems.map((item) => (
-          <div key={item.id} className="relative group">
-            <div
-              onClick={() => {
-                onNavigate(item.id, item.label);
-                onMobileClose?.();
-              }}
-              className={`flex items-center gap-3 px-3 py-2 cursor-pointer transition-colors rounded-lg
-                ${currentPage === item.id
-                  ? 'text-brand'
-                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'
-                }
-                ${!isMobile && isCollapsed ? 'justify-center' : ''}
-              `}
-            >
-              <span className="material-symbols-outlined text-xl">{item.icon}</span>
-              {(isMobile || !isCollapsed) && (
-                <span className="text-sm font-medium">{item.label}</span>
+        {bottomNavItems.map((item) => {
+          const IconComponent = iconMap[item.icon];
+          return (
+            <div key={item.id} className="relative group">
+              <div
+                onClick={() => {
+                  onNavigate(item.id, item.label);
+                  onMobileClose?.();
+                }}
+                className={`flex items-center gap-3 px-3 py-2 cursor-pointer transition-colors rounded-lg
+                  ${
+                    currentPage === item.id
+                      ? 'text-brand'
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'
+                  }
+                  ${!isMobile && isCollapsed ? 'justify-center' : ''}
+                `}
+              >
+                {IconComponent && <IconComponent className="h-5 w-5" />}
+                {(isMobile || !isCollapsed) && (
+                  <span className="text-sm font-medium">{item.label}</span>
+                )}
+              </div>
+              {/* Tooltip for collapsed state */}
+              {!isMobile && isCollapsed && (
+                <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-3 py-2 bg-charcoal dark:bg-white text-white dark:text-charcoal text-sm font-medium rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-50">
+                  {item.label}
+                  <div className="absolute right-full top-1/2 -translate-y-1/2 border-8 border-transparent border-r-charcoal dark:border-r-white" />
+                </div>
               )}
             </div>
-            {/* Tooltip for collapsed state */}
-            {!isMobile && isCollapsed && (
-              <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-3 py-2 bg-charcoal dark:bg-white text-white dark:text-charcoal text-sm font-medium rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-50">
-                {item.label}
-                <div className="absolute right-full top-1/2 -translate-y-1/2 border-8 border-transparent border-r-charcoal dark:border-r-white" />
-              </div>
-            )}
-          </div>
-        ))}
+          );
+        })}
       </div>
     </>
   );
@@ -333,7 +363,7 @@ export function Sidebar({
           onClick={onMobileClose}
           className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 dark:hover:text-white"
         >
-          <span className="material-symbols-outlined">close</span>
+          <X className="h-5 w-5" />
         </button>
         {sidebarContent(true)}
       </aside>

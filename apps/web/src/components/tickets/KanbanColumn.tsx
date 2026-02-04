@@ -1,6 +1,7 @@
 import type { Ticket, EstadoTicket } from '../../types/tickets';
 import { ESTADO_LABELS } from '../../types/tickets';
 import KanbanCard from './KanbanCard';
+import { Sparkles, UserPlus, Wrench, Clock, CheckCircle, Ban, Inbox } from 'lucide-react';
 
 interface KanbanColumnProps {
   estado: EstadoTicket;

@@ -1,39 +1,56 @@
 import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
 import api from '../lib/api';
 import { useAuthStore } from '../stores/auth-store';
 import { useNavigate } from 'react-router-dom';
+import { Button } from '../components/ui/core/Button';
+import { Input } from '../components/ui/core/Input';
 import logoBauman from '../assets/logo-bauman.png';
+import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
+
+// Schema de validación con Zod
+const loginSchema = z.object({
+  email: z
+    .string()
+    .min(1, 'El correo electrónico es requerido')
+    .email('Correo electrónico inválido'),
+  password: z.string().min(1, 'La contraseña es requerida'),
+});
+
+type LoginFormData = z.infer<typeof loginSchema>;
 
 export function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const navigate = useNavigate();
   const setAuth = useAuthStore((state) => state.setAuth);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+  });
+
+  const onSubmit = async (data: LoginFormData) => {
     setError(null);
 
     try {
-      const response = await api.post('/auth/login', { email, password });
+      const response = await api.post('/auth/login', data);
       const { user, accessToken } = response.data;
 
-      setAuth(user, accessToken); // Save user & token in store
-
-      navigate('/dashboard'); // Auto-redirect
-
+      setAuth(user, accessToken);
+      navigate('/dashboard');
     } catch (err: unknown) {
-      console.error('Login failed', err);
-      const message = err instanceof Error ? err.message : 'Error al iniciar sesión. Verifique sus credenciales.';
+      // No usar console.error en producción - solo setError
       const axiosError = err as { response?: { data?: { error?: string } } };
-      setError(axiosError.response?.data?.error || message);
-    } finally {
-      setIsLoading(false);
+      setError(
+        axiosError.response?.data?.error || 'Error al iniciar sesión. Verifique sus credenciales.'
+      );
     }
   };
 
@@ -70,61 +87,48 @@ export function LoginPage() {
               </p>
             </div>
 
-
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               {error && (
                 <div className="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-900/20 rounded-lg p-3 text-center">
-                  <p className="text-xs text-red-600 dark:text-red-400 font-medium">{error}</p>
+                  <p role="alert" className="text-xs text-red-600 dark:text-red-400 font-medium">
+                    {error}
+                  </p>
                 </div>
               )}
 
               {/* Email Field */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[9px] font-bold uppercase tracking-widest text-[var(--muted)] px-1">
-                  Correo Electrónico
-                </label>
-                <div className="relative group">
-                  <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted-foreground)] text-[18px]">
-                    mail
-                  </span>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full h-[38px] pl-10 pr-4 bg-[var(--surface)] border border-[var(--border)] rounded-lg outline-none transition-all placeholder:text-[var(--muted-foreground)] text-xs text-[var(--foreground)] focus:border-brand focus:ring-1 focus:ring-brand/20"
-                    placeholder="usuario@siba.com"
-                    required
-                  />
-                </div>
-              </div>
+              <Input
+                id="email"
+                type="email"
+                label="Correo Electrónico"
+                placeholder="usuario@siba.com"
+                error={errors.email?.message}
+                leftIcon={<Mail className="h-[18px] w-[18px]" />}
+                {...register('email')}
+              />
 
               {/* Password Field */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[9px] font-bold uppercase tracking-widest text-[var(--muted)] px-1">
-                  Contraseña
-                </label>
-                <div className="relative group">
-                  <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted-foreground)] text-[18px]">
-                    lock
-                  </span>
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full h-[38px] pl-10 pr-10 bg-[var(--surface)] border border-[var(--border)] rounded-lg outline-none transition-all placeholder:text-[var(--muted-foreground)] text-xs text-[var(--foreground)] focus:border-brand focus:ring-1 focus:ring-brand/20"
-                    placeholder="••••••••"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 flex items-center justify-center text-[var(--muted-foreground)] hover:text-brand transition-colors focus:outline-none"
-                  >
-                    <span className="material-symbols-outlined text-[16px]">
-                      {showPassword ? 'visibility_off' : 'visibility'}
-                    </span>
-                  </button>
-                </div>
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  label="Contraseña"
+                  placeholder="••••••••"
+                  error={errors.password?.message}
+                  leftIcon={<Lock className="h-[18px] w-[18px]" />}
+                  {...register('password')}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-2 top-9 h-8 w-8 flex items-center justify-center text-slate-400 hover:text-brand transition-colors focus:outline-none"
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-[18px] w-[18px]" />
+                  ) : (
+                    <Eye className="h-[18px] w-[18px]" />
+                  )}
+                </button>
               </div>
 
               {/* Forgot Password Link */}
@@ -139,19 +143,15 @@ export function LoginPage() {
 
               {/* Submit Button */}
               <div className="pt-2">
-                <button
+                <Button
                   type="submit"
-                  disabled={isLoading}
-                  className="w-full h-[40px] bg-brand hover:bg-brand-dark active:scale-[0.98] text-white text-[11px] font-bold rounded-lg shadow-md shadow-brand/20 transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                  variant="primary"
+                  size="lg"
+                  isLoading={isSubmitting}
+                  className="w-full uppercase tracking-wider"
                 >
-                  {isLoading ? (
-                    <span className="material-symbols-outlined animate-spin text-[18px]">
-                      progress_activity
-                    </span>
-                  ) : (
-                    <span className="tracking-[0.18em] uppercase">Iniciar Sesión</span>
-                  )}
-                </button>
+                  {!isSubmitting && 'Iniciar Sesión'}
+                </Button>
               </div>
             </form>
           </div>

@@ -18,9 +18,14 @@ import {
 import { Button } from '../ui/core/Button';
 import { Combobox } from '../ui/core/Combobox';
 
+interface Cliente {
+  id: number;
+  razonSocial: string;
+}
 interface Sucursal {
   id: number;
   nombre: string;
+  clienteId: number;
   cliente?: { razonSocial: string };
 }
 interface Empleado {
@@ -42,6 +47,7 @@ const baseSchema = z.object({
     'TERMINACIONES',
   ]),
   tipoTicket: z.enum(['SEA', 'SEP', 'SN']),
+  clienteId: z.string().min(1, 'Debe seleccionar un cliente'),
   sucursalId: z.string().min(1, 'Debe seleccionar una sucursal'),
   tecnicoId: z.string().optional().or(z.literal('')),
   fechaProgramada: z.string().optional().or(z.literal('')),
@@ -59,6 +65,7 @@ interface TicketDrawerProps {
 }
 
 export default function TicketDrawer({ isOpen, onClose, onSuccess, ticket }: TicketDrawerProps) {
+  const [clientes, setClientes] = useState<Cliente[]>([]);
   const [sucursales, setSucursales] = useState<Sucursal[]>([]);
   const [tecnicos, setTecnicos] = useState<Empleado[]>([]);
   const [isFetching, setIsFetching] = useState(false);
@@ -78,6 +85,7 @@ export default function TicketDrawer({ isOpen, onClose, onSuccess, ticket }: Tic
       descripcion: '',
       rubro: 'VARIOS',
       tipoTicket: 'SN', // Default SN (Solicitud Normal)
+      clienteId: '',
       sucursalId: '',
       tecnicoId: '',
       fechaProgramada: '',
@@ -85,15 +93,16 @@ export default function TicketDrawer({ isOpen, onClose, onSuccess, ticket }: Tic
     },
   });
 
+  const clienteId = watch('clienteId');
   const sucursalId = watch('sucursalId');
   const tipoTicketValue = watch('tipoTicket');
 
-  // Detectar si la sucursal es de Correo Argentino
+  // Detectar si el cliente es Correo Argentino
   const isCorreoArgentino = useMemo(() => {
-    if (!sucursalId) return false;
-    const suc = sucursales.find((s) => s.id.toString() === sucursalId);
-    return suc?.cliente?.razonSocial?.toLowerCase().includes('correo') || false;
-  }, [sucursalId, sucursales]);
+    if (!clienteId) return false;
+    const cliente = clientes.find((c) => c.id.toString() === clienteId);
+    return cliente?.razonSocial?.toLowerCase().includes('correo') || false;
+  }, [clienteId, clientes]);
 
   // Si es correo, validar codigoCliente
   const validateCorreo = (data: TicketFormValues) => {
@@ -112,39 +121,54 @@ export default function TicketDrawer({ isOpen, onClose, onSuccess, ticket }: Tic
     if (isOpen) {
       setIsFetching(true);
       Promise.all([
-        api.get('/sedes?limit=500'), // Aumentado límite para buscador
+        api.get('/clients?limit=100'),
+        api.get('/sedes?limit=500'),
         api.get('/empleados?tipo=TECNICO&limit=100'),
       ])
-        .then(([sedesRes, empleadosRes]) => {
+        .then(([clientesRes, sedesRes, empleadosRes]) => {
+          const clientesList: Cliente[] = clientesRes.data.data || [];
+          setClientes(clientesList);
           setSucursales(sedesRes.data.data || []);
           setTecnicos(empleadosRes.data.data || []);
+
+          // Find Correo Argentino client for default
+          const correoCliente = clientesList.find((c) =>
+            c.razonSocial?.toLowerCase().includes('correo')
+          );
+
+          if (ticket) {
+            // Get clienteId from sucursal for editing
+            const ticketSucursal = (sedesRes.data.data || []).find(
+              (s: Sucursal) => s.id === ticket.sucursalId
+            );
+            reset({
+              descripcion: ticket.descripcion,
+              rubro: ticket.rubro as RubroTicket,
+              tipoTicket: ticket.tipoTicket as TipoTicket,
+              clienteId: ticketSucursal?.clienteId?.toString() || '',
+              sucursalId: ticket.sucursalId.toString(),
+              tecnicoId: ticket.tecnicoId?.toString() || '',
+              fechaProgramada: ticket.fechaProgramada
+                ? new Date(ticket.fechaProgramada).toISOString().split('T')[0]
+                : '',
+              codigoCliente: ticket.codigoCliente || '',
+            });
+          } else {
+            // Default to Correo Argentino for new tickets
+            reset({
+              descripcion: '',
+              rubro: 'VARIOS',
+              tipoTicket: 'SN',
+              clienteId: correoCliente?.id?.toString() || '',
+              sucursalId: '',
+              tecnicoId: '',
+              fechaProgramada: '',
+              codigoCliente: '',
+            });
+          }
         })
         .catch(console.error)
         .finally(() => setIsFetching(false));
-
-      if (ticket) {
-        reset({
-          descripcion: ticket.descripcion,
-          rubro: ticket.rubro as RubroTicket,
-          tipoTicket: ticket.tipoTicket as TipoTicket,
-          sucursalId: ticket.sucursalId.toString(),
-          tecnicoId: ticket.tecnicoId?.toString() || '',
-          fechaProgramada: ticket.fechaProgramada
-            ? new Date(ticket.fechaProgramada).toISOString().split('T')[0]
-            : '',
-          codigoCliente: ticket.codigoCliente || '',
-        });
-      } else {
-        reset({
-          descripcion: '',
-          rubro: 'VARIOS',
-          tipoTicket: 'SN',
-          sucursalId: '',
-          tecnicoId: '',
-          fechaProgramada: '',
-          codigoCliente: '',
-        });
-      }
     }
   }, [isOpen, ticket, reset]);
 
@@ -182,12 +206,36 @@ export default function TicketDrawer({ isOpen, onClose, onSuccess, ticket }: Tic
     }
   };
 
-  const sucursalOptions = useMemo(() => {
-    return sucursales.map((s) => ({
-      value: s.id.toString(),
-      label: `${s.nombre} ${s.cliente ? `(${s.cliente.razonSocial})` : ''}`,
+  // Client options for Combobox
+  const clienteOptions = useMemo(() => {
+    return clientes.map((c) => ({
+      value: c.id.toString(),
+      label: c.razonSocial,
     }));
-  }, [sucursales]);
+  }, [clientes]);
+
+  // Filter sucursales by selected client
+  const sucursalOptions = useMemo(() => {
+    const filtered = clienteId
+      ? sucursales.filter((s) => s.clienteId?.toString() === clienteId)
+      : sucursales;
+    return filtered.map((s) => ({
+      value: s.id.toString(),
+      label: s.nombre,
+    }));
+  }, [sucursales, clienteId]);
+
+  // Clear sucursal when client changes
+  useEffect(() => {
+    if (clienteId) {
+      // Check if current sucursal belongs to selected client
+      const currentSucursal = sucursales.find((s) => s.id.toString() === sucursalId);
+      if (currentSucursal && currentSucursal.clienteId?.toString() !== clienteId) {
+        // Clear sucursal if it doesn't belong to the new client
+        reset((prev) => ({ ...prev, sucursalId: '' }), { keepErrors: true });
+      }
+    }
+  }, [clienteId, sucursales, sucursalId, reset]);
 
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -203,6 +251,37 @@ export default function TicketDrawer({ isOpen, onClose, onSuccess, ticket }: Tic
 
         <SheetBody>
           <form id="ticket-form" onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            {/* Cliente con Buscador */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                Cliente *
+              </label>
+              <Controller
+                control={control}
+                name="clienteId"
+                render={({ field }) => (
+                  <Combobox
+                    options={clienteOptions}
+                    value={field.value}
+                    onChange={field.onChange}
+                    placeholder="Seleccionar cliente..."
+                    searchPlaceholder="Buscar por razón social..."
+                    emptyText="No se encontraron clientes."
+                    disabled={isFetching}
+                  />
+                )}
+              />
+              {errors.clienteId && (
+                <p className="text-[11px] font-medium text-red-500">{errors.clienteId.message}</p>
+              )}
+              {isCorreoArgentino && (
+                <p className="text-[11px] font-medium text-blue-600 flex items-center gap-1">
+                  <span className="material-symbols-outlined text-[14px]">info</span>
+                  Cliente Correo Argentino - Ticket externo obligatorio
+                </p>
+              )}
+            </div>
+
             {/* Sucursal con Buscador */}
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
@@ -216,21 +295,17 @@ export default function TicketDrawer({ isOpen, onClose, onSuccess, ticket }: Tic
                     options={sucursalOptions}
                     value={field.value}
                     onChange={field.onChange}
-                    placeholder="Buscar sucursal..."
-                    searchPlaceholder="Filtrar por nombre o cliente..."
-                    emptyText="No se encontraron sucursales."
-                    disabled={isFetching}
+                    placeholder={clienteId ? 'Buscar sucursal...' : 'Primero seleccione un cliente'}
+                    searchPlaceholder="Filtrar por nombre..."
+                    emptyText={
+                      clienteId ? 'No se encontraron sucursales.' : 'Seleccione un cliente primero.'
+                    }
+                    disabled={isFetching || !clienteId}
                   />
                 )}
               />
               {errors.sucursalId && (
                 <p className="text-[11px] font-medium text-red-500">{errors.sucursalId.message}</p>
-              )}
-              {isCorreoArgentino && (
-                <p className="text-[11px] font-medium text-blue-600 flex items-center gap-1">
-                  <span className="material-symbols-outlined text-[14px]">info</span>
-                  Cliente Correo Argentino detectado
-                </p>
               )}
             </div>
 

@@ -9,10 +9,11 @@ import {
   RUBRO_LABELS,
 } from '../types/tickets';
 import TicketDrawer from '../components/tickets/TicketDrawer';
+import TicketDetailSheet from '../components/tickets/TicketDetailSheet';
 import KanbanBoard from '../components/tickets/KanbanBoard';
-import { OTDialog } from '../features/ordenes-trabajo';
 import { Select } from '../components/ui/core/Select';
-import { Search, LayoutGrid, AlertCircle, Clock } from 'lucide-react';
+import { Search, LayoutGrid, AlertCircle, Clock, Plus, ChevronDown, Filter } from 'lucide-react';
+import { FloatingActionButton } from '../components/layout/FloatingActionButton';
 
 export default function TicketsPage() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -27,9 +28,10 @@ export default function TicketsPage() {
 
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
-  const [detailTicketId, setDetailTicketId] = useState<number | null>(null);
   const [viewMode, setViewMode] = useState<'table' | 'kanban'>('table');
-  const [otTicket, setOtTicket] = useState<Ticket | null>(null);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [detailTicketIdSheet, setDetailTicketIdSheet] = useState<number | null>(null);
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
 
   const fetchTickets = useCallback(async () => {
     try {
@@ -63,9 +65,9 @@ export default function TicketsPage() {
     setIsDrawerOpen(true);
   };
 
-  const handleEdit = (ticket: Ticket) => {
-    setSelectedTicket(ticket);
-    setIsDrawerOpen(true);
+  const handleViewDetail = (ticket: Ticket) => {
+    setDetailTicketIdSheet(ticket.id);
+    setIsDetailOpen(true);
   };
 
   const handleDelete = async (ticket: Ticket) => {
@@ -82,8 +84,9 @@ export default function TicketsPage() {
   const handleTicketSuccess = (ticketId: number) => {
     setIsDrawerOpen(false);
     fetchTickets();
-    // Abrir drawer de detalle del ticket creado
-    setDetailTicketId(ticketId);
+    // Abrir sheet de detalle del ticket creado
+    setDetailTicketIdSheet(ticketId);
+    setIsDetailOpen(true);
   };
 
   const formatCode = (code: number) => `TKT-${String(code).padStart(5, '0')}`;
@@ -135,7 +138,7 @@ export default function TicketsPage() {
 
           <button
             onClick={handleCreate}
-            className="px-4 py-2.5 bg-brand hover:bg-brand-dark text-white text-sm font-bold rounded-lg shadow-lg shadow-brand/20 transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
+            className="hidden md:flex px-4 py-2.5 bg-brand hover:bg-brand-dark text-white text-sm font-bold rounded-lg shadow-lg shadow-brand/20 transition-all hover:scale-105 active:scale-95 items-center gap-2"
           >
             <span className="material-symbols-outlined text-[20px]">add</span>
             NUEVO TICKET
@@ -144,63 +147,95 @@ export default function TicketsPage() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 space-y-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-          <div className="lg:col-span-2 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Buscar por descripción, código..."
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
+      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+        {/* Toggle Button - Solo móvil */}
+        <button
+          onClick={() => setIsFiltersOpen(!isFiltersOpen)}
+          className="w-full md:hidden flex items-center justify-between p-4 text-left hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+        >
+          <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300 font-medium">
+            <Filter className="h-4 w-4" />
+            <span>Filtros</span>
+            {(estadoFilter || rubroFilter || tipoTicketFilter) && (
+              <span className="ml-1 px-2 py-0.5 bg-brand text-white text-xs rounded-full">
+                {[estadoFilter, rubroFilter, tipoTicketFilter].filter(Boolean).length}
+              </span>
+            )}
+          </div>
+          <ChevronDown
+            className={`h-5 w-5 text-slate-400 transition-transform duration-200 ${
+              isFiltersOpen ? 'rotate-180' : ''
+            }`}
+          />
+        </button>
+
+        {/* Filters Grid - Expandible en móvil, siempre visible en desktop */}
+        <div
+          className={`
+            md:block p-4
+            ${isFiltersOpen ? 'block' : 'hidden'}
+          `}
+        >
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="lg:col-span-2 relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Buscar por descripción, código..."
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(1);
+                }}
+                className="w-full h-10 pl-10 pr-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none focus:border-brand transition-all"
+              />
+            </div>
+            <Select
+              label="Estado"
+              value={estadoFilter}
+              onChange={(val) => {
+                setEstadoFilter(val as EstadoTicket | '');
                 setPage(1);
               }}
-              className="w-full h-10 pl-10 pr-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none focus:border-brand transition-all"
+              options={[
+                { value: '', label: 'Todos los estados' },
+                ...Object.entries(ESTADO_LABELS).map(([k, v]) => ({
+                  value: k,
+                  label: v as string,
+                })),
+              ]}
+              icon={<AlertCircle className="h-4 w-4" />}
+            />
+            <Select
+              label="Rubro"
+              value={rubroFilter}
+              onChange={(val) => {
+                setRubroFilter(val as RubroTicket | '');
+                setPage(1);
+              }}
+              options={[
+                { value: '', label: 'Todos los rubros' },
+                ...Object.entries(RUBRO_LABELS).map(([k, v]) => ({ value: k, label: v as string })),
+              ]}
+              icon={<LayoutGrid className="h-4 w-4" />}
+            />
+            <Select
+              label="Tipo (SLA)"
+              value={tipoTicketFilter}
+              onChange={(val) => {
+                setTipoTicketFilter(val as TipoTicket | '');
+                setPage(1);
+              }}
+              options={[
+                { value: '', label: 'Todos los tipos' },
+                ...Object.entries(TIPO_TICKET_LABELS).map(([k, v]) => ({
+                  value: k,
+                  label: v as string,
+                })),
+              ]}
+              icon={<Clock className="h-4 w-4" />}
             />
           </div>
-          <Select
-            label="Estado"
-            value={estadoFilter}
-            onChange={(val) => {
-              setEstadoFilter(val as EstadoTicket | '');
-              setPage(1);
-            }}
-            options={[
-              { value: '', label: 'Todos los estados' },
-              ...Object.entries(ESTADO_LABELS).map(([k, v]) => ({ value: k, label: v as string })),
-            ]}
-            icon={<AlertCircle className="h-4 w-4" />}
-          />
-          <Select
-            label="Rubro"
-            value={rubroFilter}
-            onChange={(val) => {
-              setRubroFilter(val as RubroTicket | '');
-              setPage(1);
-            }}
-            options={[
-              { value: '', label: 'Todos los rubros' },
-              ...Object.entries(RUBRO_LABELS).map(([k, v]) => ({ value: k, label: v as string })),
-            ]}
-            icon={<LayoutGrid className="h-4 w-4" />}
-          />
-          <Select
-            label="Tipo (SLA)"
-            value={tipoTicketFilter}
-            onChange={(val) => {
-              setTipoTicketFilter(val as TipoTicket | '');
-              setPage(1);
-            }}
-            options={[
-              { value: '', label: 'Todos los tipos' },
-              ...Object.entries(TIPO_TICKET_LABELS).map(([k, v]) => ({
-                value: k,
-                label: v as string,
-              })),
-            ]}
-            icon={<Clock className="h-4 w-4" />}
-          />
         </div>
       </div>
 
@@ -257,7 +292,7 @@ export default function TicketsPage() {
                     <tr
                       key={t.id}
                       className="hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors cursor-pointer"
-                      onClick={() => handleEdit(t)}
+                      onClick={() => handleViewDetail(t)}
                     >
                       <td className="px-4 py-3">
                         <div className="font-mono font-semibold text-brand">
@@ -307,23 +342,14 @@ export default function TicketsPage() {
                           onClick={(e) => e.stopPropagation()}
                         >
                           <button
-                            onClick={() => handleEdit(t)}
+                            onClick={() => handleViewDetail(t)}
                             className="p-2 text-slate-400 hover:text-brand hover:bg-brand/10 rounded-lg transition-colors"
-                            title="Editar"
+                            title="Ver detalle"
                           >
-                            <span className="material-symbols-outlined text-[20px]">edit</span>
+                            <span className="material-symbols-outlined text-[20px]">
+                              visibility
+                            </span>
                           </button>
-                          {t.estado !== 'FINALIZADO' && (
-                            <button
-                              onClick={() => setOtTicket(t)}
-                              className="p-2 text-slate-400 hover:text-gold hover:bg-gold/10 rounded-lg transition-colors"
-                              title="Orden de Trabajo"
-                            >
-                              <span className="material-symbols-outlined text-[20px]">
-                                assignment
-                              </span>
-                            </button>
-                          )}
                           <button
                             onClick={() => handleDelete(t)}
                             className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
@@ -344,7 +370,7 @@ export default function TicketsPage() {
         <KanbanBoard
           tickets={tickets}
           isLoading={isLoading}
-          onEditTicket={handleEdit}
+          onEditTicket={handleViewDetail}
           onDeleteTicket={handleDelete}
         />
       )}
@@ -380,18 +406,26 @@ export default function TicketsPage() {
         onSuccess={handleTicketSuccess}
       />
 
-      {/* OT Dialog */}
-      {otTicket && (
-        <OTDialog
-          isOpen={!!otTicket}
-          onClose={() => setOtTicket(null)}
-          ticket={otTicket}
-          onSuccess={fetchTickets}
-        />
-      )}
+      {/* Detail Sheet */}
+      <TicketDetailSheet
+        isOpen={isDetailOpen}
+        onClose={() => {
+          setIsDetailOpen(false);
+          setDetailTicketIdSheet(null);
+        }}
+        ticketId={detailTicketIdSheet}
+        onSuccess={fetchTickets}
+      />
 
-      {/* TODO: TicketDetailDrawer para ver detalle después de crear */}
-      {/* Por ahora solo recargamos la lista, el drawer de detalle se implementará en siguiente iteración */}
+      {/* FAB para móviles - Ergonomía táctil optimizada */}
+      <FloatingActionButton
+        onClick={handleCreate}
+        icon={<Plus className="h-6 w-6" />}
+        label="NUEVO"
+        hideOnDesktop
+        variant="primary"
+        size="lg"
+      />
     </div>
   );
 }

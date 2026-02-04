@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls -la \"c:\\\\repo\\\\siba\\\\docs\\\\deudas\"\" 2>&1 || ls -la \"/c/repo/siba/docs/deudas/ \")",
+      "Bash(tree:*)",
+      "Bash(wc:*)",
+      "Bash(npm install:*)",
+      "Bash(openssl rand:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat\\(security\\): resolve 5 critical vulnerabilities and consolidate technical debt documentation\n\nSECURITY FIXES \\(Blocking for production deployment\\):\n- SEC-001: Remove JWT_SECRET fallback, enforce 32+ character validation\n- SEC-002: Protect /api/tickets and /api/upload routes with authentication\n- SEC-003: Implement rate limiting \\(100 req/15min global, 5 req/15min login\\)\n- SEC-004: Increase bcrypt rounds from 10 to 12 \\(OWASP 2026 recommendation\\)\n- SEC-005: Add magic bytes validation for file uploads \\(prevent malicious files\\)\n\nDOCUMENTATION CONSOLIDATION:\n- Create PROJECT_MASTER.md with executive view and health dashboard\n- Consolidate ~50 technical debts into 7 structured documents\n- Organize debts by severity: Security \\(5\\), UX/Performance \\(25\\), Architecture \\(6\\)\n- Add detailed roadmap with code snippets and testing commands\n- Archive original audit files with redirection headers\n\nDEPENDENCIES:\n- Install express-rate-limit for DoS/brute-force protection\n- Install file-type for magic bytes validation\n\nFiles modified:\n- 8 backend files \\(auth, routes, index\\)\n- 7 documentation files created\n- README.md updated with documentation links\n- 2 npm packages installed\n\nEstimated time to resolve critical issues: ~2 hours\nDocumentation consolidation: Hub-and-Spoke model for maintainability\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")"
+    ]
+  }
+}

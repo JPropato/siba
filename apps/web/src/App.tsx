@@ -1,31 +1,66 @@
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { useThemeEffect } from './hooks/useThemeColor';
-import { Component, type ReactNode, type ErrorInfo } from 'react';
-import LoginPage from './pages/LoginPage';
-import DashboardPage from './pages/DashboardPage';
-import UsersPage from './pages/UsersPage';
-import RolesPage from './pages/RolesPage';
-import ClientsPage from './pages/ClientsPage';
-import ZonasPage from './pages/ZonasPage';
-import SedesPage from './pages/SedesPage';
-import VehiculosPage from './pages/VehiculosPage';
-import MaterialesPage from './pages/MaterialesPage';
-import EmpleadosPage from './pages/EmpleadosPage';
-import VacacionesPage from './pages/VacacionesPage';
-import SueldosPage from './pages/SueldosPage';
-import AusenciasPage from './pages/AusenciasPage';
-import TicketsPage from './pages/TicketsPage';
-import { ObrasPage } from './features/obras';
-import {
-  FinanzasDashboard,
-  MovimientosPage,
-  CuentasPage,
-  InversionesPage,
-} from './features/finanzas';
+import { Component, lazy, Suspense, type ReactNode, type ErrorInfo } from 'react';
+import { Skeleton } from './components/ui/Skeleton';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import DashboardLayout from './components/layout/DashboardLayout';
 import './App.css';
+
+// Lazy loading de páginas para reducir bundle inicial (~2MB → ~500KB)
+// LoginPage y DashboardLayout no se lazy-load porque se necesitan inmediatamente
+const LoginPage = lazy(() => import('./pages/LoginPage'));
+const DashboardPage = lazy(() => import('./pages/DashboardPage'));
+const UsersPage = lazy(() => import('./pages/UsersPage'));
+const RolesPage = lazy(() => import('./pages/RolesPage'));
+const ClientsPage = lazy(() => import('./pages/ClientsPage'));
+const ZonasPage = lazy(() => import('./pages/ZonasPage'));
+const SedesPage = lazy(() => import('./pages/SedesPage'));
+const VehiculosPage = lazy(() => import('./pages/VehiculosPage'));
+const MaterialesPage = lazy(() => import('./pages/MaterialesPage'));
+const EmpleadosPage = lazy(() => import('./pages/EmpleadosPage'));
+const VacacionesPage = lazy(() => import('./pages/VacacionesPage'));
+const SueldosPage = lazy(() => import('./pages/SueldosPage'));
+const AusenciasPage = lazy(() => import('./pages/AusenciasPage'));
+const TicketsPage = lazy(() => import('./pages/TicketsPage'));
+const ObrasPage = lazy(() => import('./features/obras').then((m) => ({ default: m.ObrasPage })));
+const FinanzasDashboard = lazy(() =>
+  import('./features/finanzas').then((m) => ({ default: m.FinanzasDashboard }))
+);
+const MovimientosPage = lazy(() =>
+  import('./features/finanzas').then((m) => ({ default: m.MovimientosPage }))
+);
+const CuentasPage = lazy(() =>
+  import('./features/finanzas').then((m) => ({ default: m.CuentasPage }))
+);
+const InversionesPage = lazy(() =>
+  import('./features/finanzas').then((m) => ({ default: m.InversionesPage }))
+);
+
+// --- Page Loading Fallback ---
+function PageLoadingFallback() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
+      <div className="w-full max-w-6xl p-8 space-y-6">
+        {/* Header skeleton */}
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-10 w-32" />
+        </div>
+        {/* Content skeleton */}
+        <div className="space-y-4">
+          <Skeleton className="h-12 w-full" />
+          <Skeleton className="h-64 w-full" />
+          <div className="grid grid-cols-3 gap-4">
+            <Skeleton className="h-32 w-full" />
+            <Skeleton className="h-32 w-full" />
+            <Skeleton className="h-32 w-full" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // --- Error Boundary ---
 class ErrorBoundary extends Component<
@@ -143,159 +178,161 @@ export default function App() {
   useThemeEffect();
   return (
     <ErrorBoundary>
-      <Routes>
-        <Route path="/login" element={<LoginPage />} />
+      <Suspense fallback={<PageLoadingFallback />}>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
 
-        <Route element={<ProtectedRoute />}>
-          <Route
-            path="/dashboard"
-            element={
-              <DashboardWrapper>
-                <DashboardPage />
-              </DashboardWrapper>
-            }
-          />
-          <Route
-            path="/dashboard/users"
-            element={
-              <DashboardWrapper>
-                <UsersPage />
-              </DashboardWrapper>
-            }
-          />
-          <Route
-            path="/dashboard/roles"
-            element={
-              <DashboardWrapper>
-                <RolesPage />
-              </DashboardWrapper>
-            }
-          />
-          <Route
-            path="/dashboard/clients"
-            element={
-              <DashboardWrapper>
-                <ClientsPage />
-              </DashboardWrapper>
-            }
-          />
-          <Route
-            path="/dashboard/zones"
-            element={
-              <DashboardWrapper>
-                <ZonasPage />
-              </DashboardWrapper>
-            }
-          />
-          <Route
-            path="/dashboard/sedes"
-            element={
-              <DashboardWrapper>
-                <SedesPage />
-              </DashboardWrapper>
-            }
-          />
-          <Route
-            path="/dashboard/vehicles"
-            element={
-              <DashboardWrapper>
-                <VehiculosPage />
-              </DashboardWrapper>
-            }
-          />
-          <Route
-            path="/dashboard/materials"
-            element={
-              <DashboardWrapper>
-                <MaterialesPage />
-              </DashboardWrapper>
-            }
-          />
-          <Route
-            path="/dashboard/empleados"
-            element={
-              <DashboardWrapper>
-                <EmpleadosPage />
-              </DashboardWrapper>
-            }
-          />
-          <Route
-            path="/dashboard/vacaciones"
-            element={
-              <DashboardWrapper>
-                <VacacionesPage />
-              </DashboardWrapper>
-            }
-          />
-          <Route
-            path="/dashboard/sueldos"
-            element={
-              <DashboardWrapper>
-                <SueldosPage />
-              </DashboardWrapper>
-            }
-          />
-          <Route
-            path="/dashboard/ausencias"
-            element={
-              <DashboardWrapper>
-                <AusenciasPage />
-              </DashboardWrapper>
-            }
-          />
-          <Route
-            path="/dashboard/tickets"
-            element={
-              <DashboardWrapper>
-                <TicketsPage />
-              </DashboardWrapper>
-            }
-          />
-          <Route
-            path="/dashboard/obras"
-            element={
-              <DashboardWrapper>
-                <ObrasPage />
-              </DashboardWrapper>
-            }
-          />
-          <Route
-            path="/dashboard/finanzas"
-            element={
-              <DashboardWrapper>
-                <FinanzasDashboard />
-              </DashboardWrapper>
-            }
-          />
-          <Route
-            path="/dashboard/finanzas/movimientos"
-            element={
-              <DashboardWrapper>
-                <MovimientosPage />
-              </DashboardWrapper>
-            }
-          />
-          <Route
-            path="/dashboard/finanzas/cuentas"
-            element={
-              <DashboardWrapper>
-                <CuentasPage />
-              </DashboardWrapper>
-            }
-          />
-          <Route
-            path="/dashboard/finanzas/inversiones"
-            element={
-              <DashboardWrapper>
-                <InversionesPage />
-              </DashboardWrapper>
-            }
-          />
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-        </Route>
+          <Route element={<ProtectedRoute />}>
+            <Route
+              path="/dashboard"
+              element={
+                <DashboardWrapper>
+                  <DashboardPage />
+                </DashboardWrapper>
+              }
+            />
+            <Route
+              path="/dashboard/users"
+              element={
+                <DashboardWrapper>
+                  <UsersPage />
+                </DashboardWrapper>
+              }
+            />
+            <Route
+              path="/dashboard/roles"
+              element={
+                <DashboardWrapper>
+                  <RolesPage />
+                </DashboardWrapper>
+              }
+            />
+            <Route
+              path="/dashboard/clients"
+              element={
+                <DashboardWrapper>
+                  <ClientsPage />
+                </DashboardWrapper>
+              }
+            />
+            <Route
+              path="/dashboard/zones"
+              element={
+                <DashboardWrapper>
+                  <ZonasPage />
+                </DashboardWrapper>
+              }
+            />
+            <Route
+              path="/dashboard/sedes"
+              element={
+                <DashboardWrapper>
+                  <SedesPage />
+                </DashboardWrapper>
+              }
+            />
+            <Route
+              path="/dashboard/vehicles"
+              element={
+                <DashboardWrapper>
+                  <VehiculosPage />
+                </DashboardWrapper>
+              }
+            />
+            <Route
+              path="/dashboard/materials"
+              element={
+                <DashboardWrapper>
+                  <MaterialesPage />
+                </DashboardWrapper>
+              }
+            />
+            <Route
+              path="/dashboard/empleados"
+              element={
+                <DashboardWrapper>
+                  <EmpleadosPage />
+                </DashboardWrapper>
+              }
+            />
+            <Route
+              path="/dashboard/vacaciones"
+              element={
+                <DashboardWrapper>
+                  <VacacionesPage />
+                </DashboardWrapper>
+              }
+            />
+            <Route
+              path="/dashboard/sueldos"
+              element={
+                <DashboardWrapper>
+                  <SueldosPage />
+                </DashboardWrapper>
+              }
+            />
+            <Route
+              path="/dashboard/ausencias"
+              element={
+                <DashboardWrapper>
+                  <AusenciasPage />
+                </DashboardWrapper>
+              }
+            />
+            <Route
+              path="/dashboard/tickets"
+              element={
+                <DashboardWrapper>
+                  <TicketsPage />
+                </DashboardWrapper>
+              }
+            />
+            <Route
+              path="/dashboard/obras"
+              element={
+                <DashboardWrapper>
+                  <ObrasPage />
+                </DashboardWrapper>
+              }
+            />
+            <Route
+              path="/dashboard/finanzas"
+              element={
+                <DashboardWrapper>
+                  <FinanzasDashboard />
+                </DashboardWrapper>
+              }
+            />
+            <Route
+              path="/dashboard/finanzas/movimientos"
+              element={
+                <DashboardWrapper>
+                  <MovimientosPage />
+                </DashboardWrapper>
+              }
+            />
+            <Route
+              path="/dashboard/finanzas/cuentas"
+              element={
+                <DashboardWrapper>
+                  <CuentasPage />
+                </DashboardWrapper>
+              }
+            />
+            <Route
+              path="/dashboard/finanzas/inversiones"
+              element={
+                <DashboardWrapper>
+                  <InversionesPage />
+                </DashboardWrapper>
+              }
+            />
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          </Route>
 
-        <Route path="*" element={<Navigate to="/login" replace />} />
-      </Routes>
+          <Route path="*" element={<Navigate to="/login" replace />} />
+        </Routes>
+      </Suspense>
     </ErrorBoundary>
   );
 }
