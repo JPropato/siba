@@ -1,7 +1,17 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'default-secret';
+const JWT_SECRET = process.env.JWT_SECRET;
+
+if (!JWT_SECRET) {
+  throw new Error('CRITICAL SECURITY ERROR: JWT_SECRET environment variable must be set');
+}
+
+if (JWT_SECRET.length < 32) {
+  throw new Error(
+    `CRITICAL SECURITY ERROR: JWT_SECRET must be at least 32 characters long (current: ${JWT_SECRET.length})`
+  );
+}
 
 // Extender la interfaz Request para incluir el usuario
 /* eslint-disable @typescript-eslint/no-namespace */

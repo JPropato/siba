@@ -1,7 +1,11 @@
 import { Router } from 'express';
 import * as ticketController from '../controllers/ticket.controller.js';
+import { authenticateToken } from '../middlewares/auth.middleware.js';
 
 const router = Router();
+
+// Proteger TODAS las rutas de tickets con autenticación
+router.use(authenticateToken);
 
 router.get('/', ticketController.getAll);
 router.get('/:id', ticketController.getById);

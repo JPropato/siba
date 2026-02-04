@@ -2,6 +2,7 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import path from 'path';
 import { PrismaClient } from '@prisma/client';
 
@@ -27,6 +28,41 @@ app.use((req, _res, next) => {
 });
 
 app.use(helmet());
+
+// Rate limiting configuration
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 100, // Máximo 100 requests por IP
+  message: {
+    error: {
+      code: 'RATE_LIMIT_EXCEEDED',
+      message: 'Demasiadas peticiones desde esta IP. Intente de nuevo en 15 minutos.',
+    },
+  },
+  standardHeaders: true, // Retorna RateLimit-* headers
+  legacyHeaders: false,
+});
+
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 5, // Máximo 5 intentos de login
+  skipSuccessfulRequests: true, // No cuenta logins exitosos
+  message: {
+    error: {
+      code: 'LOGIN_RATE_LIMIT_EXCEEDED',
+      message: 'Demasiados intentos de login fallidos. Intente de nuevo en 15 minutos.',
+    },
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Aplicar rate limiting global
+app.use('/api/', globalLimiter);
+
+// Aplicar rate limiting estricto para login
+app.use('/api/auth/login', loginLimiter);
+
 app.use(
   cors({
     origin: (origin, callback) => {

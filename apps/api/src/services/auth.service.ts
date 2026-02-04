@@ -3,10 +3,34 @@ import bcrypt from 'bcryptjs';
 import jwt, { type SignOptions } from 'jsonwebtoken';
 // const prisma = new PrismaClient();
 
-const JWT_SECRET = process.env.JWT_SECRET || 'default-secret';
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'default-refresh-secret';
+const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '15m';
 const JWT_REFRESH_EXPIRES_IN = process.env.JWT_REFRESH_EXPIRES_IN || '7d';
+
+// Validar JWT secrets al startup
+if (!JWT_SECRET) {
+  throw new Error('CRITICAL SECURITY ERROR: JWT_SECRET environment variable must be set');
+}
+
+if (JWT_SECRET.length < 32) {
+  throw new Error(
+    `CRITICAL SECURITY ERROR: JWT_SECRET must be at least 32 characters long (current: ${JWT_SECRET.length})`
+  );
+}
+
+if (!JWT_REFRESH_SECRET) {
+  throw new Error('CRITICAL SECURITY ERROR: JWT_REFRESH_SECRET environment variable must be set');
+}
+
+if (JWT_REFRESH_SECRET.length < 32) {
+  throw new Error(
+    `CRITICAL SECURITY ERROR: JWT_REFRESH_SECRET must be at least 32 characters long (current: ${JWT_REFRESH_SECRET.length})`
+  );
+}
+
+// OWASP 2026 recommendation: 12 rounds minimum
+const BCRYPT_ROUNDS = 12;
 
 // Interfaces para tipado de JWT
 interface UserPayload {
@@ -23,7 +47,7 @@ interface RefreshPayload {
 export class AuthService {
   // Hashear contraseña
   static async hashPassword(pass: string) {
-    return await bcrypt.hash(pass, 10);
+    return await bcrypt.hash(pass, BCRYPT_ROUNDS);
   }
 
   // Verificar credenciales del usuario
