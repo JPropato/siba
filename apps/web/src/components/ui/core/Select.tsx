@@ -1,4 +1,11 @@
-import { useState, useRef, useEffect, type ReactNode } from 'react';
+import {
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+  type ReactNode,
+  type KeyboardEvent,
+} from 'react';
 import { cn } from '../../../lib/utils';
 import { ChevronDown, Search, Loader2, Check } from 'lucide-react';
 
@@ -38,7 +45,9 @@ export const Select = ({
 }: SelectProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
+  const [focusedIndex, setFocusedIndex] = useState(-1);
   const containerRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
 
   // Click outside to close
   useEffect(() => {
@@ -53,9 +62,12 @@ export const Select = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isOpen]);
 
-  // Reset search when opening/closing
+  // Reset search and focus when opening/closing
   useEffect(() => {
-    if (!isOpen) setSearch('');
+    if (!isOpen) {
+      setSearch('');
+      setFocusedIndex(-1);
+    }
   }, [isOpen]);
 
   const selectedOption = options.find(
@@ -74,6 +86,65 @@ export const Select = ({
     setIsOpen(false);
   };
 
+  // Keyboard navigation handler
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent<HTMLButtonElement | HTMLInputElement>) => {
+      if (disabled) return;
+
+      switch (e.key) {
+        case 'Enter':
+        case ' ':
+          if (!isOpen) {
+            e.preventDefault();
+            setIsOpen(true);
+          } else if (focusedIndex >= 0 && filteredOptions[focusedIndex]) {
+            e.preventDefault();
+            handleSelect(filteredOptions[focusedIndex]);
+          }
+          break;
+        case 'Escape':
+          e.preventDefault();
+          setIsOpen(false);
+          break;
+        case 'ArrowDown':
+          e.preventDefault();
+          if (!isOpen) {
+            setIsOpen(true);
+          } else {
+            setFocusedIndex((prev) => (prev < filteredOptions.length - 1 ? prev + 1 : 0));
+          }
+          break;
+        case 'ArrowUp':
+          e.preventDefault();
+          if (isOpen) {
+            setFocusedIndex((prev) => (prev > 0 ? prev - 1 : filteredOptions.length - 1));
+          }
+          break;
+        case 'Home':
+          if (isOpen) {
+            e.preventDefault();
+            setFocusedIndex(0);
+          }
+          break;
+        case 'End':
+          if (isOpen) {
+            e.preventDefault();
+            setFocusedIndex(filteredOptions.length - 1);
+          }
+          break;
+      }
+    },
+    [disabled, isOpen, focusedIndex, filteredOptions, onChange]
+  );
+
+  // Scroll focused option into view
+  useEffect(() => {
+    if (focusedIndex >= 0 && listRef.current) {
+      const focusedElement = listRef.current.children[focusedIndex] as HTMLElement;
+      focusedElement?.scrollIntoView({ block: 'nearest' });
+    }
+  }, [focusedIndex]);
+
   return (
     <div className={cn('space-y-1.5 w-full relative', className)} ref={containerRef}>
       {label && (
@@ -85,16 +156,23 @@ export const Select = ({
         </label>
       )}
 
-      <div
+      <button
+        type="button"
+        id={id}
         onClick={() => !disabled && setIsOpen(!isOpen)}
+        onKeyDown={handleKeyDown}
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
         aria-invalid={error ? 'true' : 'false'}
         aria-describedby={error ? `${id}-error` : undefined}
+        disabled={disabled}
         className={cn(
-          'flex items-center w-full h-10 px-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm transition-all select-none',
+          'flex items-center w-full h-10 px-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm transition-all select-none text-left',
           !disabled && 'cursor-pointer hover:border-slate-300 dark:hover:border-slate-700',
           isOpen && 'border-brand ring-1 ring-brand/20',
           disabled && 'opacity-50 cursor-not-allowed',
-          error && 'border-red-500'
+          error && 'border-red-500',
+          'focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand'
         )}
       >
         {TriggerIcon && <div className="mr-3 text-slate-400">{TriggerIcon}</div>}
@@ -114,7 +192,7 @@ export const Select = ({
             />
           )}
         </div>
-      </div>
+      </button>
 
       {isOpen && !disabled && (
         <div className="absolute top-full left-0 w-full mt-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl z-[150] animate-in fade-in zoom-in-95 duration-200 overflow-hidden flex flex-col max-h-72">
@@ -129,21 +207,30 @@ export const Select = ({
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 onClick={(e) => e.stopPropagation()}
+                onKeyDown={handleKeyDown}
+                aria-label="Buscar opciones"
                 className="w-full h-9 pl-9 pr-3 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-lg text-sm outline-none focus:border-brand transition-all text-slate-900 dark:text-white"
               />
             </div>
           </div>
 
           {/* Options List */}
-          <div className="flex-1 overflow-y-auto custom-scrollbar p-1">
+          <div
+            ref={listRef}
+            role="listbox"
+            aria-label={label || 'Opciones'}
+            className="flex-1 overflow-y-auto custom-scrollbar p-1"
+          >
             {filteredOptions.length === 0 ? (
               <div className="p-4 text-center text-sm text-slate-400 italic">
                 No se encontraron resultados
               </div>
             ) : (
-              filteredOptions.map((option) => (
+              filteredOptions.map((option, index) => (
                 <div
                   key={option.value}
+                  role="option"
+                  aria-selected={selectedOption?.value === option.value}
                   onClick={(e) => {
                     e.stopPropagation();
                     handleSelect(option);
@@ -153,7 +240,8 @@ export const Select = ({
                     'hover:bg-brand/10 hover:text-brand',
                     selectedOption?.value === option.value
                       ? 'bg-brand/5 text-brand'
-                      : 'text-slate-700 dark:text-slate-300'
+                      : 'text-slate-700 dark:text-slate-300',
+                    focusedIndex === index && 'bg-brand/10 ring-2 ring-brand/30'
                   )}
                 >
                   {option.icon && <div className="shrink-0 text-slate-400">{option.icon}</div>}

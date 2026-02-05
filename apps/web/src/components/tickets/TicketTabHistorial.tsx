@@ -1,3 +1,4 @@
+import { Loader2, AlertCircle } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Clock, User, ArrowRight } from 'lucide-react';
 import api from '../../lib/api';
@@ -84,9 +85,7 @@ export default function TicketTabHistorial({ ticketId }: TicketTabHistorialProps
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <span className="material-symbols-outlined animate-spin text-3xl text-slate-400">
-          progress_activity
-        </span>
+        <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
   }

@@ -1,3 +1,15 @@
+import {
+  X,
+  Loader2,
+  AlertCircle,
+  FileText,
+  CheckCircle,
+  Trash2,
+  Building2,
+  Save,
+  CloudUpload,
+  FileIcon,
+} from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { OrdenTrabajo, Archivo, CreateOTPayload, UpdateOTPayload } from '../types';
@@ -239,7 +251,7 @@ export default function OTDialog({
             onClick={handleCancel}
             className="p-2 text-slate-400 hover:text-slate-600 rounded-lg transition-colors"
           >
-            <span className="material-symbols-outlined">close</span>
+            <X className="h-5 w-5" />
           </button>
         </div>
 
@@ -247,16 +259,14 @@ export default function OTDialog({
         <div className="p-6 space-y-6">
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
-              <span className="material-symbols-outlined text-3xl text-gold animate-spin">
-                progress_activity
-              </span>
+              <Loader2 className="h-8 w-8 animate-spin" />
             </div>
           ) : (
             <>
               {/* Error */}
               {error && (
                 <div className="flex items-center gap-2 px-4 py-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                  <span className="material-symbols-outlined text-red-500">error</span>
+                  <AlertCircle className="h-5 w-5 text-red-500" />
                   <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
                 </div>
               )}
@@ -346,9 +356,7 @@ export default function OTDialog({
                   />
                   <div className="flex flex-col items-center gap-2">
                     <div className="size-10 rounded-full bg-gold/10 flex items-center justify-center">
-                      <span className="material-symbols-outlined text-xl text-gold">
-                        cloud_upload
-                      </span>
+                      <CloudUpload className="h-5 w-5 text-gold" />
                     </div>
                     <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
                       Hacé click para agregar archivos
@@ -375,9 +383,7 @@ export default function OTDialog({
                             />
                           ) : (
                             <div className="size-10 rounded bg-slate-200 dark:bg-slate-800 flex items-center justify-center">
-                              <span className="material-symbols-outlined text-slate-500">
-                                picture_as_pdf
-                              </span>
+                              <FileIcon className="h-5 w-5 text-slate-500" />
                             </div>
                           )
                         ) : item.data.file.type.startsWith('image/') ? (
@@ -388,9 +394,7 @@ export default function OTDialog({
                           />
                         ) : (
                           <div className="size-10 rounded bg-slate-200 dark:bg-slate-800 flex items-center justify-center">
-                            <span className="material-symbols-outlined text-slate-500">
-                              picture_as_pdf
-                            </span>
+                            <FileIcon className="h-5 w-5 text-slate-500" />
                           </div>
                         )}
 
@@ -418,7 +422,7 @@ export default function OTDialog({
                           }
                           className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
                         >
-                          <span className="material-symbols-outlined text-[18px]">delete</span>
+                          <Trash2 className="h-[18px] w-[18px]" />
                         </button>
                       </div>
                     ))}
@@ -447,7 +451,7 @@ export default function OTDialog({
                   className="px-4 py-2 text-sm font-bold text-green-600 bg-green-100 hover:bg-green-200 dark:bg-green-900/30 dark:hover:bg-green-900/50 rounded-lg transition-colors disabled:opacity-50"
                 >
                   <span className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-[18px]">check_circle</span>
+                    <CheckCircle className="h-[18px] w-[18px]" />
                     Finalizar OT
                   </span>
                 </button>
@@ -457,7 +461,7 @@ export default function OTDialog({
                   className="px-4 py-2 text-sm font-bold text-blue-600 bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 rounded-lg transition-colors disabled:opacity-50"
                 >
                   <span className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-[18px]">domain_add</span>
+                    <Building2 className="h-[18px] w-[18px]" />
                     Generar Obra
                   </span>
                 </button>
@@ -471,14 +475,12 @@ export default function OTDialog({
             >
               {isSaving ? (
                 <>
-                  <span className="material-symbols-outlined text-[18px] animate-spin">
-                    progress_activity
-                  </span>
+                  <Loader2 className="h-[18px] w-[18px] animate-spin" />
                   Guardando...
                 </>
               ) : (
                 <>
-                  <span className="material-symbols-outlined text-[18px]">save</span>
+                  <Save className="h-[18px] w-[18px]" />
                   {ot ? 'Guardar Cambios' : 'Crear OT'}
                 </>
               )}

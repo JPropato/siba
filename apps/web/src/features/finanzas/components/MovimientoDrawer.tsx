@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Save } from 'lucide-react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -293,7 +294,7 @@ export default function MovimientoDrawer({ isOpen, onClose, onSuccess }: Movimie
             className={
               tipo === 'INGRESO' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'
             }
-            leftIcon={<span className="material-symbols-outlined text-[18px]">save</span>}
+            leftIcon={<Save className="h-[18px] w-[18px]" />}
           >
             Registrar {tipo === 'INGRESO' ? 'Ingreso' : 'Egreso'}
           </Button>

@@ -1,4 +1,5 @@
 import React from 'react';
+import { ChevronRight } from 'lucide-react';
 
 interface BreadcrumbItem {
   label: string;
@@ -14,9 +15,7 @@ export function Breadcrumbs({ items }: BreadcrumbsProps) {
     <nav className="flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-[var(--muted)]">
       {items.map((item, index) => (
         <React.Fragment key={index}>
-          {index > 0 && (
-            <span className="material-symbols-outlined text-[10px]">chevron_right</span>
-          )}
+          {index > 0 && <ChevronRight className="h-2.5 w-2.5" />}
           {item.href ? (
             <a href={item.href} className="hover:text-brand transition-colors">
               {item.label}

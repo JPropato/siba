@@ -87,7 +87,7 @@ export default function EmpleadosPage() {
           onClick={handleCreate}
           className="px-4 py-2 bg-brand hover:bg-brand-dark text-white text-sm font-bold rounded-lg shadow-lg shadow-brand/20 transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
         >
-          <span className="material-symbols-outlined text-[20px]">person_add</span>
+          <UserPlus className="h-5 w-5" />
           NUEVO EMPLEADO
         </button>
       </div>

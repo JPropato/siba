@@ -1,8 +1,8 @@
+import { Loader2, AlertCircle, ClipboardList } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Plus, Save, Check, Building2, Upload, X, Eye, Edit2, Trash2 } from 'lucide-react';
+import { Plus, Save, Check, Building2, Upload, X, Edit2, Trash2 } from 'lucide-react';
 import type { Ticket } from '../../types/tickets';
 import { otApi } from '../../features/ordenes-trabajo/api/otApi';
 import type { OrdenTrabajo, Archivo } from '../../features/ordenes-trabajo/types';
@@ -24,8 +24,6 @@ export default function TicketTabOT({ ticket, onSuccess }: TicketOTTabProps) {
   const [ordenesTrabajo, setOrdenesTrabajo] = useState<OrdenTrabajo[]>([]);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selectedOT, setSelectedOT] = useState<OrdenTrabajo | null>(null);
-  const navigate = useNavigate();
-
   // Load OTs on mount
   useEffect(() => {
     loadOTs();
@@ -84,9 +82,7 @@ export default function TicketTabOT({ ticket, onSuccess }: TicketOTTabProps) {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <span className="material-symbols-outlined animate-spin text-3xl text-slate-400">
-          progress_activity
-        </span>
+        <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
   }
@@ -108,9 +104,7 @@ export default function TicketTabOT({ ticket, onSuccess }: TicketOTTabProps) {
       {/* Lista de OTs */}
       {ordenesTrabajo.length === 0 ? (
         <div className="text-center py-12 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl">
-          <span className="material-symbols-outlined text-4xl text-slate-300 dark:text-slate-600 mb-2">
-            assignment
-          </span>
+          <ClipboardList className="h-9 w-9 text-slate-300 dark:text-slate-600 mb-2" />
           <p className="text-slate-500 dark:text-slate-400 text-sm">No hay órdenes de trabajo</p>
           {ticket.estado !== 'FINALIZADO' && ticket.estado !== 'CANCELADO' && (
             <Button
@@ -164,6 +158,7 @@ export default function TicketTabOT({ ticket, onSuccess }: TicketOTTabProps) {
                     onClick={() => handleEdit(ot)}
                     className="p-2 text-slate-400 hover:text-brand hover:bg-brand/10 rounded-lg transition-colors"
                     title="Editar OT"
+                    aria-label="Editar OT"
                   >
                     <Edit2 className="h-4 w-4" />
                   </button>
@@ -351,7 +346,7 @@ function OTMiniDrawer({ ticket, ot, onClose, onSuccess }: OTMiniDrawerProps) {
           {/* Error */}
           {error && (
             <div className="flex items-center gap-2 px-3 py-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-              <span className="material-symbols-outlined text-red-500 text-[18px]">error</span>
+              <AlertCircle className="h-[18px] w-[18px] text-red-500" />
               <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
             </div>
           )}

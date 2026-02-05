@@ -1,3 +1,4 @@
+import { Loader2, Pencil } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import { presupuestoApi } from '../api/presupuestoApi';
 import { obrasApi } from '../api/obrasApi';
@@ -281,9 +282,7 @@ export default function TabPresupuesto({
   if (isLoading && !version) {
     return (
       <div className="flex items-center justify-center py-12">
-        <span className="material-symbols-outlined animate-spin text-3xl text-slate-400">
-          progress_activity
-        </span>
+        <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
   }
@@ -357,7 +356,8 @@ export default function TabPresupuesto({
                 onClick={handleCreateVersion}
                 disabled={isSaving}
                 className="text-xs text-brand hover:underline flex items-center gap-1 disabled:opacity-50"
-                title="Crear nueva versión basada en la actual"
+                title="Crear nueva versión"
+                aria-label="Crear nueva versión basada en la actual"
               >
                 <Plus className="h-3 w-3" />
                 Nueva Versión
@@ -730,13 +730,17 @@ export default function TabPresupuesto({
                             onClick={() => startEdit(item)}
                             className="p-1.5 text-slate-400 hover:text-brand hover:bg-brand/10 rounded"
                             title="Editar"
+                            aria-label="Editar"
+                            aria-label="Editar"
                           >
-                            <span className="material-symbols-outlined text-[18px]">edit</span>
+                            <Pencil className="h-[18px] w-[18px]" />
                           </button>
                           <button
                             onClick={() => handleDeleteItem(item.id)}
                             className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-500/10 rounded"
                             title="Eliminar"
+                            aria-label="Eliminar"
+                            aria-label="Eliminar"
                           >
                             <Trash2 className="h-4 w-4" />
                           </button>

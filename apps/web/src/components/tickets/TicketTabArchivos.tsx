@@ -1,3 +1,4 @@
+import { Loader2, AlertCircle } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { Upload, Trash2, Download, FileText } from 'lucide-react';
@@ -70,7 +71,7 @@ export default function TicketTabArchivos({ ticketId }: TicketTabArchivosProps) 
       await api.delete(`/tickets/${ticketId}/archivos/${id}`);
       toast.success('Archivo eliminado');
       setArchivos((prev) => prev.filter((a) => a.id !== id));
-    } catch (error) {
+    } catch {
       toast.error('Error al eliminar');
     }
   };
@@ -86,9 +87,7 @@ export default function TicketTabArchivos({ ticketId }: TicketTabArchivosProps) 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <span className="material-symbols-outlined animate-spin text-3xl text-slate-400">
-          progress_activity
-        </span>
+        <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
   }

@@ -43,13 +43,13 @@ const COLUMN_COLORS: Record<EstadoTicket, { border: string; bg: string; text: st
   },
 };
 
-const COLUMN_ICONS: Record<EstadoTicket, string> = {
-  NUEVO: 'fiber_new',
-  ASIGNADO: 'person_add',
-  EN_CURSO: 'engineering',
-  PENDIENTE_CLIENTE: 'hourglass_top',
-  FINALIZADO: 'check_circle',
-  CANCELADO: 'block',
+const COLUMN_ICONS: Record<EstadoTicket, React.ElementType> = {
+  NUEVO: Sparkles,
+  ASIGNADO: UserPlus,
+  EN_CURSO: Wrench,
+  PENDIENTE_CLIENTE: Clock,
+  FINALIZADO: CheckCircle,
+  CANCELADO: Ban,
 };
 
 export default function KanbanColumn({
@@ -59,6 +59,7 @@ export default function KanbanColumn({
   onDeleteTicket,
 }: KanbanColumnProps) {
   const colors = COLUMN_COLORS[estado];
+  const IconComponent = COLUMN_ICONS[estado];
 
   return (
     <div
@@ -67,9 +68,7 @@ export default function KanbanColumn({
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-800">
         <div className="flex items-center gap-2">
-          <span className={`material-symbols-outlined text-[20px] ${colors.text}`}>
-            {COLUMN_ICONS[estado]}
-          </span>
+          <IconComponent className={`h-5 w-5 ${colors.text}`} />
           <h3 className="font-semibold text-slate-900 dark:text-white">{ESTADO_LABELS[estado]}</h3>
         </div>
         <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${colors.bg} ${colors.text}`}>
@@ -81,7 +80,7 @@ export default function KanbanColumn({
       <div className="flex-1 p-3 space-y-3 overflow-y-auto max-h-[calc(100vh-300px)] min-h-[200px]">
         {tickets.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-8 text-slate-400">
-            <span className="material-symbols-outlined text-3xl mb-2 opacity-50">inbox</span>
+            <Inbox className="h-8 w-8 mb-2 opacity-50" />
             <p className="text-xs">Sin tickets</p>
           </div>
         ) : (

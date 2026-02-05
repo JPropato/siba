@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Save } from 'lucide-react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -91,7 +92,9 @@ export default function EmpleadoDialog({
           email: initialData.email || '',
           direccion: initialData.direccion || '',
           telefono: initialData.telefono || '',
-          inicioRelacionLaboral: new Date(initialData.inicioRelacionLaboral).toISOString().split('T')[0],
+          inicioRelacionLaboral: new Date(initialData.inicioRelacionLaboral)
+            .toISOString()
+            .split('T')[0],
           tipo: initialData.tipo,
           contratacion: initialData.contratacion || '',
           zonaId: initialData.zonaId?.toString() || '',
@@ -131,7 +134,7 @@ export default function EmpleadoDialog({
       const axiosErr = err as { response?: { data?: { error?: string | string[] } } };
       const backendError = axiosErr.response?.data?.error;
       const message = Array.isArray(backendError)
-        ? backendError.map((e: any) => e.message || String(e)).join('. ')
+        ? backendError.join('. ')
         : backendError || 'Error al guardar el empleado.';
       toast.error(message);
     }
@@ -153,7 +156,7 @@ export default function EmpleadoDialog({
             type="submit"
             form="empleado-form"
             isLoading={isSubmitting}
-            leftIcon={<span className="material-symbols-outlined text-[18px]">save</span>}
+            leftIcon={<Save className="h-[18px] w-[18px]" />}
           >
             Guardar Empleado
           </Button>
@@ -227,7 +230,7 @@ export default function EmpleadoDialog({
               render={({ field }) => (
                 <Select
                   label="Zona (Opcional)"
-                  options={zonas.map(z => ({ value: z.id.toString(), label: z.nombre }))}
+                  options={zonas.map((z) => ({ value: z.id.toString(), label: z.nombre }))}
                   value={field.value}
                   onChange={field.onChange}
                   isLoading={isFetchingZonas}
@@ -262,9 +265,7 @@ export default function EmpleadoDialog({
               render={({ field }) => (
                 <Select
                   label="Contratación"
-                  options={[
-                    { value: 'CONTRATO_MARCO', label: 'Contrato Marco' },
-                  ]}
+                  options={[{ value: 'CONTRATO_MARCO', label: 'Contrato Marco' }]}
                   value={field.value}
                   onChange={field.onChange}
                   placeholder="Sin especificar"

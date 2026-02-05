@@ -1,11 +1,13 @@
+import { type ReactNode } from 'react';
+
 interface EmptyStateProps {
-  icon: string;
+  icon: ReactNode;
   title: string;
   description: string;
   primaryAction?: {
     label: string;
     onClick: () => void;
-    icon?: string;
+    icon?: ReactNode;
   };
   secondaryAction?: {
     label: string;
@@ -23,7 +25,7 @@ export function EmptyState({
   return (
     <div className="flex flex-col items-center justify-center min-h-[500px] border-2 border-dashed border-slate-200 dark:border-[var(--border)] rounded-xl bg-[var(--surface)]/50 dark:bg-charcoal/20 backdrop-blur-sm p-12 text-center transition-colors">
       <div className="size-20 bg-brand/10 rounded-full flex items-center justify-center mb-6 border border-brand/20">
-        <span className="material-symbols-outlined text-brand text-5xl">{icon}</span>
+        {icon}
       </div>
       <div className="max-w-md">
         <h3 className="text-2xl font-bold text-[var(--foreground)] mb-3 tracking-tight">{title}</h3>
@@ -42,9 +44,7 @@ export function EmptyState({
               onClick={primaryAction.onClick}
               className="px-6 py-2.5 bg-brand text-white font-bold rounded-lg hover:bg-brand-dark hover:shadow-xl hover:shadow-brand/20 transition-all flex items-center gap-2"
             >
-              {primaryAction.icon && (
-                <span className="material-symbols-outlined">{primaryAction.icon}</span>
-              )}
+              {primaryAction.icon}
               {primaryAction.label}
             </button>
           )}

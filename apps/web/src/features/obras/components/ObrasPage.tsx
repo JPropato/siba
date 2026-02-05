@@ -1,3 +1,4 @@
+import { Loader2, Eye, Trash2 } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { obrasApi } from '../api/obrasApi';
@@ -212,9 +213,7 @@ export default function ObrasPage() {
               {isLoading ? (
                 <tr>
                   <td colSpan={8} className="px-4 py-12 text-center text-slate-400">
-                    <span className="material-symbols-outlined animate-spin text-3xl">
-                      progress_activity
-                    </span>
+                    <Loader2 className="h-8 w-8 animate-spin" />
                   </td>
                 </tr>
               ) : obras.length === 0 ? (
@@ -284,18 +283,20 @@ export default function ObrasPage() {
                             onClick={() => handleView(obra)}
                             className="p-2 text-slate-400 hover:text-brand hover:bg-brand/10 rounded-lg transition-colors"
                             title="Ver detalle"
+                            aria-label="Ver detalle"
+                            aria-label="Ver detalle"
                           >
-                            <span className="material-symbols-outlined text-[20px]">
-                              visibility
-                            </span>
+                            <Eye className="h-5 w-5" />
                           </button>
                           {obra.estado === 'BORRADOR' && (
                             <button
                               onClick={() => handleDelete(obra)}
                               className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
                               title="Eliminar"
+                              aria-label="Eliminar"
+                              aria-label="Eliminar"
                             >
-                              <span className="material-symbols-outlined text-[20px]">delete</span>
+                              <Trash2 className="h-5 w-5" />
                             </button>
                           )}
                         </div>

@@ -1,5 +1,6 @@
 import type { Empleado } from '../../types/empleados';
 import { useSortableTable } from '../../hooks/useSortableTable';
+import { Loader2, Pencil, Trash2 } from 'lucide-react';
 import { SortableHeader } from '../ui/core/SortableHeader';
 
 interface EmpleadoTableProps {
@@ -20,9 +21,7 @@ export default function EmpleadoTable({
   if (isLoading) {
     return (
       <div className="w-full h-40 flex items-center justify-center">
-        <span className="material-symbols-outlined animate-spin text-4xl text-brand">
-          progress_activity
-        </span>
+        <Loader2 className="h-9 w-9 text-brand animate-spin" />
       </div>
     );
   }
@@ -128,17 +127,19 @@ export default function EmpleadoTable({
                   <div className="flex items-center justify-end gap-2">
                     <button
                       onClick={() => onEdit(e)}
-                      className="p-1.5 text-slate-400 hover:text-brand transition-colors rounded hover:bg-slate-100 dark:hover:bg-slate-800"
+                      className="p-1.5 text-slate-400 hover:text-brand transition-colors rounded hover:bg-slate-100 dark:hover:bg-slate-800 focus-visible:ring-2 focus-visible:ring-brand/50"
                       title="Editar"
+                      aria-label="Editar"
                     >
-                      <span className="material-symbols-outlined text-[18px]">edit</span>
+                      <Pencil className="h-[18px] w-[18px]" />
                     </button>
                     <button
                       onClick={() => onDelete(e)}
-                      className="p-1.5 text-slate-400 hover:text-red-500 transition-colors rounded hover:bg-red-50 dark:hover:bg-red-900/10"
+                      className="p-1.5 text-slate-400 hover:text-red-500 transition-colors rounded hover:bg-red-50 dark:hover:bg-red-900/10 focus-visible:ring-2 focus-visible:ring-red-500/50"
                       title="Eliminar"
+                      aria-label="Eliminar"
                     >
-                      <span className="material-symbols-outlined text-[18px]">delete</span>
+                      <Trash2 className="h-[18px] w-[18px]" />
                     </button>
                   </div>
                 </td>

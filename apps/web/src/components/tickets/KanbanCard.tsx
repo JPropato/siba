@@ -1,5 +1,6 @@
 import type { Ticket } from '../../types/tickets';
 import { TIPO_TICKET_LABELS, TIPO_TICKET_COLORS, RUBRO_LABELS } from '../../types/tickets';
+import { Building2, Wrench, Pencil, Trash2 } from 'lucide-react';
 
 interface KanbanCardProps {
   ticket: Ticket;
@@ -47,7 +48,7 @@ export default function KanbanCard({ ticket, onEdit, onDelete }: KanbanCardProps
 
       {/* Cliente / Sucursal */}
       <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mb-3">
-        <span className="material-symbols-outlined text-[14px]">corporate_fare</span>
+        <Building2 className="h-3.5 w-3.5" />
         <span className="truncate">
           {ticket.sucursal?.cliente?.razonSocial || ticket.sucursal?.nombre || 'Sin asignar'}
         </span>
@@ -55,7 +56,7 @@ export default function KanbanCard({ ticket, onEdit, onDelete }: KanbanCardProps
 
       {/* Rubro Tag */}
       <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mb-3">
-        <span className="material-symbols-outlined text-[14px]">construction</span>
+        <Wrench className="h-3.5 w-3.5" />
         <span>{RUBRO_LABELS[ticket.rubro]}</span>
       </div>
 
@@ -92,8 +93,9 @@ export default function KanbanCard({ ticket, onEdit, onDelete }: KanbanCardProps
               }}
               className="p-1 text-slate-400 hover:text-gold hover:bg-gold/10 rounded transition-colors"
               title="Editar"
+              aria-label="Editar"
             >
-              <span className="material-symbols-outlined text-[16px]">edit</span>
+              <Pencil className="h-4 w-4" />
             </button>
             <button
               onClick={(e) => {
@@ -102,8 +104,9 @@ export default function KanbanCard({ ticket, onEdit, onDelete }: KanbanCardProps
               }}
               className="p-1 text-slate-400 hover:text-red-500 hover:bg-red-500/10 rounded transition-colors"
               title="Eliminar"
+              aria-label="Eliminar"
             >
-              <span className="material-symbols-outlined text-[16px]">delete</span>
+              <Trash2 className="h-4 w-4" />
             </button>
           </div>
         </div>

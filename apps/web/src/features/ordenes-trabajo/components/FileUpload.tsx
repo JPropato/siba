@@ -1,3 +1,13 @@
+import {
+  Loader2,
+  CloudUpload,
+  AlertCircle,
+  Eye,
+  Trash2,
+  FileText,
+  FileIcon,
+  Paperclip,
+} from 'lucide-react';
 import { useState, useRef, useCallback } from 'react';
 import type { Archivo } from '../types';
 
@@ -126,15 +136,13 @@ export default function FileUpload({
 
         {isUploading ? (
           <div className="flex flex-col items-center gap-2">
-            <span className="material-symbols-outlined text-3xl text-gold animate-spin">
-              progress_activity
-            </span>
+            <Loader2 className="h-8 w-8 animate-spin" />
             <p className="text-sm text-slate-500">Subiendo...</p>
           </div>
         ) : (
           <div className="flex flex-col items-center gap-2">
             <div className="size-12 rounded-full bg-gold/10 flex items-center justify-center">
-              <span className="material-symbols-outlined text-2xl text-gold">cloud_upload</span>
+              <CloudUpload className="h-6 w-6 text-gold" />
             </div>
             <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
               Arrastrá archivos aquí o hacé click
@@ -147,7 +155,7 @@ export default function FileUpload({
       {/* Error */}
       {error && (
         <div className="flex items-center gap-2 px-3 py-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-          <span className="material-symbols-outlined text-red-500 text-[18px]">error</span>
+          <AlertCircle className="h-[18px] w-[18px] text-red-500" />
           <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
         </div>
       )}
@@ -169,9 +177,11 @@ export default function FileUpload({
                 />
               ) : (
                 <div className="size-10 rounded bg-slate-200 dark:bg-slate-800 flex items-center justify-center">
-                  <span className="material-symbols-outlined text-slate-500">
-                    {file.mimeType === 'application/pdf' ? 'picture_as_pdf' : 'attach_file'}
-                  </span>
+                  {file.mimeType === 'application/pdf' ? (
+                    <FileIcon className="h-5 w-5 text-slate-500" />
+                  ) : (
+                    <Paperclip className="h-5 w-5 text-slate-500" />
+                  )}
                 </div>
               )}
 
@@ -192,8 +202,9 @@ export default function FileUpload({
                     rel="noopener noreferrer"
                     className="p-2 text-slate-400 hover:text-gold hover:bg-gold/10 rounded-lg transition-colors"
                     title="Ver archivo"
+                    aria-label="Ver archivo"
                   >
-                    <span className="material-symbols-outlined text-[18px]">visibility</span>
+                    <Eye className="h-[18px] w-[18px]" />
                   </a>
                 )}
                 {onDelete && (
@@ -201,8 +212,9 @@ export default function FileUpload({
                     onClick={() => handleRemove(file.id)}
                     className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
                     title="Eliminar"
+                    aria-label="Eliminar"
                   >
-                    <span className="material-symbols-outlined text-[18px]">delete</span>
+                    <Trash2 className="h-[18px] w-[18px]" />
                   </button>
                 )}
               </div>

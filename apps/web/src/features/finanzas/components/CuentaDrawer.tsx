@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Save } from 'lucide-react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -11,14 +12,7 @@ import { Input } from '../../../components/ui/core/Input';
 import { Button } from '../../../components/ui/core/Button';
 import { Select } from '../../../components/ui/core/Select';
 import { DatePicker } from '../../../components/ui/core/DatePicker';
-import {
-  Building2,
-  Wallet,
-  CreditCard,
-  Smartphone,
-  TrendingUp,
-  PiggyBank,
-} from 'lucide-react';
+import { Building2, Wallet, CreditCard, Smartphone, TrendingUp, PiggyBank } from 'lucide-react';
 
 interface CuentaDrawerProps {
   isOpen: boolean;
@@ -89,9 +83,17 @@ export default function CuentaDrawer({ isOpen, onClose, cuenta, onSuccess }: Cue
   } = useForm<CuentaFormValues>({
     resolver: zodResolver(cuentaSchema),
     defaultValues: {
-      nombre: '', tipo: 'CUENTA_CORRIENTE', bancoId: '', numeroCuenta: '',
-      cbu: '', alias: '', saldoInicial: '0', moneda: 'ARS',
-      tipoInversion: '', tasaAnual: '', fechaVencimiento: '',
+      nombre: '',
+      tipo: 'CUENTA_CORRIENTE',
+      bancoId: '',
+      numeroCuenta: '',
+      cbu: '',
+      alias: '',
+      saldoInicial: '0',
+      moneda: 'ARS',
+      tipoInversion: '',
+      tasaAnual: '',
+      fechaVencimiento: '',
     },
   });
 
@@ -128,9 +130,17 @@ export default function CuentaDrawer({ isOpen, onClose, cuenta, onSuccess }: Cue
       });
     } else {
       reset({
-        nombre: '', tipo: 'CUENTA_CORRIENTE', bancoId: '', numeroCuenta: '',
-        cbu: '', alias: '', saldoInicial: '0', moneda: 'ARS',
-        tipoInversion: '', tasaAnual: '', fechaVencimiento: '',
+        nombre: '',
+        tipo: 'CUENTA_CORRIENTE',
+        bancoId: '',
+        numeroCuenta: '',
+        cbu: '',
+        alias: '',
+        saldoInicial: '0',
+        moneda: 'ARS',
+        tipoInversion: '',
+        tasaAnual: '',
+        fechaVencimiento: '',
       });
     }
   }, [cuenta, reset]);
@@ -148,9 +158,10 @@ export default function CuentaDrawer({ isOpen, onClose, cuenta, onSuccess }: Cue
         moneda: values.moneda,
         tipoInversion: showInversionFields ? values.tipoInversion || null : null,
         tasaAnual: showInversionFields && values.tasaAnual ? Number(values.tasaAnual) : null,
-        fechaVencimiento: showInversionFields && values.fechaVencimiento
-          ? new Date(values.fechaVencimiento).toISOString()
-          : null,
+        fechaVencimiento:
+          showInversionFields && values.fechaVencimiento
+            ? new Date(values.fechaVencimiento).toISOString()
+            : null,
       };
 
       if (isEditing && cuenta) {
@@ -185,7 +196,7 @@ export default function CuentaDrawer({ isOpen, onClose, cuenta, onSuccess }: Cue
             type="submit"
             form="cuenta-form"
             isLoading={isSubmitting}
-            leftIcon={<span className="material-symbols-outlined text-[18px]">save</span>}
+            leftIcon={<Save className="h-[18px] w-[18px]" />}
           >
             {isEditing ? 'Guardar Cambios' : 'Crear Cuenta'}
           </Button>
@@ -202,17 +213,13 @@ export default function CuentaDrawer({ isOpen, onClose, cuenta, onSuccess }: Cue
             {TIPOS_CUENTA.map((t) => (
               <label
                 key={t}
-                className={`flex items-center gap-2 p-3 rounded-lg border text-sm font-medium cursor-pointer transition-all ${tipo === t
-                  ? 'border-brand bg-brand/5 text-brand'
-                  : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-slate-300'
-                  }`}
+                className={`flex items-center gap-2 p-3 rounded-lg border text-sm font-medium cursor-pointer transition-all ${
+                  tipo === t
+                    ? 'border-brand bg-brand/5 text-brand'
+                    : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-slate-300'
+                }`}
               >
-                <input
-                  type="radio"
-                  value={t}
-                  {...register('tipo')}
-                  className="sr-only"
-                />
+                <input type="radio" value={t} {...register('tipo')} className="sr-only" />
                 {getIconForType(t)}
                 {TIPO_CUENTA_CONFIG[t]?.label}
               </label>
@@ -257,11 +264,7 @@ export default function CuentaDrawer({ isOpen, onClose, cuenta, onSuccess }: Cue
               className="font-mono"
               {...register('cbu')}
             />
-            <Input
-              label="Alias"
-              placeholder="mi.alias.cbu"
-              {...register('alias')}
-            />
+            <Input label="Alias" placeholder="mi.alias.cbu" {...register('alias')} />
           </div>
         )}
 
@@ -277,9 +280,13 @@ export default function CuentaDrawer({ isOpen, onClose, cuenta, onSuccess }: Cue
         {/* Saldo Inicial y Moneda */}
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Saldo Inicial</label>
+            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+              Saldo Inicial
+            </label>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">$</span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">
+                $
+              </span>
               <input
                 type="number"
                 disabled={isEditing}
@@ -299,7 +306,7 @@ export default function CuentaDrawer({ isOpen, onClose, cuenta, onSuccess }: Cue
                 label="Moneda"
                 options={[
                   { value: 'ARS', label: 'ARS - Peso Argentino' },
-                  { value: 'USD', label: 'USD - Dólar' }
+                  { value: 'USD', label: 'USD - Dólar' },
                 ]}
                 value={field.value}
                 onChange={field.onChange}
@@ -342,11 +349,7 @@ export default function CuentaDrawer({ isOpen, onClose, cuenta, onSuccess }: Cue
                 name="fechaVencimiento"
                 control={control}
                 render={({ field }) => (
-                  <DatePicker
-                    label="Vencimiento"
-                    value={field.value}
-                    onChange={field.onChange}
-                  />
+                  <DatePicker label="Vencimiento" value={field.value} onChange={field.onChange} />
                 )}
               />
             </div>

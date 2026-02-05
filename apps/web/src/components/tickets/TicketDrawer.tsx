@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
+import { Save, Info, Clock } from 'lucide-react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -283,7 +284,7 @@ export default function TicketDrawer({ isOpen, onClose, onSuccess, ticket }: Tic
               )}
               {isCorreoArgentino && (
                 <p className="text-[11px] font-medium text-blue-600 flex items-center gap-1">
-                  <span className="material-symbols-outlined text-[14px]">info</span>
+                  <Info className="h-3.5 w-3.5" />
                   Cliente Correo Argentino - Ticket externo obligatorio
                 </p>
               )}
@@ -393,7 +394,7 @@ export default function TicketDrawer({ isOpen, onClose, onSuccess, ticket }: Tic
 
             {/* SLA Info */}
             <div className="flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-              <span className="material-symbols-outlined text-blue-500 text-[18px]">schedule</span>
+              <Clock className="h-[18px] w-[18px] text-blue-500" />
               <span className="text-xs text-blue-700 dark:text-blue-300">
                 <strong>SLA:</strong> {TIPO_TICKET_SLA[tipoTicketValue as TipoTicket]}
               </span>
@@ -443,7 +444,7 @@ export default function TicketDrawer({ isOpen, onClose, onSuccess, ticket }: Tic
             type="submit"
             form="ticket-form"
             isLoading={isSubmitting}
-            leftIcon={<span className="material-symbols-outlined text-[18px]">save</span>}
+            leftIcon={<Save className="h-[18px] w-[18px]" />}
           >
             {ticket ? 'Guardar Cambios' : 'Crear Ticket'}
           </Button>

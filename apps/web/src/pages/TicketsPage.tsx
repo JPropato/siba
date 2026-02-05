@@ -12,7 +12,20 @@ import TicketDrawer from '../components/tickets/TicketDrawer';
 import TicketDetailSheet from '../components/tickets/TicketDetailSheet';
 import KanbanBoard from '../components/tickets/KanbanBoard';
 import { Select } from '../components/ui/core/Select';
-import { Search, LayoutGrid, AlertCircle, Clock, Plus, ChevronDown, Filter } from 'lucide-react';
+import {
+  Search,
+  LayoutGrid,
+  AlertCircle,
+  Clock,
+  Plus,
+  ChevronDown,
+  Filter,
+  List,
+  Columns,
+  Loader2,
+  Eye,
+  Trash2,
+} from 'lucide-react';
 import { FloatingActionButton } from '../components/layout/FloatingActionButton';
 
 export default function TicketsPage() {
@@ -120,8 +133,9 @@ export default function TicketsPage() {
                   : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
               }`}
               title="Vista Tabla"
+              aria-label="Vista Tabla"
             >
-              <span className="material-symbols-outlined text-[20px]">view_list</span>
+              <List className="h-5 w-5" />
             </button>
             <button
               onClick={() => setViewMode('kanban')}
@@ -131,8 +145,9 @@ export default function TicketsPage() {
                   : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
               }`}
               title="Vista Kanban"
+              aria-label="Vista Kanban"
             >
-              <span className="material-symbols-outlined text-[20px]">view_kanban</span>
+              <Columns className="h-5 w-5" />
             </button>
           </div>
 
@@ -140,7 +155,7 @@ export default function TicketsPage() {
             onClick={handleCreate}
             className="hidden md:flex px-4 py-2.5 bg-brand hover:bg-brand-dark text-white text-sm font-bold rounded-lg shadow-lg shadow-brand/20 transition-all hover:scale-105 active:scale-95 items-center gap-2"
           >
-            <span className="material-symbols-outlined text-[20px]">add</span>
+            <Plus className="h-5 w-5" />
             NUEVO TICKET
           </button>
         </div>
@@ -276,9 +291,7 @@ export default function TicketsPage() {
                 {isLoading ? (
                   <tr>
                     <td colSpan={8} className="px-4 py-12 text-center text-slate-400">
-                      <span className="material-symbols-outlined animate-spin text-3xl">
-                        progress_activity
-                      </span>
+                      <Loader2 className="h-8 w-8 animate-spin mx-auto" />
                     </td>
                   </tr>
                 ) : tickets.length === 0 ? (
@@ -345,17 +358,17 @@ export default function TicketsPage() {
                             onClick={() => handleViewDetail(t)}
                             className="p-2 text-slate-400 hover:text-brand hover:bg-brand/10 rounded-lg transition-colors"
                             title="Ver detalle"
+                            aria-label="Ver detalle"
                           >
-                            <span className="material-symbols-outlined text-[20px]">
-                              visibility
-                            </span>
+                            <Eye className="h-5 w-5" />
                           </button>
                           <button
                             onClick={() => handleDelete(t)}
                             className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
                             title="Eliminar"
+                            aria-label="Eliminar"
                           >
-                            <span className="material-symbols-outlined text-[20px]">delete</span>
+                            <Trash2 className="h-5 w-5" />
                           </button>
                         </div>
                       </td>

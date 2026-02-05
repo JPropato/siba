@@ -36,8 +36,9 @@ export function TopHeader({
       <div className="flex items-center gap-6">
         <button
           onClick={onToggleSidebar}
-          className="text-slate-400 hover:text-brand transition-colors"
+          className="text-slate-400 hover:text-brand transition-colors focus-visible:ring-2 focus-visible:ring-brand/50 rounded-lg p-1"
           title={isSidebarCollapsed ? 'Expandir menú' : 'Colapsar menú'}
+          aria-label={isSidebarCollapsed ? 'Expandir menú' : 'Colapsar menú'}
         >
           <Menu className="lg:hidden h-5 w-5" />
           {isSidebarCollapsed ? (
@@ -83,14 +84,19 @@ export function TopHeader({
         {/* Theme Toggle */}
         <button
           onClick={onToggleDarkMode}
-          className="p-2 text-slate-400 hover:text-brand transition-colors hover:bg-brand/5 rounded-lg flex items-center justify-center"
+          className="p-2 text-slate-400 hover:text-brand transition-colors hover:bg-brand/5 rounded-lg flex items-center justify-center focus-visible:ring-2 focus-visible:ring-brand/50"
           title={darkMode ? 'Modo claro' : 'Modo oscuro'}
+          aria-label={darkMode ? 'Modo claro' : 'Modo oscuro'}
         >
           {darkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
         </button>
 
         {/* Notifications */}
-        <button className="relative p-2 text-slate-400 hover:text-brand transition-colors hover:bg-brand/5 rounded-lg">
+        <button
+          className="relative p-2 text-slate-400 hover:text-brand transition-colors hover:bg-brand/5 rounded-lg focus-visible:ring-2 focus-visible:ring-brand/50"
+          title="Notificaciones"
+          aria-label="Notificaciones"
+        >
           <Bell className="h-5 w-5" />
           <span className="absolute top-2.5 right-2.5 size-2 bg-brand rounded-full ring-2 ring-[var(--surface)] dark:ring-bg-dark" />
         </button>
@@ -102,7 +108,8 @@ export function TopHeader({
         <div className="relative">
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="flex items-center gap-3 pl-2 group cursor-pointer outline-none"
+            className="flex items-center gap-3 pl-2 group cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-brand/50 rounded-lg"
+            aria-label="Menú de usuario"
           >
             <div className="text-right hidden sm:block">
               <p className="text-xs font-bold text-[var(--foreground)] leading-none">

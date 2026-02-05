@@ -1,3 +1,4 @@
+import { Loader2, Ticket } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { toast } from 'sonner';
@@ -134,7 +135,7 @@ export default function TicketDetailSheet({
           <div className="flex items-center justify-between p-4">
             <div className="flex items-center gap-3">
               <div className="size-10 rounded-xl bg-brand/10 flex items-center justify-center">
-                <span className="material-symbols-outlined text-brand">confirmation_number</span>
+                <Ticket className="h-5 w-5 text-brand" />
               </div>
               <div>
                 <h2 className="text-lg font-bold text-slate-900 dark:text-white">
@@ -228,9 +229,7 @@ export default function TicketDetailSheet({
         <div className="flex-1 p-4 overflow-y-auto">
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
-              <span className="material-symbols-outlined animate-spin text-3xl text-slate-400">
-                progress_activity
-              </span>
+              <Loader2 className="h-8 w-8 animate-spin" />
             </div>
           ) : !ticket ? (
             <div className="text-center py-12 text-slate-400">No se encontró el ticket</div>

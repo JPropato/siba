@@ -98,7 +98,7 @@ export default function SedesPage() {
           onClick={handleCreate}
           className="px-4 py-2 bg-brand hover:bg-brand-dark text-white text-sm font-bold rounded-lg shadow-lg shadow-brand/20 transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
         >
-          <span className="material-symbols-outlined text-[20px]">add_business</span>
+          <Building2 className="h-5 w-5" />
           NUEVA SEDE
         </button>
       </div>
@@ -132,7 +132,7 @@ export default function SedesPage() {
               disabled={page === 1}
               className="px-3 py-1 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md disabled:opacity-50 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
             >
-              <span className="material-symbols-outlined text-[18px]">chevron_left</span>
+              <ChevronLeft className="h-[18px] w-[18px]" />
             </button>
             <span className="text-sm text-slate-600 dark:text-slate-400">
               Página {page} de {totalPages}
@@ -142,7 +142,7 @@ export default function SedesPage() {
               disabled={page === totalPages}
               className="px-3 py-1 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md disabled:opacity-50 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
             >
-              <span className="material-symbols-outlined text-[18px]">chevron_right</span>
+              <ChevronRight className="h-[18px] w-[18px]" />
             </button>
           </div>
         )}

@@ -1,3 +1,4 @@
+import { Loader2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { toast } from 'sonner';
@@ -224,7 +225,9 @@ export default function ObraDrawer({
         const hasValidItems = items.length > 0 && items.some((item) => Number(item.cantidad) > 0);
 
         if (!hasValidItems) {
-          toast.error('No se puede presupuestar: Debe agregar al menos un item con cantidad mayor a 0');
+          toast.error(
+            'No se puede presupuestar: Debe agregar al menos un item con cantidad mayor a 0'
+          );
           setIsLoading(false);
           return;
         }
@@ -248,28 +251,28 @@ export default function ObraDrawer({
     modo: ModoEjecucion
   ): { estado: EstadoObra; label: string; color: string }[] => {
     const transiciones: Record<EstadoObra, { estado: EstadoObra; label: string; color: string }[]> =
-    {
-      BORRADOR:
-        modo === 'CON_PRESUPUESTO'
-          ? [
-            {
-              estado: 'PRESUPUESTADO',
-              label: 'Generar PDF y Presupuestar',
-              color: 'text-blue-600',
-            },
-          ]
-          : [{ estado: 'EN_EJECUCION', label: 'Iniciar Ejecución', color: 'text-amber-600' }],
-      PRESUPUESTADO: [
-        { estado: 'APROBADO', label: 'Aprobar', color: 'text-green-600' },
-        { estado: 'RECHAZADO', label: 'Rechazar', color: 'text-red-600' },
-        { estado: 'BORRADOR', label: 'Reabrir para Edición', color: 'text-slate-600' },
-      ],
-      APROBADO: [{ estado: 'EN_EJECUCION', label: 'Iniciar Ejecución', color: 'text-amber-600' }],
-      RECHAZADO: [{ estado: 'BORRADOR', label: 'Reabrir para Edición', color: 'text-slate-600' }],
-      EN_EJECUCION: [{ estado: 'FINALIZADO', label: 'Finalizar Obra', color: 'text-purple-600' }],
-      FINALIZADO: [{ estado: 'FACTURADO', label: 'Marcar Facturado', color: 'text-emerald-600' }],
-      FACTURADO: [],
-    };
+      {
+        BORRADOR:
+          modo === 'CON_PRESUPUESTO'
+            ? [
+                {
+                  estado: 'PRESUPUESTADO',
+                  label: 'Generar PDF y Presupuestar',
+                  color: 'text-blue-600',
+                },
+              ]
+            : [{ estado: 'EN_EJECUCION', label: 'Iniciar Ejecución', color: 'text-amber-600' }],
+        PRESUPUESTADO: [
+          { estado: 'APROBADO', label: 'Aprobar', color: 'text-green-600' },
+          { estado: 'RECHAZADO', label: 'Rechazar', color: 'text-red-600' },
+          { estado: 'BORRADOR', label: 'Reabrir para Edición', color: 'text-slate-600' },
+        ],
+        APROBADO: [{ estado: 'EN_EJECUCION', label: 'Iniciar Ejecución', color: 'text-amber-600' }],
+        RECHAZADO: [{ estado: 'BORRADOR', label: 'Reabrir para Edición', color: 'text-slate-600' }],
+        EN_EJECUCION: [{ estado: 'FINALIZADO', label: 'Finalizar Obra', color: 'text-purple-600' }],
+        FINALIZADO: [{ estado: 'FACTURADO', label: 'Marcar Facturado', color: 'text-emerald-600' }],
+        FACTURADO: [],
+      };
     return transiciones[estadoActual] || [];
   };
 
@@ -311,9 +314,7 @@ export default function ObraDrawer({
       />
 
       {/* Drawer */}
-      <div
-        className="fixed inset-y-0 right-0 w-full sm:max-w-2xl z-[101] bg-white dark:bg-slate-950 border-l border-slate-200 dark:border-slate-800 shadow-xl flex flex-col animate-in slide-in-from-right duration-300"
-      >
+      <div className="fixed inset-y-0 right-0 w-full sm:max-w-2xl z-[101] bg-white dark:bg-slate-950 border-l border-slate-200 dark:border-slate-800 shadow-xl flex flex-col animate-in slide-in-from-right duration-300">
         {/* Header */}
         <div className="sticky top-0 z-10 bg-white dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800">
           <div className="flex items-center justify-between p-4">
@@ -349,10 +350,10 @@ export default function ObraDrawer({
                   {estadoConfig.label}
                   {getTransicionesPermitidas(displayObra.estado, displayObra.modoEjecucion).length >
                     0 && (
-                      <ChevronDown
-                        className={`h-4 w-4 transition-transform ${showEstadoDropdown ? 'rotate-180' : ''}`}
-                      />
-                    )}
+                    <ChevronDown
+                      className={`h-4 w-4 transition-transform ${showEstadoDropdown ? 'rotate-180' : ''}`}
+                    />
+                  )}
                 </button>
 
                 {/* Dropdown Menu */}
@@ -405,10 +406,11 @@ export default function ObraDrawer({
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === tab.id
-                    ? 'border-gold text-gold'
-                    : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
-                    }`}
+                  className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+                    activeTab === tab.id
+                      ? 'border-gold text-gold'
+                      : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                  }`}
                 >
                   <tab.icon className="h-4 w-4" />
                   {tab.label}
@@ -422,9 +424,7 @@ export default function ObraDrawer({
         <div className="flex-1 p-4 overflow-y-auto">
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
-              <span className="material-symbols-outlined animate-spin text-3xl text-slate-400">
-                progress_activity
-              </span>
+              <Loader2 className="h-8 w-8 animate-spin" />
             </div>
           ) : activeTab === 'general' ? (
             <div className="space-y-6">
@@ -432,14 +432,20 @@ export default function ObraDrawer({
               <div className="grid grid-cols-2 gap-4">
                 <Select
                   label="Tipo de Obra *"
-                  options={Object.entries(TIPO_OBRA_CONFIG).map(([key, { label }]) => ({ value: key, label }))}
+                  options={Object.entries(TIPO_OBRA_CONFIG).map(([key, { label }]) => ({
+                    value: key,
+                    label,
+                  }))}
                   value={tipo}
                   onChange={(val) => setTipo(val as TipoObra)}
                   disabled={!!isReadOnly}
                 />
                 <Select
                   label="Modo Ejecución"
-                  options={Object.entries(MODO_EJECUCION_CONFIG).map(([key, { label }]) => ({ value: key, label }))}
+                  options={Object.entries(MODO_EJECUCION_CONFIG).map(([key, { label }]) => ({
+                    value: key,
+                    label,
+                  }))}
                   value={modoEjecucion}
                   onChange={(val) => setModoEjecucion(val as ModoEjecucion)}
                   disabled={!!isReadOnly}
@@ -480,10 +486,10 @@ export default function ObraDrawer({
               <div className="grid grid-cols-2 gap-4">
                 <Select
                   label="Cliente *"
-                  options={clientes.map(c => ({
+                  options={clientes.map((c) => ({
                     value: c.id,
                     label: c.razonSocial,
-                    icon: <Briefcase className="h-4 w-4" />
+                    icon: <Briefcase className="h-4 w-4" />,
                   }))}
                   value={clienteId}
                   onChange={(val) => setClienteId(val ? Number(val) : '')}
@@ -492,10 +498,10 @@ export default function ObraDrawer({
                 />
                 <Select
                   label="Sucursal"
-                  options={sucursales.map(s => ({
+                  options={sucursales.map((s) => ({
                     value: s.id,
                     label: s.nombre,
-                    icon: <MapPin className="h-4 w-4" />
+                    icon: <MapPin className="h-4 w-4" />,
                   }))}
                   value={sucursalId}
                   onChange={(val) => setSucursalId(val ? Number(val) : '')}
@@ -658,7 +664,6 @@ export default function ObraDrawer({
             </div>
           </div>
         )}
-
       </div>
     </>
   );
