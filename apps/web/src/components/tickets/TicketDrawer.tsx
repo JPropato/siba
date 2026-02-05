@@ -25,6 +25,8 @@ interface Cliente {
 interface Sucursal {
   id: number;
   nombre: string;
+  direccion?: string;
+  codigoInterno?: number;
   clienteId: number;
   cliente?: { razonSocial: string };
 }
@@ -219,10 +221,14 @@ export default function TicketDrawer({ isOpen, onClose, onSuccess, ticket }: Tic
     const filtered = clienteId
       ? sucursales.filter((s) => s.clienteId?.toString() === clienteId)
       : sucursales;
-    return filtered.map((s) => ({
-      value: s.id.toString(),
-      label: s.nombre,
-    }));
+    return filtered.map((s) => {
+      const codigo = s.codigoInterno ? `[${s.codigoInterno}]` : '';
+      const direccion = s.direccion ? ` - ${s.direccion}` : '';
+      return {
+        value: s.id.toString(),
+        label: `${codigo} ${s.nombre}${direccion}`.trim(),
+      };
+    });
   }, [sucursales, clienteId]);
 
   // Clear sucursal when client changes

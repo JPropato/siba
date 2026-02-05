@@ -128,7 +128,7 @@ export default function TicketDetailSheet({
       />
 
       {/* Drawer */}
-      <div className="fixed inset-y-0 right-0 w-full sm:max-w-2xl z-[101] bg-white dark:bg-slate-950 border-l border-slate-200 dark:border-slate-800 shadow-xl flex flex-col animate-in slide-in-from-right duration-300">
+      <div className="fixed inset-y-0 right-0 w-full sm:max-w-3xl z-[101] bg-white dark:bg-slate-950 border-l border-slate-200 dark:border-slate-800 shadow-xl flex flex-col animate-in slide-in-from-right duration-300">
         {/* Header */}
         <div className="sticky top-0 z-10 bg-white dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800">
           <div className="flex items-center justify-between p-4">
