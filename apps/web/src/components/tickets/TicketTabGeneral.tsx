@@ -8,6 +8,7 @@ import api from '../../lib/api';
 import type { Ticket } from '../../types/tickets';
 import { RUBRO_LABELS, TIPO_TICKET_LABELS } from '../../types/tickets';
 import { Button } from '../ui/core/Button';
+import { Select } from '../ui/core/Select';
 
 interface TicketDetailTabProps {
   ticket: Ticket;
@@ -158,62 +159,57 @@ export default function TicketTabGeneral({ ticket, onUpdate, onSuccess }: Ticket
 
         {/* Rubro y Tipo */}
         <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-              Rubro
-            </label>
-            <select
-              {...register('rubro')}
-              className="w-full h-10 px-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm outline-none focus:border-brand"
-            >
-              {Object.entries(RUBRO_LABELS).map(([k, v]) => (
-                <option key={k} value={k}>
-                  {v as string}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-              Tipo (SLA)
-            </label>
-            <select
-              {...register('tipoTicket')}
-              className="w-full h-10 px-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm outline-none focus:border-brand"
-            >
-              {Object.entries(TIPO_TICKET_LABELS).map(([k, v]) => (
-                <option key={k} value={k}>
-                  {v as string}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {/* Técnico */}
-        <div className="space-y-1.5">
-          <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-            Técnico Asignado
-          </label>
           <Controller
-            name="tecnicoId"
             control={control}
+            name="rubro"
             render={({ field }) => (
-              <select
-                value={field.value ?? ''}
-                onChange={(e) => field.onChange(e.target.value)}
-                className="w-full h-10 px-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm outline-none focus:border-brand"
-              >
-                <option value="">Sin asignar</option>
-                {tecnicos.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.nombre} {t.apellido}
-                  </option>
-                ))}
-              </select>
+              <Select
+                label="Rubro"
+                options={Object.entries(RUBRO_LABELS).map(([k, v]) => ({
+                  value: k,
+                  label: v as string,
+                }))}
+                value={field.value}
+                onChange={field.onChange}
+              />
+            )}
+          />
+          <Controller
+            control={control}
+            name="tipoTicket"
+            render={({ field }) => (
+              <Select
+                label="Tipo (SLA)"
+                options={Object.entries(TIPO_TICKET_LABELS).map(([k, v]) => ({
+                  value: k,
+                  label: v as string,
+                }))}
+                value={field.value}
+                onChange={field.onChange}
+              />
             )}
           />
         </div>
+
+        {/* Técnico */}
+        <Controller
+          control={control}
+          name="tecnicoId"
+          render={({ field }) => (
+            <Select
+              label="Técnico Asignado"
+              options={[
+                { value: '', label: 'Sin asignar' },
+                ...tecnicos.map((t) => ({
+                  value: t.id.toString(),
+                  label: `${t.nombre} ${t.apellido}`,
+                })),
+              ]}
+              value={field.value?.toString() || ''}
+              onChange={field.onChange}
+            />
+          )}
+        />
 
         {/* Código Cliente y Fecha */}
         <div className="grid grid-cols-2 gap-4">

@@ -17,6 +17,7 @@ import {
 } from '../ui/Sheet';
 import { Button } from '../ui/core/Button';
 import { Combobox } from '../ui/core/Combobox';
+import { Select } from '../ui/core/Select';
 
 interface Cliente {
   id: number;
@@ -356,36 +357,38 @@ export default function TicketDrawer({ isOpen, onClose, onSuccess, ticket }: Tic
 
             {/* Rubro y Tipo */}
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                  Rubro *
-                </label>
-                <select
-                  {...register('rubro')}
-                  className="w-full h-10 px-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none focus:border-brand transition-all font-semibold text-slate-900 dark:text-white"
-                >
-                  {Object.entries(RUBRO_LABELS).map(([k, v]) => (
-                    <option key={k} value={k}>
-                      {v as string}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                  Tipo de Ticket *
-                </label>
-                <select
-                  {...register('tipoTicket')}
-                  className="w-full h-10 px-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none focus:border-brand transition-all font-semibold text-slate-900 dark:text-white"
-                >
-                  {Object.entries(TIPO_TICKET_LABELS).map(([k, v]) => (
-                    <option key={k} value={k}>
-                      {v as string}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <Controller
+                control={control}
+                name="rubro"
+                render={({ field }) => (
+                  <Select
+                    label="Rubro *"
+                    options={Object.entries(RUBRO_LABELS).map(([k, v]) => ({
+                      value: k,
+                      label: v as string,
+                    }))}
+                    value={field.value}
+                    onChange={field.onChange}
+                    placeholder="Seleccionar rubro"
+                  />
+                )}
+              />
+              <Controller
+                control={control}
+                name="tipoTicket"
+                render={({ field }) => (
+                  <Select
+                    label="Tipo de Ticket *"
+                    options={Object.entries(TIPO_TICKET_LABELS).map(([k, v]) => ({
+                      value: k,
+                      label: v as string,
+                    }))}
+                    value={field.value}
+                    onChange={field.onChange}
+                    placeholder="Seleccionar tipo"
+                  />
+                )}
+              />
             </div>
 
             {/* SLA Info */}
@@ -398,23 +401,26 @@ export default function TicketDrawer({ isOpen, onClose, onSuccess, ticket }: Tic
 
             {/* Técnico y Fecha Programada */}
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                  Técnico Asignado
-                </label>
-                <select
-                  disabled={isFetching}
-                  {...register('tecnicoId')}
-                  className="w-full h-10 px-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none focus:border-brand transition-all font-semibold text-slate-900 dark:text-white"
-                >
-                  <option value="">Sin asignar</option>
-                  {tecnicos.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.nombre} {t.apellido}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <Controller
+                control={control}
+                name="tecnicoId"
+                render={({ field }) => (
+                  <Select
+                    label="Técnico Asignado"
+                    options={[
+                      { value: '', label: 'Sin asignar' },
+                      ...tecnicos.map((t) => ({
+                        value: t.id.toString(),
+                        label: `${t.nombre} ${t.apellido}`,
+                      })),
+                    ]}
+                    value={field.value}
+                    onChange={field.onChange}
+                    placeholder="Sin asignar"
+                    disabled={isFetching}
+                  />
+                )}
+              />
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
                   Fecha Programada
