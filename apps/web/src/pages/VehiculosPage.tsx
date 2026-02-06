@@ -1,48 +1,45 @@
 import { useState, useEffect } from 'react';
-import api from '../lib/api';
 import { Search, Truck } from 'lucide-react';
+import { toast } from 'sonner';
 import VehiculoTable from '../components/vehiculos/VehiculoTable';
 import VehiculoDialog from '../components/vehiculos/VehiculoDialog';
 import { CollapsibleFilters } from '../components/layout/CollapsibleFilters';
 import { FloatingActionButton } from '../components/layout/FloatingActionButton';
+import {
+  useVehiculos,
+  useCreateVehiculo,
+  useUpdateVehiculo,
+  useDeleteVehiculo,
+} from '../hooks/api/useVehiculos';
 import type { Vehiculo, VehiculoFormData } from '../types/vehiculos';
 import { Pagination } from '../components/ui/Pagination';
 
 export default function VehiculosPage() {
-  const [vehiculos, setVehiculos] = useState<Vehiculo[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedVehiculo, setSelectedVehiculo] = useState<Vehiculo | null>(null);
 
-  const fetchVehiculos = async () => {
-    setIsLoading(true);
-    try {
-      const res = await api.get('/vehiculos', {
-        params: {
-          search: search || undefined,
-          page,
-          limit: 10,
-        },
-      });
-      setVehiculos(res.data.data || []);
-      setTotalPages(res.data.meta?.totalPages || 1);
-    } catch (error) {
-      console.error('Error fetching vehiculos:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
+  // Debounce search
   useEffect(() => {
-    const timer = setTimeout(() => {
-      fetchVehiculos();
-    }, 300);
+    const timer = setTimeout(() => setDebouncedSearch(search), 300);
     return () => clearTimeout(timer);
-  }, [search, page]);
+  }, [search]);
+
+  // Reset page when search changes
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch]);
+
+  // TanStack Query hooks
+  const { data, isLoading, refetch } = useVehiculos(debouncedSearch, page);
+  const vehiculos = data?.data ?? [];
+  const totalPages = data?.totalPages ?? 1;
+  const createVehiculo = useCreateVehiculo();
+  const updateVehiculo = useUpdateVehiculo();
+  const deleteVehiculo = useDeleteVehiculo();
 
   const handleCreate = () => {
     setSelectedVehiculo(null);
@@ -58,20 +55,19 @@ export default function VehiculosPage() {
     if (!window.confirm(`¿Está seguro de eliminar el vehículo con patente "${v.patente}"?`)) return;
 
     try {
-      await api.delete(`/vehiculos/${v.id}`);
-      fetchVehiculos();
-    } catch (error) {
-      console.error('Error deleting vehiculo:', error);
+      await deleteVehiculo.mutateAsync(v.id);
+      toast.success('Vehículo eliminado');
+    } catch {
+      toast.error('Error al eliminar vehículo');
     }
   };
 
   const handleSave = async (data: VehiculoFormData) => {
     if (selectedVehiculo) {
-      await api.put(`/vehiculos/${selectedVehiculo.id}`, data);
+      await updateVehiculo.mutateAsync({ id: selectedVehiculo.id, data });
     } else {
-      await api.post('/vehiculos', data);
+      await createVehiculo.mutateAsync(data);
     }
-    fetchVehiculos();
   };
 
   return (
