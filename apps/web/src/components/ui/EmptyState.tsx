@@ -1,4 +1,4 @@
-import { type ReactNode } from 'react';
+import { memo, type ReactNode } from 'react';
 
 interface EmptyStateProps {
   icon: ReactNode;
@@ -15,7 +15,10 @@ interface EmptyStateProps {
   };
 }
 
-export function EmptyState({
+/**
+ * EmptyState - Memoizado para evitar re-renders innecesarios.
+ */
+export const EmptyState = memo(function EmptyState({
   icon,
   title,
   description,
@@ -52,6 +55,6 @@ export function EmptyState({
       </div>
     </div>
   );
-}
+});
 
 export default EmptyState;

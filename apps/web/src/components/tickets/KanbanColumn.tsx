@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import type { Ticket, EstadoTicket } from '../../types/tickets';
 import { ESTADO_LABELS } from '../../types/tickets';
 import KanbanCard from './KanbanCard';
@@ -52,7 +53,10 @@ const COLUMN_ICONS: Record<EstadoTicket, React.ElementType> = {
   CANCELADO: Ban,
 };
 
-export default function KanbanColumn({
+/**
+ * KanbanColumn - Memoizado para evitar re-renders cuando otras columnas cambian.
+ */
+const KanbanColumn = memo(function KanbanColumn({
   estado,
   tickets,
   onEditTicket,
@@ -96,4 +100,6 @@ export default function KanbanColumn({
       </div>
     </div>
   );
-}
+});
+
+export default KanbanColumn;

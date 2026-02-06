@@ -197,6 +197,8 @@ model Sucursal {
   ordenesTrabajo OrdenTrabajo[]
   obras          Obra[]
 
+  @@index([clienteId])
+  @@index([zonaId])
   @@map("sucursales")
 }
 
@@ -217,6 +219,8 @@ model Vehiculo {
 
   zona Zona? @relation(fields: [zonaId], references: [id])
 
+  @@index([zonaId])
+  @@index([estado])
   @@map("vehiculos")
 }
 
@@ -257,6 +261,7 @@ model HistorialPrecio {
   
   material        Material  @relation(fields: [materialId], references: [id])
 
+  @@index([materialId])
   @@map("historial_precios")
 }
 
@@ -285,6 +290,8 @@ model Empleado {
   ordenesTrabajo  OrdenTrabajo[] @relation("OrdenTrabajoTecnico")
   movimientos     Movimiento[]
 
+  @@index([zonaId])
+  @@index([tipo])
   @@map("empleados")
 }
 
@@ -328,6 +335,11 @@ model Ticket {
   obra                Obra?
   movimientos         Movimiento[]
 
+  @@index([estado])
+  @@index([sucursalId])
+  @@index([tecnicoId])
+  @@index([fechaCreacion])
+  @@index([rubro])
   @@map("tickets")
 }
 
@@ -344,6 +356,8 @@ model TicketHistorial {
   ticket           Ticket   @relation(fields: [ticketId], references: [id])
   usuario          Usuario  @relation(fields: [usuarioId], references: [id])
 
+  @@index([ticketId])
+  @@index([fechaCambio])
   @@map("ticket_historial")
 }
 
@@ -388,6 +402,7 @@ model Archivo {
   
   ordenTrabajo    OrdenTrabajo? @relation(fields: [ordenTrabajoId], references: [id])
 
+  @@index([ordenTrabajoId])
   @@map("archivos")
 }
 

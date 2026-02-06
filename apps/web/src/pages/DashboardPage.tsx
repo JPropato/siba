@@ -9,6 +9,7 @@ import {
   Plus,
 } from 'lucide-react';
 import { usePermissions } from '../hooks/usePermissions';
+import { StaggerContainer, StaggerItem, SlideIn } from '../components/ui/motion';
 
 export function DashboardPage() {
   const { isSuperAdmin, hasPermission } = usePermissions();
@@ -62,17 +63,20 @@ export function DashboardPage() {
   );
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-8">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <SlideIn
+        direction="down"
+        className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
+      >
         <div>
-          <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-3">
+          <h1 className="text-fluid-3xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-3">
             <div className="p-2 bg-brand/10 rounded-lg">
               <LayoutDashboard className="h-6 w-6 text-brand" />
             </div>
             Dashboard General
           </h1>
-          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+          <p className="text-slate-500 dark:text-slate-400 text-fluid-sm mt-1">
             Resumen operativo y comercial en tiempo real
           </p>
         </div>
@@ -92,14 +96,16 @@ export function DashboardPage() {
             <Plus className="h-5 w-5" />
           </button>
         </div>
-      </div>
+      </SlideIn>
 
       {visibleKpis.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StaggerContainer className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {visibleKpis.map((kpi) => (
-            <StatCard key={kpi.id} {...kpi} />
+            <StaggerItem key={kpi.id}>
+              <StatCard {...kpi} />
+            </StaggerItem>
           ))}
-        </div>
+        </StaggerContainer>
       ) : (
         <div className="bg-white dark:bg-slate-900 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 p-12 text-center">
           <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl w-fit mx-auto mb-4">
@@ -119,7 +125,7 @@ export function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+            <h2 className="text-fluid-xl font-bold text-slate-900 dark:text-white">
               Tendencias Semanales
             </h2>
             <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest">
@@ -150,7 +156,9 @@ export function DashboardPage() {
         </div>
 
         <div className="space-y-6">
-          <h2 className="text-xl font-bold text-slate-900 dark:text-white">Alertas Críticas</h2>
+          <h2 className="text-fluid-xl font-bold text-slate-900 dark:text-white">
+            Alertas Críticas
+          </h2>
           <div className="space-y-4">
             <div className="p-4 bg-rose-50 dark:bg-rose-900/10 border border-rose-100 dark:border-rose-900/20 rounded-2xl flex gap-4">
               <div className="h-10 w-10 bg-rose-500 rounded-full flex items-center justify-center shrink-0">

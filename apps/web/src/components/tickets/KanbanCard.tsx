@@ -1,6 +1,10 @@
+import { memo } from 'react';
+import { motion } from 'framer-motion';
 import type { Ticket } from '../../types/tickets';
 import { TIPO_TICKET_LABELS, TIPO_TICKET_COLORS, RUBRO_LABELS } from '../../types/tickets';
 import { Building2, Wrench, Pencil, Trash2 } from 'lucide-react';
+import { useActionSheet } from '../../hooks/useActionSheet';
+import { MobileActionSheet } from '../ui/MobileActionSheet';
 
 interface KanbanCardProps {
   ticket: Ticket;
@@ -8,7 +12,13 @@ interface KanbanCardProps {
   onDelete: (ticket: Ticket) => void;
 }
 
-export default function KanbanCard({ ticket, onEdit, onDelete }: KanbanCardProps) {
+/**
+ * KanbanCard - Memoizado para evitar re-renders innecesarios en el Kanban.
+ * Solo se re-renderiza cuando cambian las props (ticket, onEdit, onDelete).
+ * Long-press en mobile abre ActionSheet con acciones.
+ */
+const KanbanCard = memo(function KanbanCard({ ticket, onEdit, onDelete }: KanbanCardProps) {
+  const actionSheet = useActionSheet<Ticket>();
   const formatCode = (code: number) => `TKT-${String(code).padStart(5, '0')}`;
 
   const formatDate = (date: string | null) => {
@@ -25,9 +35,19 @@ export default function KanbanCard({ ticket, onEdit, onDelete }: KanbanCardProps
   };
 
   return (
-    <div
-      className="group bg-white dark:bg-charcoal/30 rounded-xl border border-[#e5e5e3] dark:border-[#37322a] p-4 cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 hover:border-gold/30"
-      onClick={() => onEdit(ticket)}
+    <motion.div
+      className="group bg-white dark:bg-charcoal/30 rounded-xl border border-[#e5e5e3] dark:border-[#37322a] p-4 cursor-pointer"
+      onClick={() => {
+        if (!actionSheet.shouldPreventClick()) onEdit(ticket);
+      }}
+      whileHover={{
+        y: -2,
+        boxShadow: '0 8px 25px rgba(0,0,0,0.1)',
+        borderColor: 'rgba(189, 142, 61, 0.3)',
+      }}
+      whileTap={{ scale: 0.98 }}
+      transition={{ duration: 0.15, ease: [0.4, 0, 0.2, 1] }}
+      {...actionSheet.getLongPressHandlers(ticket)}
     >
       {/* Header: Código + Tipo Ticket (SLA) */}
       <div className="flex items-center justify-between mb-2">
@@ -111,6 +131,30 @@ export default function KanbanCard({ ticket, onEdit, onDelete }: KanbanCardProps
           </div>
         </div>
       </div>
-    </div>
+      <MobileActionSheet
+        open={actionSheet.isOpen}
+        onClose={actionSheet.close}
+        title={
+          actionSheet.selectedItem ? formatCode(actionSheet.selectedItem.codigoInterno) : undefined
+        }
+        actions={[
+          {
+            id: 'edit',
+            label: 'Editar ticket',
+            icon: <Pencil className="h-5 w-5" />,
+            onClick: () => actionSheet.selectedItem && onEdit(actionSheet.selectedItem),
+          },
+          {
+            id: 'delete',
+            label: 'Eliminar ticket',
+            icon: <Trash2 className="h-5 w-5" />,
+            variant: 'destructive',
+            onClick: () => actionSheet.selectedItem && onDelete(actionSheet.selectedItem),
+          },
+        ]}
+      />
+    </motion.div>
   );
-}
+});
+
+export default KanbanCard;

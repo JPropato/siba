@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import api from '../lib/api';
-import { Search } from 'lucide-react';
+import { Search, MapPin } from 'lucide-react';
 import ZonaTable from '../components/zonas/ZonaTable';
 import ZonaDialog from '../components/zonas/ZonaDialog';
+import { CollapsibleFilters } from '../components/layout/CollapsibleFilters';
+import { FloatingActionButton } from '../components/layout/FloatingActionButton';
 import type { Zona, ZonaFormData } from '../types/zona';
 
 export default function ZonasPage() {
@@ -72,10 +74,10 @@ export default function ZonasPage() {
     <div className="p-6 space-y-6 animate-in fade-in duration-500">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+          <h1 className="text-fluid-2xl font-bold text-slate-900 dark:text-white tracking-tight">
             Gestión de Zonas
           </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-fluid-sm text-slate-500 dark:text-slate-400 mt-1">
             Administre las áreas geográficas para sedes y logística.
           </p>
         </div>
@@ -88,7 +90,8 @@ export default function ZonasPage() {
         </button>
       </div>
 
-      <div className="flex gap-4 items-center bg-white dark:bg-slate-900/50 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+      {/* Filters - Colapsables en móvil */}
+      <CollapsibleFilters activeFiltersCount={search ? 1 : 0}>
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <input
@@ -99,7 +102,7 @@ export default function ZonasPage() {
             className="w-full h-10 pl-10 pr-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 transition-all"
           />
         </div>
-      </div>
+      </CollapsibleFilters>
 
       <ZonaTable zones={zones} onEdit={handleEdit} onDelete={handleDelete} isLoading={isLoading} />
 
@@ -108,6 +111,14 @@ export default function ZonasPage() {
         onClose={() => setIsModalOpen(false)}
         onSave={handleSave}
         initialData={selectedZone}
+      />
+
+      {/* FAB para móvil */}
+      <FloatingActionButton
+        onClick={handleCreate}
+        icon={<MapPin className="h-6 w-6" />}
+        hideOnDesktop
+        aria-label="Nueva Zona"
       />
     </div>
   );

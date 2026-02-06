@@ -17,6 +17,8 @@ interface ComboboxProps {
   className?: string;
   disabled?: boolean;
   clearable?: boolean;
+  id?: string;
+  'aria-labelledby'?: string;
 }
 
 export function Combobox({
@@ -29,6 +31,8 @@ export function Combobox({
   className,
   disabled = false,
   clearable = false,
+  id,
+  'aria-labelledby': ariaLabelledBy,
 }: ComboboxProps) {
   const [open, setOpen] = React.useState(false);
   const [search, setSearch] = React.useState('');
@@ -129,10 +133,23 @@ export function Combobox({
     <div ref={containerRef} className={cn('relative w-full', className)}>
       {/* Trigger / Input */}
       <div
+        id={id}
+        role="combobox"
+        aria-expanded={open}
+        aria-haspopup="listbox"
+        aria-labelledby={ariaLabelledBy}
+        tabIndex={disabled ? -1 : 0}
         onClick={() => !disabled && setOpen(true)}
+        onKeyDown={(e) => {
+          if (!disabled && !open && (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown')) {
+            e.preventDefault();
+            setOpen(true);
+          }
+        }}
         className={cn(
           'flex h-10 w-full items-center justify-between rounded-lg border bg-white dark:bg-slate-950 px-3 text-sm transition-colors',
           'border-slate-200 dark:border-slate-800',
+          'focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand',
           open && 'ring-2 ring-brand/20 border-brand',
           disabled && 'opacity-50 cursor-not-allowed bg-slate-100 dark:bg-slate-900',
           !disabled && !open && 'hover:border-slate-300 dark:hover:border-slate-700 cursor-pointer'

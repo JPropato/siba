@@ -144,10 +144,14 @@ export default function TicketTabGeneral({ ticket, onUpdate, onSuccess }: Ticket
 
         {/* Descripción */}
         <div className="space-y-1.5">
-          <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+          <label
+            htmlFor="descripcion-general"
+            className="text-xs font-bold text-slate-500 uppercase tracking-wider"
+          >
             Descripción *
           </label>
           <textarea
+            id="descripcion-general"
             {...register('descripcion')}
             rows={3}
             className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm outline-none focus:border-brand resize-none"
@@ -214,20 +218,28 @@ export default function TicketTabGeneral({ ticket, onUpdate, onSuccess }: Ticket
         {/* Código Cliente y Fecha */}
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+            <label
+              htmlFor="codigoCliente-general"
+              className="text-xs font-bold text-slate-500 uppercase tracking-wider"
+            >
               N° Ticket Externo
             </label>
             <input
+              id="codigoCliente-general"
               type="text"
               {...register('codigoCliente')}
               className="w-full h-10 px-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm outline-none focus:border-brand"
             />
           </div>
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+            <label
+              htmlFor="fechaProgramada-general"
+              className="text-xs font-bold text-slate-500 uppercase tracking-wider"
+            >
               Fecha Programada
             </label>
             <input
+              id="fechaProgramada-general"
               type="date"
               {...register('fechaProgramada')}
               className="w-full h-10 px-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm outline-none focus:border-brand"

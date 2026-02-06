@@ -1,8 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense, useCallback } from 'react';
 import api from '../lib/api';
-import { Search } from 'lucide-react';
+import { Search, Plus } from 'lucide-react';
 import ClientTable from '../components/clients/ClientTable';
-import ClientDialog from '../components/clients/ClientDialog';
+
+// Lazy loading del dialog (solo se carga cuando se abre)
+const ClientDialog = lazy(() => import('../components/clients/ClientDialog'));
+import { FloatingActionButton } from '../components/layout/FloatingActionButton';
+import { CollapsibleFilters } from '../components/layout/CollapsibleFilters';
+import { PullToRefresh } from '../components/ui/PullToRefresh';
 import type { Cliente, ClienteFormData } from '../types/client';
 
 export default function ClientsPage() {
@@ -72,56 +77,75 @@ export default function ClientsPage() {
     fetchClients();
   };
 
+  // Handler para pull-to-refresh
+  const handleRefresh = useCallback(async () => {
+    await fetchClients();
+  }, []);
+
   return (
-    <div className="p-6 space-y-6 animate-in fade-in duration-500">
-      {/* Page Header - Aligned with UsersPage */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
-            Gestión de Clientes
-          </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Administre la base centralizada de clientes y sus configuraciones.
-          </p>
+    <PullToRefresh onRefresh={handleRefresh} className="min-h-screen">
+      <div className="p-6 space-y-6 animate-in fade-in duration-500">
+        {/* Page Header - Aligned with UsersPage */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-fluid-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+              Gestión de Clientes
+            </h1>
+            <p className="text-fluid-sm text-slate-500 dark:text-slate-400 mt-1">
+              Administre la base centralizada de clientes y sus configuraciones.
+            </p>
+          </div>
+          <button
+            onClick={handleCreate}
+            className="px-4 py-2 bg-brand hover:bg-brand-dark text-white text-sm font-bold rounded-lg shadow-lg shadow-brand/20 transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
+          >
+            <Plus className="h-5 w-5" />
+            NUEVO CLIENTE
+          </button>
         </div>
-        <button
+
+        {/* Filters - Colapsables en móvil */}
+        <CollapsibleFilters activeFiltersCount={search ? 1 : 0}>
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Buscar por Razón Social o CUIT..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full h-10 pl-10 pr-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 transition-all"
+            />
+          </div>
+        </CollapsibleFilters>
+
+        {/* Table */}
+        <ClientTable
+          clients={clients}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          isLoading={isLoading}
+        />
+
+        {/* Dialog - Lazy loaded */}
+        {isModalOpen && (
+          <Suspense fallback={null}>
+            <ClientDialog
+              isOpen={isModalOpen}
+              onClose={() => setIsModalOpen(false)}
+              onSave={handleSave}
+              initialData={selectedClient}
+            />
+          </Suspense>
+        )}
+
+        {/* FAB para móvil */}
+        <FloatingActionButton
           onClick={handleCreate}
-          className="px-4 py-2 bg-brand hover:bg-brand-dark text-white text-sm font-bold rounded-lg shadow-lg shadow-brand/20 transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
-        >
-          <Plus className="h-5 w-5" />
-          NUEVO CLIENTE
-        </button>
+          icon={<Plus className="h-6 w-6" />}
+          hideOnDesktop
+          aria-label="Nuevo Cliente"
+        />
       </div>
-
-      {/* Filters - Aligned with UsersPage */}
-      <div className="flex gap-4 items-center bg-white dark:bg-slate-900/50 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Buscar por Razón Social o CUIT..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full h-10 pl-10 pr-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 transition-all"
-          />
-        </div>
-      </div>
-
-      {/* Table */}
-      <ClientTable
-        clients={clients}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-        isLoading={isLoading}
-      />
-
-      {/* Dialog */}
-      <ClientDialog
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSave={handleSave}
-        initialData={selectedClient}
-      />
-    </div>
+    </PullToRefresh>
   );
 }

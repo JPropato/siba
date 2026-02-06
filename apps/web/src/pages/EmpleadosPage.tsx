@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react';
 import api from '../lib/api';
-import { Search } from 'lucide-react';
+import { Search, UserPlus } from 'lucide-react';
 import EmpleadoTable from '../components/empleados/EmpleadoTable';
 import EmpleadoDialog from '../components/empleados/EmpleadoDialog';
+import { FloatingActionButton } from '../components/layout/FloatingActionButton';
+import { CollapsibleFilters } from '../components/layout/CollapsibleFilters';
 import type { Empleado, EmpleadoFormData } from '../types/empleados';
+import { Pagination } from '../components/ui/Pagination';
 
 export default function EmpleadosPage() {
   const [empleados, setEmpleados] = useState<Empleado[]>([]);
@@ -76,10 +79,10 @@ export default function EmpleadosPage() {
     <div className="p-6 space-y-6 animate-in fade-in duration-500">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+          <h1 className="text-fluid-2xl font-bold text-slate-900 dark:text-white tracking-tight">
             Gestión de Empleados
           </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-fluid-sm text-slate-500 dark:text-slate-400 mt-1">
             Administre el personal de la empresa y sus asignaciones.
           </p>
         </div>
@@ -92,7 +95,8 @@ export default function EmpleadosPage() {
         </button>
       </div>
 
-      <div className="flex gap-4 items-center bg-white dark:bg-slate-900/50 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+      {/* Filters - Colapsables en móvil */}
+      <CollapsibleFilters activeFiltersCount={search ? 1 : 0}>
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <input
@@ -103,7 +107,7 @@ export default function EmpleadosPage() {
             className="w-full h-10 pl-10 pr-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 transition-all text-slate-900 dark:text-white"
           />
         </div>
-      </div>
+      </CollapsibleFilters>
 
       <EmpleadoTable
         empleados={empleados}
@@ -112,33 +116,21 @@ export default function EmpleadosPage() {
         isLoading={isLoading}
       />
 
-      {totalPages > 1 && (
-        <div className="flex justify-center gap-2 py-4">
-          <button
-            disabled={page === 1}
-            onClick={() => setPage((p) => p - 1)}
-            className="px-3 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-semibold hover:bg-slate-50 disabled:opacity-30"
-          >
-            Anterior
-          </button>
-          <span className="text-xs text-slate-500 flex items-center px-2">
-            Página {page} de {totalPages}
-          </span>
-          <button
-            disabled={page === totalPages}
-            onClick={() => setPage((p) => p + 1)}
-            className="px-3 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-semibold hover:bg-slate-50 disabled:opacity-30"
-          >
-            Siguiente
-          </button>
-        </div>
-      )}
+      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
 
       <EmpleadoDialog
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSave={handleSave}
         initialData={selectedEmpleado}
+      />
+
+      {/* FAB para móvil */}
+      <FloatingActionButton
+        onClick={handleCreate}
+        icon={<UserPlus className="h-6 w-6" />}
+        hideOnDesktop
+        aria-label="Nuevo Empleado"
       />
     </div>
   );

@@ -1,7 +1,8 @@
-import { Loader2, Ticket } from 'lucide-react';
+import { Loader2, Ticket as TicketIcon } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   X,
   FileText,
@@ -59,7 +60,10 @@ export default function TicketDetailSheet({
   const [isLoading, setIsLoading] = useState(false);
   const [showEstadoDropdown, setShowEstadoDropdown] = useState(false);
 
-  // Load ticket detail
+  // QueryClient para usar data prefetcheada
+  const queryClient = useQueryClient();
+
+  // Load ticket detail - usa cache si está disponible (prefetch en hover)
   useEffect(() => {
     if (isOpen && ticketId) {
       loadTicket(ticketId);
@@ -71,9 +75,25 @@ export default function TicketDetailSheet({
 
   const loadTicket = async (id: number) => {
     try {
+      // Primero intentar obtener del cache (prefetcheado en hover)
+      const cachedData = queryClient.getQueryData<Ticket>(['ticket', id]);
+      if (cachedData) {
+        setTicket(cachedData);
+        // Igual hacer fetch en background para tener data fresca
+        setIsLoading(false);
+        const res = await api.get(`/tickets/${id}`);
+        setTicket(res.data);
+        // Actualizar cache
+        queryClient.setQueryData(['ticket', id], res.data);
+        return;
+      }
+
+      // Si no hay cache, fetch normal
       setIsLoading(true);
       const res = await api.get(`/tickets/${id}`);
       setTicket(res.data);
+      // Guardar en cache para futuras referencias
+      queryClient.setQueryData(['ticket', id], res.data);
     } catch (error) {
       console.error('Error loading ticket:', error);
       toast.error('Error al cargar el ticket');
@@ -135,7 +155,7 @@ export default function TicketDetailSheet({
           <div className="flex items-center justify-between p-4">
             <div className="flex items-center gap-3">
               <div className="size-10 rounded-xl bg-brand/10 flex items-center justify-center">
-                <Ticket className="h-5 w-5 text-brand" />
+                <TicketIcon className="h-5 w-5 text-brand" />
               </div>
               <div>
                 <h2 className="text-lg font-bold text-slate-900 dark:text-white">

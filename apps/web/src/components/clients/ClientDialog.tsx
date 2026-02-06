@@ -149,10 +149,14 @@ export default function ClientDialog({ isOpen, onClose, onSave, initialData }: C
         />
 
         <div className="space-y-1.5">
-          <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+          <label
+            htmlFor="direccionFiscal"
+            className="text-xs font-bold text-slate-500 uppercase tracking-wider"
+          >
             Dirección Fiscal
           </label>
           <textarea
+            id="direccionFiscal"
             {...register('direccionFiscal')}
             className={cn(
               'w-full py-2 px-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 transition-all resize-none text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600',

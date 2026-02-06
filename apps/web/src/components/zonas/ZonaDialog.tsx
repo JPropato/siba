@@ -99,10 +99,14 @@ export default function ZonaDialog({ isOpen, onClose, onSave, initialData }: Zon
           error={errors.nombre?.message}
         />
         <div className="space-y-1.5">
-          <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+          <label
+            htmlFor="descripcion"
+            className="text-xs font-bold text-slate-500 uppercase tracking-wider"
+          >
             Descripción
           </label>
           <textarea
+            id="descripcion"
             {...register('descripcion')}
             className="w-full py-2 px-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none focus:border-brand transition-all resize-none text-slate-900 dark:text-white"
             placeholder="Breve descripción del área..."

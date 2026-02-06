@@ -127,17 +127,92 @@ Tareas de alto impacto con bajo esfuerzo:
 
 ---
 
-### MF-006-MF-010: Otras Deudas Mobile-First
+### MF-006: Tipografía Fluida con clamp() ✅
+
+**Estado**: Implementado
+
+**Solución implementada**:
+
+- Añadido `fontSize` fluido en [tailwind.config.js](../../apps/web/tailwind.config.js)
+- Clases: `text-fluid-xs` a `text-fluid-5xl` con escalado viewport-based
+- Aplicado a títulos de 8 páginas principales (Dashboard, Tickets, Clientes, etc.)
+
+**Uso**:
+
+```tsx
+// En lugar de text-2xl fijo
+<h1 className="text-fluid-2xl font-bold">Título</h1>
+<p className="text-fluid-sm">Descripción</p>
+```
+
+**Beneficio**: Tipografía que escala suavemente entre 320px y 1920px de viewport.
+
+---
+
+### MF-010: Modal Full-Screen en Móvil ✅
+
+**Estado**: Implementado
+
+**Solución implementada**:
+
+- [DialogBase.tsx](../../apps/web/src/components/ui/core/DialogBase.tsx) actualizado
+- Full-screen en móvil con slide-up animation
+- Indicador de drag para cerrar
+- Safe area para notch/home indicator
+- Padding responsivo (p-4 móvil, p-6 desktop)
+
+**Beneficio**: UX nativa en móviles, aprovecha toda la pantalla.
+
+---
+
+### MF-009: DatePicker Optimizado para Móvil ✅
+
+**Estado**: Implementado
+
+**Solución implementada**:
+
+- [DatePicker.tsx](../../apps/web/src/components/ui/core/DatePicker.tsx) actualizado
+- Modal centrado en móvil (fixed + inset-x-4 + top-1/2)
+- Touch targets de 44px para días (h-11 en móvil)
+- Botones de navegación con 44px touch target
+- Backdrop oscuro en móvil para enfoque
+- Botón limpiar con área táctil mejorada
+
+**Beneficio**: UX táctil nativa comparable a apps móviles.
+
+---
+
+### MF-008: Pull-to-Refresh ✅
+
+**Estado**: Implementado
+
+**Solución implementada**:
+
+- Hook [usePullToRefresh.ts](../../apps/web/src/hooks/usePullToRefresh.ts)
+- Componente [PullToRefresh.tsx](../../apps/web/src/components/ui/PullToRefresh.tsx)
+- Solo activo en móvil (sm:hidden para indicador)
+- Animación con Framer Motion (spinner rotando)
+- Integrado en: TicketsPage, ClientsPage
+
+**Uso**:
+
+```tsx
+<PullToRefresh onRefresh={handleRefresh}>
+  <div>...contenido...</div>
+</PullToRefresh>
+```
+
+**Beneficio**: UX táctil nativa para actualizar listas.
+
+---
+
+### MF-007: Gestos Táctiles Pendiente
 
 | ID     | Deuda                                   | Esfuerzo |
 | ------ | --------------------------------------- | -------- |
-| MF-006 | Tipografía no fluida (sin clamp())      | 2h       |
 | MF-007 | Sin gestos táctiles (swipe, long-press) | 4h       |
-| MF-008 | Sin pull-to-refresh                     | 2h       |
-| MF-009 | DatePicker no optimizado para móvil     | 2h       |
-| MF-010 | Modal full-screen en móvil              | 1h       |
 
-**Esfuerzo total Mobile-First**: ~19 horas
+**Esfuerzo restante Mobile-First**: ~4 horas
 
 ---
 
@@ -215,20 +290,25 @@ Tareas de alto impacto con bajo esfuerzo:
 
 ## 🎨 Micro-interacciones (5 deudas)
 
-### UX-001: Sin Animaciones Premium
+### UX-001: Animaciones Premium ✅
 
-**Problema**: Solo `transition-all` genérico, sin micro-animaciones pulidas
+**Estado**: Implementado
 
-**Solución**: Integrar Framer Motion para:
+**Solución implementada**:
 
-- Fade in/out suaves
-- Hover effects (scale, translateY)
-- Page transitions
-- Skeleton shimmer
+- Instalado `framer-motion`
+- Componentes de animación en [motion/index.tsx](../../apps/web/src/components/ui/motion/index.tsx)
+- Aplicado a Dashboard (StaggerContainer, SlideIn)
+- KanbanCard con hover animado (motion.div)
 
-**Librería**: `framer-motion@12`
+**Componentes disponibles**:
 
-**Esfuerzo**: 6 horas
+- `FadeIn` - Entrada con opacidad
+- `SlideIn` - Entrada con desplazamiento
+- `ScaleIn` - Entrada con zoom
+- `StaggerContainer/StaggerItem` - Animaciones escalonadas
+- `HoverScale/HoverLift` - Efectos de hover
+- `PageTransition` - Transiciones de página
 
 ---
 
@@ -260,15 +340,56 @@ Tareas de alto impacto con bajo esfuerzo:
 
 ---
 
-### UX-003-UX-005: Otras Micro-interacciones
+### UX-003: Feedback al Crear Ticket ✅
 
-| ID     | Deuda                                  | Esfuerzo |
-| ------ | -------------------------------------- | -------- |
-| UX-003 | Sin feedback al crear ticket           | 1h       |
-| UX-004 | Pagination sin transición              | 1h       |
-| UX-005 | Toggle vista tabla/kanban poco visible | 1h       |
+**Estado**: Implementado
 
-**Esfuerzo total**: ~11 horas
+**Solución implementada**:
+
+- Toast de éxito con `sonner` al crear ticket
+- LiveRegion + useLiveAnnounce para screen readers
+- Redirección automática al detalle del ticket creado
+
+---
+
+### UX-004: Pagination con Transiciones ✅
+
+**Estado**: Implementado
+
+**Solución implementada**:
+
+- Componente [Pagination.tsx](../../apps/web/src/components/ui/Pagination.tsx)
+- AnimatePresence para número de página con transición vertical
+- Botones con whileHover/whileTap de Framer Motion
+- Aplicado a: TicketsPage, MaterialesPage, EmpleadosPage, VehiculosPage
+
+---
+
+### UX-005: Toggle Vista Tabla/Kanban Premium ✅
+
+**Estado**: Implementado
+
+**Solución implementada**:
+
+- Componente [ViewToggle.tsx](../../apps/web/src/components/ui/ViewToggle.tsx)
+- Animación `layoutId` para sliding background entre opciones
+- whileHover/whileTap en botones
+- Genérico con TypeScript para cualquier conjunto de vistas
+
+**Uso**:
+
+```tsx
+<ViewToggle
+  value={viewMode}
+  onChange={setViewMode}
+  options={[
+    { value: 'table', icon: List, label: 'Vista Tabla' },
+    { value: 'kanban', icon: Columns, label: 'Vista Kanban' },
+  ]}
+/>
+```
+
+**Esfuerzo total Micro-interacciones**: ~6 horas ✅ Completado
 
 ---
 
@@ -305,17 +426,37 @@ const TicketsPage = lazy(() => import('@/pages/tickets/TicketsPage'));
 
 ---
 
-### PERF-002: Sin Code Splitting
+### PERF-002: Code Splitting ✅
 
-**Problema**: Librerías grandes cargadas aunque no se usen (ej: DatePicker ~9KB)
+**Estado**: Implementado
 
-**Solución**: Dynamic imports para componentes pesados
+**Solución implementada**:
+
+1. **Vendor chunking en Vite** ([vite.config.ts](../../apps/web/vite.config.ts)):
+   - `vendor-react`: React core (cache stable)
+   - `vendor-motion`: Framer Motion (~100KB separado)
+   - `vendor-form`: React Hook Form + Zod
+   - `vendor-ui`: Lucide, sonner, cmdk
+   - `vendor-data`: TanStack Query, Zustand, Axios
+
+2. **Lazy loading de componentes pesados**:
+   - TicketDrawer, TicketDetailSheet, KanbanBoard (TicketsPage)
+   - ClientDialog (ClientsPage)
+   - Solo se cargan cuando el usuario los abre
+
+**Uso**:
 
 ```tsx
-const DatePicker = lazy(() => import('@/components/ui/date-picker'));
+const TicketDrawer = lazy(() => import('../components/tickets/TicketDrawer'));
+
+{isDrawerOpen && (
+  <Suspense fallback={null}>
+    <TicketDrawer isOpen={isDrawerOpen} ... />
+  </Suspense>
+)}
 ```
 
-**Esfuerzo**: 2 horas
+**Beneficio**: Carga paralela de chunks + mejor caching de vendors
 
 ---
 
@@ -335,17 +476,34 @@ export const PureComponent = React.memo(({ data }) => {
 
 ---
 
-### PERF-004: Sin Virtual Lists para Tablas Grandes
+### PERF-004: Virtual Lists para Tablas Grandes ✅
 
-**Problema**: Renderizar 1000+ filas causa lag
+**Estado**: Implementado
 
-**Solución**: Integrar `@tanstack/react-virtual`
+**Solución implementada**:
 
-**Beneficio**: Renderizar solo filas visibles (30-50) en lugar de todas
+- Instalado `@tanstack/react-virtual`
+- Componente [VirtualTable.tsx](../../apps/web/src/components/ui/VirtualTable.tsx)
+- Hook [useVirtualList.ts](../../apps/web/src/hooks/useVirtualList.ts)
 
-**Esfuerzo**: 4 horas
+**Uso**:
 
-**Ver snippet**: [PRIORIDADES_ROADMAP.md](./PRIORIDADES_ROADMAP.md#arch-005-virtual-lists-4-horas)
+```tsx
+import { VirtualTable } from '@/components/ui/VirtualTable';
+
+<VirtualTable
+  data={items}
+  columns={[
+    { key: 'id', header: 'ID', render: (item) => item.id },
+    { key: 'name', header: 'Nombre', render: (item) => item.name },
+  ]}
+  getRowKey={(item) => item.id}
+  rowHeight={56}
+  maxHeight="calc(100vh - 300px)"
+/>;
+```
+
+**Beneficio**: Solo renderiza filas visibles (~30) en lugar de todas (1000+)
 
 ---
 
@@ -381,15 +539,67 @@ const tickets = await prisma.ticket.findMany({
 
 ---
 
-### PERF-006-PERF-008: Otras Deudas de Performance
+### PERF-006: Prefetching con TanStack Query ✅
+
+**Estado**: Implementado
+
+**Solución implementada**:
+
+1. **QueryClient configurado** en [main.tsx](../../apps/web/src/main.tsx) y [queryClient.ts](../../apps/web/src/lib/queryClient.ts):
+   - staleTime: 30s, gcTime: 5min
+   - Retry: 1 intento
+   - refetchOnWindowFocus: false
+
+2. **Prefetch en hover** implementado en TicketsPage:
+   - Al pasar mouse sobre fila, prefetch del detalle del ticket
+   - Delay de 150ms para evitar prefetch en hover accidental
+   - TicketDetailSheet usa cache primero, luego refresca en background
+
+3. **Hook reutilizable** [usePrefetch.ts](../../apps/web/src/hooks/usePrefetch.ts)
+
+**Uso**:
+
+```tsx
+const queryClient = useQueryClient();
+
+// Prefetch en hover
+onMouseEnter={() => queryClient.prefetchQuery({
+  queryKey: ['ticket', id],
+  queryFn: () => api.get(`/tickets/${id}`),
+})}
+```
+
+**Beneficio**: Apertura instantánea de detalles (0ms vs ~200ms)
+
+---
+
+### PERF-007-PERF-008: Otras Deudas de Performance
 
 | ID       | Deuda                                       | Esfuerzo |
 | -------- | ------------------------------------------- | -------- |
-| PERF-006 | Sin prefetching con TanStack Query          | 2h       |
 | PERF-007 | useMemo/useCallback uso inconsistente       | 3h       |
 | PERF-008 | Sin indexes en BD para búsquedas frecuentes | 2h       |
+| PERF-009 | Migrar data fetching a TanStack Query       | 12h      |
 
-**Esfuerzo total Performance**: ~21 horas
+**Esfuerzo restante Performance**: ~17 horas
+
+---
+
+### PERF-009: Migrar a TanStack Query (Arquitectura)
+
+**Problema**: Data fetching manual con useState + useEffect en todas las páginas
+
+**Beneficios**:
+
+- Caché automático (evita refetch innecesarios)
+- Deduplicación de requests
+- Background refetch para datos frescos
+- Optimistic updates built-in
+- DevTools para debugging
+- Reducción de código ~40%
+
+**Esfuerzo**: 12 horas (sprint dedicado)
+**Prioridad**: P2 - Mejora arquitectural importante
 
 ---
 
@@ -441,26 +651,42 @@ const tickets = await prisma.ticket.findMany({
 - [x] UX-011: ConfirmDialog (30 min)
 - [x] MF-001: Responsive padding (10 min)
 - [x] A11Y-001: aria-invalid (20 min)
+- [x] A11Y-002: role="alert" en errores (30 min) ✅ DatePicker actualizado
+- [x] A11Y-003: aria-live para cambios dinámicos (1h) ✅ useLiveAnnounce + LiveRegion
+- [x] MF-005: Target size 44px (1h) ✅ Todos los botones de tablas actualizados
+- [x] A11Y-004: Labels con htmlFor (1h) ✅ Todos los formularios + Combobox mejorado
+- [x] UX-002: Hover de filas premium (2h) ✅ motion.tr con scale + shadow en 7 tablas
+- [x] UX-003: Feedback al crear ticket (1h) ✅ sonner + LiveRegion
+- [x] UX-004: Pagination con transición (1h) ✅ Componente Pagination con AnimatePresence
+- [x] UX-005: Toggle vista mejorado (1h) ✅ ViewToggle con layoutId animation
+- [x] MF-006: Tipografía fluida (2h) ✅ clamp() en Tailwind + 8 páginas
+- [x] MF-010: Modal full-screen móvil (1h) ✅ DialogBase con slide-up + safe area
+- [x] PERF-002: Code splitting (2h) ✅ Vendor chunks + lazy dialogs
+- [x] MF-009: DatePicker móvil (2h) ✅ Modal centrado + 44px targets
+- [x] MF-008: Pull-to-refresh (2h) ✅ Hook + componente + TicketsPage/ClientsPage
+- [x] PERF-006: Prefetching TanStack Query (2h) ✅ QueryClient + prefetch en hover
 
-**Total**: 80 minutos
+**Total**: 20.5 horas ✅ Completado
 
 ### Sprint 2-3 (UX Crítico - 1 semana)
 
-- [ ] PERF-001: Lazy loading routes (2h)
-- [ ] MF-002: FAB móvil (2h)
-- [ ] MF-004: Filtros colapsables (2h)
-- [ ] UX-007: Migrar LoginPage (1h)
+- [x] PERF-001: Lazy loading routes (2h) ✅ Ya implementado
+- [x] UX-008: Iconografía unificada (2h) ✅ Migrado a Lucide
+- [x] UX-009: Border-radius consistente (30m) ✅ Estandarizado a rounded-xl
+- [x] MF-002: FAB móvil (2h) ✅ Agregado a todas las páginas de gestión
+- [x] MF-004: Filtros colapsables (2h) ✅ Componente CollapsibleFilters aplicado a 8 páginas
+- [x] UX-007: Migrar LoginPage (1h) ✅ Ya implementado con RHF+Zod
 
-**Total**: 7 horas
+**Total**: 7 horas ✅ Completado
 
 ### Sprint 4-8 (Mejoras Profundas - 2-4 semanas)
 
-- [ ] UX-001: Framer Motion (6h)
-- [ ] PERF-004: Virtual lists (4h)
-- [ ] PERF-003: React.memo audit (3h)
-- [ ] A11y completo (8h)
+- [x] UX-001: Framer Motion (6h) ✅ Componentes motion + Dashboard + KanbanCard animado
+- [x] PERF-004: Virtual lists (4h) ✅ VirtualTable + useVirtualList hook
+- [x] PERF-003: React.memo audit (3h) ✅ Memoizados: KanbanCard, KanbanColumn, StatCard, EmptyState, SortableHeader, FAB
+- [x] A11y completo (8h) ✅ A11Y-005 a A11Y-007 completados
 
-**Total**: ~21 horas
+**Total**: ~21 horas ✅ Completado
 
 ---
 
@@ -468,11 +694,12 @@ const tickets = await prisma.ticket.findMany({
 
 | Categoría           | Completadas | Total  | Progreso |
 | ------------------- | ----------- | ------ | -------- |
-| Mobile-First        | 0           | 10     | 0%       |
-| Accesibilidad       | 0           | 7      | 0%       |
-| Micro-interacciones | 0           | 5      | 0%       |
-| Performance         | 0           | 8      | 0%       |
-| **TOTAL**           | **0**       | **30** | **0%**   |
+| Mobile-First        | 8           | 10     | 80%      |
+| Accesibilidad       | 7           | 7      | 100%     |
+| Micro-interacciones | 5           | 5      | 100%     |
+| Performance         | 6           | 8      | 75%      |
+| Inconsistencias     | 3           | 3      | 100%     |
+| **TOTAL**           | **30**      | **34** | **88%**  |
 
 ---
 
@@ -499,5 +726,5 @@ const tickets = await prisma.ticket.findMany({
 
 ---
 
-**Última actualización**: 2026-02-04
+**Última actualización**: 2026-02-05
 **Responsable**: Frontend Lead

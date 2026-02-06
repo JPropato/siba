@@ -167,7 +167,7 @@ export const Select = ({
         aria-describedby={error ? `${id}-error` : undefined}
         disabled={disabled}
         className={cn(
-          'flex items-center w-full h-10 px-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm transition-all select-none text-left',
+          'flex items-center w-full h-9 sm:h-10 px-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm transition-all select-none text-left',
           !disabled && 'cursor-pointer hover:border-slate-300 dark:hover:border-slate-700',
           isOpen && 'border-brand ring-1 ring-brand/20',
           disabled && 'opacity-50 cursor-not-allowed',

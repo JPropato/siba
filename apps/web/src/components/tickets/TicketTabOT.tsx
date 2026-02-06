@@ -353,10 +353,14 @@ function OTMiniDrawer({ ticket, ot, onClose, onSuccess }: OTMiniDrawerProps) {
 
           {/* Descripción */}
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+            <label
+              htmlFor="descripcion-ot"
+              className="text-xs font-bold text-slate-500 uppercase tracking-wider"
+            >
               Descripción del Trabajo *
             </label>
             <textarea
+              id="descripcion-ot"
               value={descripcion}
               onChange={(e) => setDescripcion(e.target.value)}
               rows={4}
@@ -367,10 +371,14 @@ function OTMiniDrawer({ ticket, ot, onClose, onSuccess }: OTMiniDrawerProps) {
 
           {/* Materiales */}
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+            <label
+              htmlFor="materiales-ot"
+              className="text-xs font-bold text-slate-500 uppercase tracking-wider"
+            >
               Materiales Utilizados
             </label>
             <textarea
+              id="materiales-ot"
               value={materiales}
               onChange={(e) => setMateriales(e.target.value)}
               rows={2}

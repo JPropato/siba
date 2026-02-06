@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { type LucideIcon } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
@@ -13,7 +14,10 @@ interface StatCardProps {
   };
 }
 
-export function StatCard({
+/**
+ * StatCard - Memoizado para evitar re-renders innecesarios en el Dashboard.
+ */
+export const StatCard = memo(function StatCard({
   title,
   value,
   icon: Icon,
@@ -69,4 +73,4 @@ export function StatCard({
       </div>
     </div>
   );
-}
+});

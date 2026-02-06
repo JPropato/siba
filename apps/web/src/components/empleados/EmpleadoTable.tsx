@@ -1,7 +1,10 @@
 import type { Empleado } from '../../types/empleados';
 import { useSortableTable } from '../../hooks/useSortableTable';
+import { useActionSheet } from '../../hooks/useActionSheet';
 import { Loader2, Pencil, Trash2 } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { SortableHeader } from '../ui/core/SortableHeader';
+import { MobileActionSheet } from '../ui/MobileActionSheet';
 
 interface EmpleadoTableProps {
   empleados: Empleado[];
@@ -17,6 +20,7 @@ export default function EmpleadoTable({
   isLoading,
 }: EmpleadoTableProps) {
   const { items, requestSort, sortConfig } = useSortableTable(empleados);
+  const actionSheet = useActionSheet<Empleado>();
 
   if (isLoading) {
     return (
@@ -70,16 +74,23 @@ export default function EmpleadoTable({
               <th className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">
                 Zona Asignada
               </th>
-              <th className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100 text-right">
+              <th className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100 text-right hidden sm:table-cell">
                 Acciones
               </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200 dark:divide-slate-800 bg-white dark:bg-slate-950">
             {items.map((e) => (
-              <tr
+              <motion.tr
                 key={e.id}
-                className="hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors"
+                className="bg-white dark:bg-slate-950"
+                whileHover={{
+                  backgroundColor: 'rgba(248, 250, 252, 1)',
+                  scale: 1.005,
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+                }}
+                transition={{ duration: 0.15, ease: 'easeOut' }}
+                {...actionSheet.getLongPressHandlers(e)}
               >
                 <td className="px-4 py-3">
                   <div className="flex flex-col gap-1">
@@ -123,11 +134,11 @@ export default function EmpleadoTable({
                     <span className="text-[10px] text-slate-400 italic">No asignada</span>
                   )}
                 </td>
-                <td className="px-4 py-3 text-right">
+                <td className="px-4 py-3 text-right hidden sm:table-cell">
                   <div className="flex items-center justify-end gap-2">
                     <button
                       onClick={() => onEdit(e)}
-                      className="p-1.5 text-slate-400 hover:text-brand transition-colors rounded hover:bg-slate-100 dark:hover:bg-slate-800 focus-visible:ring-2 focus-visible:ring-brand/50"
+                      className="min-h-11 min-w-11 flex items-center justify-center text-slate-400 hover:text-brand transition-colors rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 focus-visible:ring-2 focus-visible:ring-brand/50"
                       title="Editar"
                       aria-label="Editar"
                     >
@@ -135,7 +146,7 @@ export default function EmpleadoTable({
                     </button>
                     <button
                       onClick={() => onDelete(e)}
-                      className="p-1.5 text-slate-400 hover:text-red-500 transition-colors rounded hover:bg-red-50 dark:hover:bg-red-900/10 focus-visible:ring-2 focus-visible:ring-red-500/50"
+                      className="min-h-11 min-w-11 flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-900/10 focus-visible:ring-2 focus-visible:ring-red-500/50"
                       title="Eliminar"
                       aria-label="Eliminar"
                     >
@@ -143,11 +154,36 @@ export default function EmpleadoTable({
                     </button>
                   </div>
                 </td>
-              </tr>
+              </motion.tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      <MobileActionSheet
+        open={actionSheet.isOpen}
+        onClose={actionSheet.close}
+        title={
+          actionSheet.selectedItem
+            ? `${actionSheet.selectedItem.apellido}, ${actionSheet.selectedItem.nombre}`
+            : undefined
+        }
+        actions={[
+          {
+            id: 'edit',
+            label: 'Editar',
+            icon: <Pencil className="h-5 w-5" />,
+            onClick: () => actionSheet.selectedItem && onEdit(actionSheet.selectedItem),
+          },
+          {
+            id: 'delete',
+            label: 'Eliminar',
+            icon: <Trash2 className="h-5 w-5" />,
+            variant: 'destructive',
+            onClick: () => actionSheet.selectedItem && onDelete(actionSheet.selectedItem),
+          },
+        ]}
+      />
     </div>
   );
 }

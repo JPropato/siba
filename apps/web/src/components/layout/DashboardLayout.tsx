@@ -78,7 +78,7 @@ export function DashboardLayout({ children, currentPage, onNavigate }: Dashboard
         />
 
         {/* Page Content */}
-        <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 space-y-6">{children}</div>
+        <div className="flex-1 overflow-y-auto p-3 md:p-4 lg:p-6 space-y-4">{children}</div>
       </main>
     </div>
   );

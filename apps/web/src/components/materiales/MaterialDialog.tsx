@@ -266,11 +266,15 @@ export default function MaterialDialog({
               error={errors.precioCosto?.message}
             />
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider text-center block">
+              <label
+                htmlFor="porcentajeRentabilidad"
+                className="text-xs font-bold text-slate-500 uppercase tracking-wider text-center block"
+              >
                 Rentabilidad (%)
               </label>
               <div className="relative">
                 <input
+                  id="porcentajeRentabilidad"
                   type="number"
                   {...register('porcentajeRentabilidad')}
                   className="w-full h-10 px-3 bg-white dark:bg-slate-900 border border-blue-300 dark:border-blue-700 rounded-lg text-sm font-bold text-blue-600 dark:text-blue-400 text-center outline-none focus:border-blue-500 transition-all"

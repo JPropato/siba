@@ -261,7 +261,10 @@ export default function TicketDrawer({ isOpen, onClose, onSuccess, ticket }: Tic
           <form id="ticket-form" onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             {/* Cliente con Buscador */}
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+              <label
+                id="cliente-label"
+                className="text-xs font-bold text-slate-500 uppercase tracking-wider"
+              >
                 Cliente *
               </label>
               <Controller
@@ -269,6 +272,8 @@ export default function TicketDrawer({ isOpen, onClose, onSuccess, ticket }: Tic
                 name="clienteId"
                 render={({ field }) => (
                   <Combobox
+                    id="clienteId"
+                    aria-labelledby="cliente-label"
                     options={clienteOptions}
                     value={field.value}
                     onChange={field.onChange}
@@ -292,7 +297,10 @@ export default function TicketDrawer({ isOpen, onClose, onSuccess, ticket }: Tic
 
             {/* Sucursal con Buscador */}
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+              <label
+                id="sucursal-label"
+                className="text-xs font-bold text-slate-500 uppercase tracking-wider"
+              >
                 Sucursal *
               </label>
               <Controller
@@ -300,6 +308,8 @@ export default function TicketDrawer({ isOpen, onClose, onSuccess, ticket }: Tic
                 name="sucursalId"
                 render={({ field }) => (
                   <Combobox
+                    id="sucursalId"
+                    aria-labelledby="sucursal-label"
                     options={sucursalOptions}
                     value={field.value}
                     onChange={field.onChange}
@@ -319,10 +329,14 @@ export default function TicketDrawer({ isOpen, onClose, onSuccess, ticket }: Tic
 
             {/* Código Cliente (Ticket Externo) */}
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center justify-between">
+              <label
+                htmlFor="codigoCliente"
+                className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center justify-between"
+              >
                 <span>N° Ticket Externo {isCorreoArgentino ? '*' : '(opcional)'}</span>
               </label>
               <input
+                id="codigoCliente"
                 type="text"
                 {...register('codigoCliente')}
                 className={cn(
@@ -342,10 +356,14 @@ export default function TicketDrawer({ isOpen, onClose, onSuccess, ticket }: Tic
 
             {/* Descripción */}
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+              <label
+                htmlFor="descripcion"
+                className="text-xs font-bold text-slate-500 uppercase tracking-wider"
+              >
                 Descripción del Problema *
               </label>
               <textarea
+                id="descripcion"
                 rows={4}
                 {...register('descripcion')}
                 className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none focus:border-brand transition-all resize-none text-slate-900 dark:text-white"
@@ -423,10 +441,14 @@ export default function TicketDrawer({ isOpen, onClose, onSuccess, ticket }: Tic
                 )}
               />
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                <label
+                  htmlFor="fechaProgramada"
+                  className="text-xs font-bold text-slate-500 uppercase tracking-wider"
+                >
                   Fecha Programada
                 </label>
                 <input
+                  id="fechaProgramada"
                   type="date"
                   {...register('fechaProgramada')}
                   className="w-full h-10 px-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none focus:border-brand transition-all text-slate-900 dark:text-white"

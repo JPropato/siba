@@ -37,10 +37,10 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     };
 
     const sizes = {
-      sm: 'h-11 px-3 text-xs', // 44px - WCAG 2.1 AAA minimum
-      md: 'h-11 px-4 text-sm', // 44px - WCAG 2.1 AAA minimum
-      lg: 'h-12 px-6 text-base',
-      icon: 'h-11 w-11 p-0', // 44x44px - WCAG 2.1 AAA minimum
+      sm: 'h-8 sm:h-9 px-2.5 sm:px-3 text-xs', // 32px mobile → 36px desktop
+      md: 'h-9 sm:h-10 px-3 sm:px-4 text-sm', // 36px mobile → 40px desktop
+      lg: 'h-10 sm:h-11 px-4 sm:px-6 text-sm sm:text-base', // 40px → 44px
+      icon: 'h-9 w-9 sm:h-10 sm:w-10 p-0', // 36x36 → 40x40 desktop
     };
 
     return (

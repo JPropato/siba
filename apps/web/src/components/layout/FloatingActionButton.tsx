@@ -1,4 +1,4 @@
-import { type ReactNode } from 'react';
+import { memo, type ReactNode } from 'react';
 import { cn } from '../../lib/utils';
 
 export interface FloatingActionButtonProps {
@@ -36,7 +36,7 @@ export interface FloatingActionButtonProps {
  *   size="lg"
  * />
  */
-export function FloatingActionButton({
+export const FloatingActionButton = memo(function FloatingActionButton({
   onClick,
   icon,
   label,
@@ -91,7 +91,7 @@ export function FloatingActionButton({
       {label && <span className="whitespace-nowrap">{label}</span>}
     </button>
   );
-}
+});
 
 /**
  * FABContainer - Contenedor para múltiples FABs
@@ -104,7 +104,7 @@ export function FloatingActionButton({
  *   <FloatingActionButton icon={<Edit />} onClick={handleEdit} variant="secondary" size="sm" />
  * </FABContainer>
  */
-export function FABContainer({
+export const FABContainer = memo(function FABContainer({
   children,
   position = 'bottom-right',
   className,
@@ -125,4 +125,4 @@ export function FABContainer({
       {children}
     </div>
   );
-}
+});

@@ -151,10 +151,14 @@ export default function TicketDialog({ isOpen, onClose, onSuccess, ticket }: Tic
         <div className="space-y-4">
           <div className="grid grid-cols-1 gap-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+              <label
+                htmlFor="sucursalId"
+                className="text-xs font-bold text-slate-500 uppercase tracking-wider"
+              >
                 Sucursal *
               </label>
               <select
+                id="sucursalId"
                 disabled={isFetching}
                 {...register('sucursalId')}
                 className="w-full h-10 px-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none focus:border-brand transition-all font-semibold text-slate-900 dark:text-white"
@@ -172,10 +176,14 @@ export default function TicketDialog({ isOpen, onClose, onSuccess, ticket }: Tic
             </div>
           </div>
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+            <label
+              htmlFor="descripcion-dialog"
+              className="text-xs font-bold text-slate-500 uppercase tracking-wider"
+            >
               Descripción del Problema *
             </label>
             <textarea
+              id="descripcion-dialog"
               rows={3}
               {...register('descripcion')}
               className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none focus:border-brand transition-all resize-none text-slate-900 dark:text-white"
@@ -190,10 +198,14 @@ export default function TicketDialog({ isOpen, onClose, onSuccess, ticket }: Tic
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+              <label
+                htmlFor="rubro"
+                className="text-xs font-bold text-slate-500 uppercase tracking-wider"
+              >
                 Rubro *
               </label>
               <select
+                id="rubro"
                 {...register('rubro')}
                 className="w-full h-10 px-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none focus:border-brand transition-all font-semibold text-slate-900 dark:text-white"
               >
@@ -205,10 +217,14 @@ export default function TicketDialog({ isOpen, onClose, onSuccess, ticket }: Tic
               </select>
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+              <label
+                htmlFor="prioridad"
+                className="text-xs font-bold text-slate-500 uppercase tracking-wider"
+              >
                 Prioridad *
               </label>
               <select
+                id="prioridad"
                 {...register('prioridad')}
                 className="w-full h-10 px-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none focus:border-brand transition-all font-semibold text-slate-900 dark:text-white"
               >
@@ -225,10 +241,14 @@ export default function TicketDialog({ isOpen, onClose, onSuccess, ticket }: Tic
         <div className="space-y-4">
           <div className="grid grid-cols-1 gap-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+              <label
+                htmlFor="tecnicoId"
+                className="text-xs font-bold text-slate-500 uppercase tracking-wider"
+              >
                 Técnico Asignado
               </label>
               <select
+                id="tecnicoId"
                 disabled={isFetching}
                 {...register('tecnicoId')}
                 className="w-full h-10 px-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none focus:border-brand transition-all font-semibold text-slate-900 dark:text-white"

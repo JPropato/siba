@@ -32,7 +32,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             aria-invalid={error ? 'true' : 'false'}
             aria-describedby={error ? `${id}-error` : undefined}
             className={cn(
-              'w-full h-10 px-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none transition-all placeholder:text-slate-400 dark:placeholder:text-slate-600 text-slate-900 dark:text-white',
+              'w-full h-9 sm:h-10 px-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none transition-all placeholder:text-slate-400 dark:placeholder:text-slate-600 text-slate-900 dark:text-white',
               'focus:border-brand focus:ring-1 focus:ring-brand/20',
               error && 'border-red-500 focus:border-red-500 focus:ring-red-500/20',
               leftIcon && 'pl-10',
