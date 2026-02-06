@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback, lazy, Suspense, useRef } from 'react';
+import { useState, useCallback, lazy, Suspense, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import api from '../lib/api';
 import type { Ticket, EstadoTicket, RubroTicket, TipoTicket } from '../types/tickets';
+import { useTickets, useDeleteTicket } from '../hooks/api/useTickets';
 import { useLiveAnnounce } from '../hooks/useLiveAnnounce';
 import { LiveRegion } from '../components/ui/LiveRegion';
 import {
@@ -37,15 +38,11 @@ import { ViewToggle } from '../components/ui/ViewToggle';
 import { PullToRefresh } from '../components/ui/PullToRefresh';
 
 export default function TicketsPage() {
-  const [tickets, setTickets] = useState<Ticket[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [estadoFilter, setEstadoFilter] = useState<EstadoTicket | ''>('');
   const [rubroFilter, setRubroFilter] = useState<RubroTicket | ''>('');
   const [tipoTicketFilter, setTipoTicketFilter] = useState<TipoTicket | ''>('');
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [total, setTotal] = useState(0);
 
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
@@ -56,6 +53,26 @@ export default function TicketsPage() {
 
   // Accesibilidad: anuncios para screen readers
   const { announce, message } = useLiveAnnounce();
+
+  // TanStack Query: tickets con paginación server-side y filtros
+  const {
+    data: ticketsData,
+    isLoading,
+    refetch,
+  } = useTickets({
+    search,
+    estado: estadoFilter,
+    rubro: rubroFilter,
+    tipoTicket: tipoTicketFilter,
+    page,
+    limit: 10,
+  });
+
+  const tickets = ticketsData?.data ?? [];
+  const totalPages = ticketsData?.meta?.totalPages ?? 1;
+  const total = ticketsData?.meta?.total ?? 0;
+
+  const deleteTicketMutation = useDeleteTicket();
 
   // Prefetching: cargar detalles de ticket en hover
   const queryClient = useQueryClient();
@@ -82,33 +99,6 @@ export default function TicketsPage() {
     }
   }, []);
 
-  const fetchTickets = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      const params = new URLSearchParams({
-        page: String(page),
-        limit: '10',
-      });
-      if (search) params.append('search', search);
-      if (estadoFilter) params.append('estado', estadoFilter);
-      if (rubroFilter) params.append('rubro', rubroFilter);
-      if (tipoTicketFilter) params.append('tipoTicket', tipoTicketFilter);
-
-      const res = await api.get(`/tickets?${params}`);
-      setTickets(res.data.data || []);
-      setTotalPages(res.data.meta?.totalPages || 1);
-      setTotal(res.data.meta?.total || 0);
-    } catch (error) {
-      console.error('Error fetching tickets:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [page, search, estadoFilter, rubroFilter, tipoTicketFilter]);
-
-  useEffect(() => {
-    fetchTickets();
-  }, [fetchTickets]);
-
   const handleCreate = useCallback(() => {
     setSelectedTicket(null);
     setIsDrawerOpen(true);
@@ -124,20 +114,19 @@ export default function TicketsPage() {
       if (!confirm(`¿Eliminar el ticket TKT-${String(ticket.codigoInterno).padStart(5, '0')}?`))
         return;
       try {
-        await api.delete(`/tickets/${ticket.id}`);
+        await deleteTicketMutation.mutateAsync(ticket.id);
         announce(`Ticket ${ticket.codigoInterno} eliminado`);
-        fetchTickets();
       } catch (error) {
         console.error('Error deleting ticket:', error);
         announce('Error al eliminar el ticket');
       }
     },
-    [fetchTickets, announce]
+    [deleteTicketMutation, announce]
   );
 
   const handleTicketSuccess = (ticketId: number) => {
     setIsDrawerOpen(false);
-    fetchTickets();
+    refetch();
     // Abrir sheet de detalle del ticket creado
     setDetailTicketIdSheet(ticketId);
     setIsDetailOpen(true);
@@ -155,9 +144,9 @@ export default function TicketsPage() {
 
   // Handler para pull-to-refresh
   const handleRefresh = useCallback(async () => {
-    await fetchTickets();
+    await refetch();
     announce('Lista actualizada');
-  }, [fetchTickets, announce]);
+  }, [refetch, announce]);
 
   return (
     <PullToRefresh onRefresh={handleRefresh} className="min-h-screen">
@@ -461,7 +450,7 @@ export default function TicketsPage() {
                 setDetailTicketIdSheet(null);
               }}
               ticketId={detailTicketIdSheet}
-              onSuccess={fetchTickets}
+              onSuccess={() => refetch()}
             />
           </Suspense>
         )}
