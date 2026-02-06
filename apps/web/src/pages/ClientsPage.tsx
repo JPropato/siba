@@ -1,7 +1,13 @@
 import { useState, useEffect, lazy, Suspense, useCallback } from 'react';
-import api from '../lib/api';
 import { Search, Plus } from 'lucide-react';
+import { toast } from 'sonner';
 import ClientTable from '../components/clients/ClientTable';
+import {
+  useClients,
+  useCreateClient,
+  useUpdateClient,
+  useDeleteClient,
+} from '../hooks/api/useClients';
 
 // Lazy loading del dialog (solo se carga cuando se abre)
 const ClientDialog = lazy(() => import('../components/clients/ClientDialog'));
@@ -11,40 +17,24 @@ import { PullToRefresh } from '../components/ui/PullToRefresh';
 import type { Cliente, ClienteFormData } from '../types/client';
 
 export default function ClientsPage() {
-  const [clients, setClients] = useState<Cliente[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Cliente | null>(null);
 
-  const fetchClients = async () => {
-    setIsLoading(true);
-    try {
-      const res = await api.get('/clients', {
-        params: {
-          search: search || undefined,
-        },
-      });
-      if (res.data && res.data.data) {
-        setClients(res.data.data);
-      } else {
-        setClients([]);
-      }
-    } catch (error) {
-      console.error('Error fetching clients:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
+  // Debounce search
   useEffect(() => {
-    const timer = setTimeout(() => {
-      fetchClients();
-    }, 300);
+    const timer = setTimeout(() => setDebouncedSearch(search), 300);
     return () => clearTimeout(timer);
   }, [search]);
+
+  // TanStack Query hooks
+  const { data: clients = [], isLoading, refetch } = useClients(debouncedSearch);
+  const createClient = useCreateClient();
+  const updateClient = useUpdateClient();
+  const deleteClient = useDeleteClient();
 
   const handleCreate = () => {
     setSelectedClient(null);
@@ -60,27 +50,25 @@ export default function ClientsPage() {
     if (!window.confirm(`¿Está seguro de eliminar a "${client.razonSocial}"?`)) return;
 
     try {
-      await api.delete(`/clients/${client.id}`);
-      fetchClients();
-    } catch (error) {
-      console.error('Error deleting client:', error);
-      alert('Error al eliminar cliente');
+      await deleteClient.mutateAsync(client.id);
+      toast.success('Cliente eliminado');
+    } catch {
+      toast.error('Error al eliminar cliente');
     }
   };
 
   const handleSave = async (data: ClienteFormData) => {
     if (selectedClient) {
-      await api.put(`/clients/${selectedClient.id}`, data);
+      await updateClient.mutateAsync({ id: selectedClient.id, data });
     } else {
-      await api.post('/clients', data);
+      await createClient.mutateAsync(data);
     }
-    fetchClients();
   };
 
   // Handler para pull-to-refresh
   const handleRefresh = useCallback(async () => {
-    await fetchClients();
-  }, []);
+    await refetch();
+  }, [refetch]);
 
   return (
     <PullToRefresh onRefresh={handleRefresh} className="min-h-screen">

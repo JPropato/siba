@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import Sidebar from './Sidebar';
 import TopHeader from './TopHeader';
 import { CommandMenu } from './CommandMenu';
+import { BottomNav } from './BottomNav';
 
 interface PageInfo {
   id: string;
@@ -78,8 +79,13 @@ export function DashboardLayout({ children, currentPage, onNavigate }: Dashboard
         />
 
         {/* Page Content */}
-        <div className="flex-1 overflow-y-auto p-3 md:p-4 lg:p-6 space-y-4">{children}</div>
+        <div className="flex-1 overflow-y-auto p-3 md:p-4 lg:p-6 pb-20 md:pb-4 lg:pb-6 space-y-4">
+          {children}
+        </div>
       </main>
+
+      {/* Bottom Navigation - Solo móvil */}
+      <BottomNav />
     </div>
   );
 }

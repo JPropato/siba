@@ -1,68 +1,28 @@
 import { useState } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from './dialog';
-import { Button } from './button';
+import { AlertTriangle } from 'lucide-react';
+import { DialogBase } from './core/DialogBase';
+import { Button } from './core/Button';
 
 export interface ConfirmDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  title: string;
-  description: string;
-  confirmText?: string;
-  cancelText?: string;
-  variant?: 'default' | 'destructive';
+  isOpen: boolean;
+  onClose: () => void;
   onConfirm: () => void | Promise<void>;
+  title: string;
+  message: string;
+  confirmLabel?: string;
+  cancelLabel?: string;
+  variant?: 'danger' | 'warning' | 'info';
 }
 
-/**
- * ConfirmDialog Component
- *
- * Componente de diálogo de confirmación reutilizable.
- * Soporta acciones síncronas y asíncronas con estado de carga.
- *
- * @example
- * // Uso básico
- * const [open, setOpen] = useState(false);
- *
- * <ConfirmDialog
- *   open={open}
- *   onOpenChange={setOpen}
- *   title="Eliminar ticket"
- *   description="¿Estás seguro de que deseas eliminar este ticket? Esta acción no se puede deshacer."
- *   variant="destructive"
- *   onConfirm={async () => {
- *     await deleteTicket(id);
- *     setOpen(false);
- *   }}
- * />
- *
- * @example
- * // Con textos personalizados
- * <ConfirmDialog
- *   open={open}
- *   onOpenChange={setOpen}
- *   title="Confirmar acción"
- *   description="Esta acción requiere confirmación."
- *   confirmText="Sí, continuar"
- *   cancelText="No, cancelar"
- *   onConfirm={() => handleAction()}
- * />
- */
 export function ConfirmDialog({
-  open,
-  onOpenChange,
-  title,
-  description,
-  confirmText = 'Confirmar',
-  cancelText = 'Cancelar',
-  variant = 'default',
+  isOpen,
+  onClose,
   onConfirm,
+  title,
+  message,
+  confirmLabel = 'Confirmar',
+  cancelLabel = 'Cancelar',
+  variant = 'danger',
 }: ConfirmDialogProps) {
   const [isLoading, setIsLoading] = useState(false);
 
@@ -70,98 +30,35 @@ export function ConfirmDialog({
     setIsLoading(true);
     try {
       await onConfirm();
-      // Solo cerrar si onConfirm no lo hace por sí mismo
-      // Esperamos un tick para permitir que onConfirm cierre el diálogo si lo desea
-      await new Promise((resolve) => setTimeout(resolve, 0));
-      if (open) {
-        onOpenChange(false);
-      }
-    } catch (error) {
-      console.error('Error en confirmación:', error);
+      onClose();
+    } catch {
+      // error handled by caller
     } finally {
       setIsLoading(false);
     }
   };
 
+  const confirmVariant = variant === 'danger' ? 'danger' : 'primary';
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>{description}</DialogDescription>
-        </DialogHeader>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading}>
-            {cancelText}
+    <DialogBase
+      isOpen={isOpen}
+      onClose={onClose}
+      title={title}
+      maxWidth="sm"
+      icon={variant === 'danger' ? <AlertTriangle className="h-5 w-5 text-red-500" /> : undefined}
+      footer={
+        <div className="flex justify-end gap-3">
+          <Button variant="outline" onClick={onClose} disabled={isLoading}>
+            {cancelLabel}
           </Button>
-          <Button
-            variant={variant}
-            onClick={handleConfirm}
-            disabled={isLoading}
-            className="min-w-[100px]"
-          >
-            {isLoading ? (
-              <span className="flex items-center gap-2">
-                <span className="size-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                Procesando...
-              </span>
-            ) : (
-              confirmText
-            )}
+          <Button variant={confirmVariant} onClick={handleConfirm} isLoading={isLoading}>
+            {confirmLabel}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </div>
+      }
+    >
+      <p className="text-sm text-slate-600 dark:text-slate-400">{message}</p>
+    </DialogBase>
   );
-}
-
-/**
- * Hook useConfirmDialog
- *
- * Hook personalizado para gestionar el estado de ConfirmDialog.
- * Simplifica el uso del componente ConfirmDialog.
- *
- * @example
- * function MyComponent() {
- *   const { confirmDialog, showConfirm } = useConfirmDialog();
- *
- *   const handleDelete = () => {
- *     showConfirm({
- *       title: 'Eliminar elemento',
- *       description: '¿Estás seguro?',
- *       variant: 'destructive',
- *       onConfirm: async () => {
- *         await deleteItem();
- *       },
- *     });
- *   };
- *
- *   return (
- *     <>
- *       <button onClick={handleDelete}>Eliminar</button>
- *       {confirmDialog}
- *     </>
- *   );
- * }
- */
-export function useConfirmDialog() {
-  const [dialogProps, setDialogProps] = useState<ConfirmDialogProps | null>(null);
-
-  const showConfirm = (props: Omit<ConfirmDialogProps, 'open' | 'onOpenChange'>) => {
-    setDialogProps({
-      ...props,
-      open: true,
-      onOpenChange: (open) => {
-        if (!open) setDialogProps(null);
-      },
-    });
-  };
-
-  const confirmDialog = dialogProps ? <ConfirmDialog {...dialogProps} /> : null;
-
-  return {
-    confirmDialog,
-    showConfirm,
-    closeConfirm: () => setDialogProps(null),
-  };
 }
