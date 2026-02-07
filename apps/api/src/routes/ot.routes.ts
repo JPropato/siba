@@ -93,7 +93,6 @@ router.get('/:id', async (req: Request<IdParams>, res: Response) => {
             codigoInterno: true,
             descripcion: true,
             rubro: true,
-            prioridad: true,
             estado: true,
           },
         },
