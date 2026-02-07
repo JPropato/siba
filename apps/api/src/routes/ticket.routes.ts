@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import * as ticketController from '../controllers/ticket.controller.js';
+import * as ticketController from '../controllers/ticket/index.js';
 import { authenticateToken } from '../middlewares/auth.middleware.js';
 
 const router = Router();

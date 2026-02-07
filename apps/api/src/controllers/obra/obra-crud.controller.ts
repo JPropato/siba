@@ -1,68 +1,8 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
-import { TipoObra, EstadoObra, ModoEjecucion, Prisma } from '@prisma/client';
-import { prisma } from '../lib/prisma.js';
-
-// --- Schemas ---
-const createObraSchema = z.object({
-  tipo: z.nativeEnum(TipoObra),
-  modoEjecucion: z.nativeEnum(ModoEjecucion).optional().default(ModoEjecucion.CON_PRESUPUESTO),
-  titulo: z.string().min(3).max(200),
-  descripcion: z.string().optional().nullable(),
-  fechaSolicitud: z.string().datetime().or(z.date()),
-  fechaInicioEstimada: z.string().datetime().or(z.date()).optional().nullable(),
-  fechaFinEstimada: z.string().datetime().or(z.date()).optional().nullable(),
-  clienteId: z.number().int(),
-  sucursalId: z.number().int().optional().nullable(),
-  ticketId: z.number().int().optional().nullable(),
-  condicionesPago: z.string().optional().nullable(),
-  validezDias: z.number().int().optional().default(30),
-});
-
-const updateObraSchema = createObraSchema.partial().extend({
-  fechaInicioReal: z.string().datetime().or(z.date()).optional().nullable(),
-  fechaFinReal: z.string().datetime().or(z.date()).optional().nullable(),
-  numeroFactura: z.string().optional().nullable(),
-  fechaFacturacion: z.string().datetime().or(z.date()).optional().nullable(),
-});
-
-const cambiarEstadoSchema = z.object({
-  estado: z.nativeEnum(EstadoObra),
-  observacion: z.string().optional(),
-});
-
-// --- Helper Functions ---
-function getUserId(req: Request): number {
-  return req.user?.id || 1;
-}
-
-async function generateCodigo(): Promise<string> {
-  const lastObra = await prisma.obra.findFirst({
-    orderBy: { id: 'desc' },
-    select: { codigo: true },
-  });
-
-  let nextNum = 1;
-  if (lastObra?.codigo) {
-    const match = lastObra.codigo.match(/OBR-(\d+)/);
-    if (match) {
-      nextNum = parseInt(match[1], 10) + 1;
-    }
-  }
-
-  return `OBR-${String(nextNum).padStart(5, '0')}`;
-}
-
-// Validación de transiciones de estado
-const TRANSICIONES_VALIDAS: Record<EstadoObra, EstadoObra[]> = {
-  [EstadoObra.BORRADOR]: [EstadoObra.PRESUPUESTADO, EstadoObra.EN_EJECUCION],
-  [EstadoObra.PRESUPUESTADO]: [EstadoObra.APROBADO, EstadoObra.RECHAZADO, EstadoObra.BORRADOR],
-  [EstadoObra.APROBADO]: [EstadoObra.EN_EJECUCION],
-  [EstadoObra.RECHAZADO]: [EstadoObra.BORRADOR],
-  [EstadoObra.EN_EJECUCION]: [EstadoObra.FINALIZADO],
-  [EstadoObra.FINALIZADO]: [EstadoObra.FACTURADO],
-  [EstadoObra.FACTURADO]: [],
-};
+import { EstadoObra, ModoEjecucion, Prisma, TipoObra } from '@prisma/client';
+import { prisma } from '../../lib/prisma.js';
+import { createObraSchema, updateObraSchema, getUserId, generateCodigo } from './utils.js';
 
 // --- Controller Methods ---
 
@@ -209,7 +149,7 @@ export const create = async (req: Request, res: Response) => {
       }
     }
 
-    // Verificar ticket si se proporciona (y que no esté ya vinculado a otra obra)
+    // Verificar ticket si se proporciona (y que no este ya vinculado a otra obra)
     if (body.ticketId) {
       const ticket = await prisma.ticket.findUnique({
         where: { id: body.ticketId },
@@ -222,7 +162,7 @@ export const create = async (req: Request, res: Response) => {
         where: { ticketId: body.ticketId },
       });
       if (existingObra) {
-        return res.status(400).json({ error: 'El ticket ya está vinculado a otra obra' });
+        return res.status(400).json({ error: 'El ticket ya esta vinculado a otra obra' });
       }
     }
 
@@ -253,7 +193,7 @@ export const create = async (req: Request, res: Response) => {
       },
     });
 
-    // Crear versión inicial del presupuesto si es CON_PRESUPUESTO
+    // Crear version inicial del presupuesto si es CON_PRESUPUESTO
     if (body.modoEjecucion === ModoEjecucion.CON_PRESUPUESTO) {
       await prisma.versionPresupuesto.create({
         data: {
@@ -291,7 +231,7 @@ export const update = async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Obra no encontrada' });
     }
 
-    // Bloquear edición si está FACTURADO
+    // Bloquear edicion si esta FACTURADO
     if (obra.estado === EstadoObra.FACTURADO) {
       return res.status(400).json({ error: 'No se puede editar una obra facturada' });
     }
@@ -332,86 +272,6 @@ export const update = async (req: Request, res: Response) => {
   }
 };
 
-export const cambiarEstado = async (req: Request, res: Response) => {
-  try {
-    const id = Number(req.params.id);
-    const body = cambiarEstadoSchema.parse(req.body);
-    const nuevoEstado = body.estado;
-    const userId = getUserId(req);
-
-    const obra = await prisma.obra.findUnique({
-      where: { id },
-    });
-
-    if (!obra) {
-      return res.status(404).json({ error: 'Obra no encontrada' });
-    }
-
-    // Validar transición
-    const transicionesPermitidas = TRANSICIONES_VALIDAS[obra.estado];
-    if (!transicionesPermitidas.includes(nuevoEstado)) {
-      return res.status(400).json({
-        error: `Transición no permitida: ${obra.estado} → ${nuevoEstado}`,
-        transicionesPermitidas,
-      });
-    }
-
-    // Reglas especiales
-    if (obra.modoEjecucion === ModoEjecucion.EJECUCION_DIRECTA) {
-      // Solo puede ir de BORRADOR a EN_EJECUCION directamente
-      if (obra.estado === EstadoObra.BORRADOR && nuevoEstado !== EstadoObra.EN_EJECUCION) {
-        return res.status(400).json({
-          error: 'En modo EJECUCION_DIRECTA, solo se puede pasar de BORRADOR a EN_EJECUCION',
-        });
-      }
-    }
-
-    const updatedData: Prisma.ObraUpdateInput = {
-      estado: nuevoEstado,
-    };
-
-    // Setear fechas automáticamente
-    if (nuevoEstado === EstadoObra.EN_EJECUCION && !obra.fechaInicioReal) {
-      updatedData.fechaInicioReal = new Date();
-    }
-    if (nuevoEstado === EstadoObra.FINALIZADO && !obra.fechaFinReal) {
-      updatedData.fechaFinReal = new Date();
-    }
-    if (nuevoEstado === EstadoObra.FACTURADO) {
-      updatedData.fechaFacturacion = new Date();
-    }
-
-    // Usar transacción para actualizar obra y registrar historial
-    const [updatedObra] = await prisma.$transaction([
-      prisma.obra.update({
-        where: { id },
-        data: updatedData,
-      }),
-      prisma.historialEstadoObra.create({
-        data: {
-          obraId: id,
-          estadoAnterior: obra.estado,
-          estadoNuevo: nuevoEstado,
-          usuarioId: userId,
-          observacion: body.observacion,
-        },
-      }),
-    ]);
-
-    console.log(`[ObraController] Estado cambiado: ${obra.codigo} ${obra.estado} → ${nuevoEstado}`);
-    res.json(updatedObra);
-  } catch (error) {
-    console.error('[ObraController] CAMBIAR ESTADO ERROR:', error);
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: error.errors });
-    }
-    res.status(500).json({
-      error: 'Error al cambiar estado',
-      details: error instanceof Error ? error.message : String(error),
-    });
-  }
-};
-
 export const deleteOne = async (req: Request, res: Response) => {
   try {
     const id = Number(req.params.id);
@@ -424,14 +284,14 @@ export const deleteOne = async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Obra no encontrada' });
     }
 
-    // Solo se puede eliminar si está en BORRADOR
+    // Solo se puede eliminar si esta en BORRADOR
     if (obra.estado !== EstadoObra.BORRADOR) {
       return res.status(400).json({
         error: 'Solo se pueden eliminar obras en estado BORRADOR',
       });
     }
 
-    // Eliminar obra (cascade eliminará versiones, items y archivos)
+    // Eliminar obra (cascade eliminara versiones, items y archivos)
     await prisma.obra.delete({
       where: { id },
     });

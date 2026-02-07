@@ -14,6 +14,9 @@
     "build": "npm run build --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "test": "npm run test --workspaces --if-present",
+    "test:web": "npm run test -w @siba/web",
+    "test:api": "npm run test -w @siba/api",
     "prepare": "husky"
   },
   "lint-staged": {

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import * as obraController from '../controllers/obra.controller.js';
+import * as obraController from '../controllers/obra/index.js';
 import * as presupuestoController from '../controllers/presupuesto.controller.js';
 import * as obraExtrasController from '../controllers/obraExtras.controller.js';
 
