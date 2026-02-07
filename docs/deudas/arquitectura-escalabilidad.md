@@ -2,7 +2,7 @@
 
 > Refactorings estructurales para mantenibilidad y escalabilidad a largo plazo.
 
-**Estado**: En progreso (4/6 completados)
+**Estado**: En progreso (5/6 completados)
 **Esfuerzo total**: ~80 horas
 **Prioridad**: P2 - Calidad y escalabilidad
 
@@ -24,7 +24,7 @@
 
 ---
 
-## ARCH-001: Controllers Monolíticos ✅ (Parcial)
+## ARCH-001: Controllers Monolíticos ✅
 
 ### 📌 Descripción
 
@@ -32,11 +32,11 @@ Varios controllers violan el **Single Responsibility Principle (SRP)** al maneja
 
 ### 🎯 Ubicación y Métricas
 
-| Controller                                                                  | Líneas             | Estado        | Prioridad |
-| --------------------------------------------------------------------------- | ------------------ | ------------- | --------- |
-| [finanzas/](../../apps/api/src/controllers/finanzas/)                       | **533→5 archivos** | ✅ Completado | P1        |
-| [ticket.controller.ts](../../apps/api/src/controllers/ticket.controller.ts) | **483**            | 🟡 Atención   | P2        |
-| [obra.controller.ts](../../apps/api/src/controllers/obra.controller.ts)     | ~400               | 🟡 Revisar    | P3        |
+| Controller                                            | Líneas             | Estado        | Prioridad |
+| ----------------------------------------------------- | ------------------ | ------------- | --------- |
+| [finanzas/](../../apps/api/src/controllers/finanzas/) | **533→5 archivos** | ✅ Completado | P1        |
+| [ticket/](../../apps/api/src/controllers/ticket/)     | **483→4 archivos** | ✅ Completado | P2        |
+| [obra/](../../apps/api/src/controllers/obra/)         | **445→4 archivos** | ✅ Completado | P3        |
 
 **Umbral aceptable**: 200 líneas por controller
 
@@ -242,11 +242,22 @@ app.use((err, req, res, next) => {
 
 ---
 
-## ARCH-003: Sin Sistema de Testing
+## ARCH-003: Sin Sistema de Testing ✅
 
 ### 📌 Descripción
 
 El proyecto no tiene configuración de tests (0% cobertura), lo que aumenta el riesgo de regresiones en refactorings y deploys.
+
+### Estado: Implementado
+
+**Solución implementada**:
+
+- **Frontend**: Vitest + jsdom + React Testing Library + jest-dom matchers
+- **Backend**: Vitest + node environment + supertest
+- 5 tests Button component (render, click, loading, variants, disabled)
+- 7 tests error middleware (NotFound, Conflict, Validation, BadRequest, unknown, response shape, notFoundHandler)
+- Scripts: `npm test`, `npm run test:run`, `npm run test:coverage` en ambos workspaces
+- Setup files: `apps/web/src/test/setup.ts`, `apps/api/src/test/setup.ts`
 
 ### ⚠️ Impacto
 
@@ -448,16 +459,16 @@ sequenceDiagram
 
 ## 📊 Dashboard de Progreso
 
-| ID       | Completada            | Responsable   | Fecha      |
-| -------- | --------------------- | ------------- | ---------- |
-| ARCH-001 | ✅ Parcial (finanzas) | Backend Lead  | 2026-02-06 |
-| ARCH-002 | ✅ Completado         | Backend Lead  | 2026-02-06 |
-| ARCH-003 | ⏳ Pendiente          | Tech Lead     | -          |
-| ARCH-004 | ✅ Completado         | Frontend Lead | 2026-02-06 |
-| ARCH-005 | ⏳ Pendiente          | Full Stack    | -          |
-| ARCH-006 | ✅ Completado         | Backend Lead  | 2026-02-06 |
+| ID       | Completada    | Responsable   | Fecha      |
+| -------- | ------------- | ------------- | ---------- |
+| ARCH-001 | ✅ Completado | Backend Lead  | 2026-02-06 |
+| ARCH-002 | ✅ Completado | Backend Lead  | 2026-02-06 |
+| ARCH-003 | ✅ Completado | Tech Lead     | 2026-02-06 |
+| ARCH-004 | ✅ Completado | Frontend Lead | 2026-02-06 |
+| ARCH-005 | ⏳ Pendiente  | Full Stack    | -          |
+| ARCH-006 | ✅ Completado | Backend Lead  | 2026-02-06 |
 
-**Progreso total**: 4/6 (67%)
+**Progreso total**: 5/6 (83%)
 
 ---
 
@@ -466,24 +477,25 @@ sequenceDiagram
 ### Sprint 3-4 (Fundamentos) ✅
 
 - [x] ARCH-002: Error handler mejorado (1h) ✅
-- [ ] ARCH-003: Setup de testing (4h)
+- [x] ARCH-003: Setup de testing (4h) ✅ Vitest + RTL + 12 tests
 - [x] ARCH-006: Refresh tokens (2h) ✅
 
-**Total**: 7 horas (5h completadas)
+**Total**: 7 horas ✅ Completado
 
 ### Sprint 5-6 (Refactors) ✅
 
 - [x] ARCH-001: Split finanzas.controller.ts (6h) ✅
+- [x] ARCH-001: Split ticket.controller.ts (4h) ✅
+- [x] ARCH-001: Split obra.controller.ts (4h) ✅
 - [x] ARCH-004: Virtual lists (4h) ✅ (implementado en fase UX)
 
-**Total**: 10 horas ✅ Completado
+**Total**: 18 horas ✅ Completado
 
 ### Sprint 7-8 (Features Avanzados)
 
 - [ ] ARCH-005: WebSockets real-time (8h)
-- [ ] ARCH-001: Split ticket.controller.ts y obra.controller.ts (8h)
 
-**Total**: 16 horas
+**Total**: 8 horas
 
 ---
 
