@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import * as finanzasController from '../controllers/finanzas.controller.js';
+import * as finanzasController from '../controllers/finanzas/index.js';
 import { authenticateToken, requirePermission } from '../middlewares/auth.middleware.js';
 
 const router = Router();

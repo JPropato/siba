@@ -4,19 +4,16 @@ import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import path from 'path';
-import { PrismaClient } from '@prisma/client';
 
 import cookieParser from 'cookie-parser';
 import routes from './routes/index.js';
-
-// ... (imports anteriores)
+import { errorHandler, notFoundHandler } from './middlewares/error.middleware.js';
 
 const app = express();
 // Confiar en el proxy (Dokploy/Traefik) para detectar HTTPS correctamente
 app.set('trust proxy', 1);
 
 import { prisma } from './lib/prisma.js';
-// export const prisma = new PrismaClient(); // Removed to avoid circular dep
 const PORT = process.env.API_PORT || 3001;
 
 // Middleware logging (DEBUG)
@@ -114,19 +111,7 @@ app.use(cookieParser());
 // Servir archivos subidos
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
-// Rutas API
-app.use('/api', routes);
-
-// Catch-all para 404 en /api
-app.use('/api', (req, res) => {
-  console.log(`[404] Route not found: ${req.originalUrl}`);
-  res.status(404).json({
-    success: false,
-    error: { code: 'NOT_FOUND', message: `Route ${req.originalUrl} not found` },
-  });
-});
-
-// Health check
+// Health check (before routes so it is always reachable)
 app.get('/api/health', async (_req, res) => {
   try {
     await prisma.$queryRaw`SELECT 1`;
@@ -141,14 +126,14 @@ app.get('/', (_req, res) => {
   res.send('API Running');
 });
 
-// Error handler
-app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-  console.error(err.stack);
-  res.status(500).json({
-    success: false,
-    error: { code: 'INTERNAL_ERROR', message: 'Something went wrong' },
-  });
-});
+// Rutas API
+app.use('/api', routes);
+
+// Catch-all para 404 en /api (ARCH-002: centralized not-found handler)
+app.use('/api', notFoundHandler);
+
+// ARCH-002: Centralized error handler (must be registered LAST)
+app.use(errorHandler);
 
 // Start server
 const server = app.listen(Number(PORT), '0.0.0.0', async () => {

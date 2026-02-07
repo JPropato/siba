@@ -2,7 +2,7 @@
 
 > Refactorings estructurales para mantenibilidad y escalabilidad a largo plazo.
 
-**Estado**: Todas pendientes
+**Estado**: En progreso (4/6 completados)
 **Esfuerzo total**: ~80 horas
 **Prioridad**: P2 - Calidad y escalabilidad
 
@@ -24,7 +24,7 @@
 
 ---
 
-## ARCH-001: Controllers Monolíticos
+## ARCH-001: Controllers Monolíticos ✅ (Parcial)
 
 ### 📌 Descripción
 
@@ -32,11 +32,11 @@ Varios controllers violan el **Single Responsibility Principle (SRP)** al maneja
 
 ### 🎯 Ubicación y Métricas
 
-| Controller                                                                      | Líneas  | Estado      | Prioridad |
-| ------------------------------------------------------------------------------- | ------- | ----------- | --------- |
-| [finanzas.controller.ts](../../apps/api/src/controllers/finanzas.controller.ts) | **533** | 🔴 Crítico  | P1        |
-| [ticket.controller.ts](../../apps/api/src/controllers/ticket.controller.ts)     | **483** | 🟡 Atención | P2        |
-| [obra.controller.ts](../../apps/api/src/controllers/obra.controller.ts)         | ~400    | 🟡 Revisar  | P3        |
+| Controller                                                                  | Líneas             | Estado        | Prioridad |
+| --------------------------------------------------------------------------- | ------------------ | ------------- | --------- |
+| [finanzas/](../../apps/api/src/controllers/finanzas/)                       | **533→5 archivos** | ✅ Completado | P1        |
+| [ticket.controller.ts](../../apps/api/src/controllers/ticket.controller.ts) | **483**            | 🟡 Atención   | P2        |
+| [obra.controller.ts](../../apps/api/src/controllers/obra.controller.ts)     | ~400               | 🟡 Revisar    | P3        |
 
 **Umbral aceptable**: 200 líneas por controller
 
@@ -188,11 +188,23 @@ node -e "const { bancoController } = require('./dist/controllers/finanzas'); con
 
 ---
 
-## ARCH-002: Error Handler Básico
+## ARCH-002: Error Handler Básico ✅
 
 ### 📌 Descripción
 
 El error handler global actual no clasifica errores (Prisma, Zod, custom), retorna mensajes genéricos y dificulta el debugging.
+
+### Estado: Implementado
+
+**Solución implementada**:
+
+- Clase `AppError` con jerarquía de errores en `lib/errors.ts`
+- Middleware centralizado en `middlewares/error.middleware.ts`
+- Clasificación automática de: Prisma (P2002→409, P2025→404), Zod (400 con field details), AppError, JSON parse errors
+- Respuesta estructurada: `{ success: false, error: { code, message, details? } }`
+- Stack traces solo en desarrollo
+- `notFoundHandler` para catch-all 404
+- `client.controller.ts` refactorizado como ejemplo (sin try/catch manual)
 
 ### 🐛 Problema Actual
 
@@ -268,11 +280,19 @@ El proyecto no tiene configuración de tests (0% cobertura), lo que aumenta el r
 
 ---
 
-## ARCH-004: Sin Virtual Lists
+## ARCH-004: Sin Virtual Lists ✅
 
 ### 📌 Descripción
 
 Tablas con 500+ filas causan lag porque se renderizan todas las filas aunque solo ~30 sean visibles.
+
+### Estado: Implementado
+
+**Solución implementada** (durante fase UX/Performance):
+
+- Componente `VirtualTable.tsx` con `@tanstack/react-virtual`
+- Hook `useVirtualList.ts` reutilizable
+- Solo renderiza filas visibles (~30) en lugar de todas (1000+)
 
 ### ⚠️ Impacto
 
@@ -381,11 +401,23 @@ export function useRealtimeTickets() {
 
 ---
 
-## ARCH-006: Sin Refresh Tokens Flow
+## ARCH-006: Sin Refresh Tokens Flow ✅
 
 ### 📌 Descripción
 
 El sistema usa solo access tokens de 15min. Cuando expiran, el usuario debe hacer login nuevamente, generando fricciones.
+
+### Estado: Implementado
+
+**Solución implementada**:
+
+- Modelo `RefreshToken` en Prisma (tabla `refresh_tokens`)
+- Token opaco de 128 chars (crypto.randomBytes) almacenado en DB
+- Cookie httpOnly, secure, sameSite: 'lax', path: '/api/auth'
+- Rotación de token en cada refresh (previene reutilización)
+- Revocación server-side (deleteRefreshToken, deleteAllRefreshTokens)
+- Frontend ya tenía interceptor 401→refresh configurado (sin cambios necesarios)
+- Eliminada dependencia de `JWT_REFRESH_SECRET`
 
 ### ✅ Solución
 
@@ -416,40 +448,40 @@ sequenceDiagram
 
 ## 📊 Dashboard de Progreso
 
-| ID       | Completada   | Responsable   | Fecha Límite |
-| -------- | ------------ | ------------- | ------------ |
-| ARCH-001 | ⏳ Pendiente | Backend Lead  | -            |
-| ARCH-002 | ⏳ Pendiente | Backend Lead  | -            |
-| ARCH-003 | ⏳ Pendiente | Tech Lead     | -            |
-| ARCH-004 | ⏳ Pendiente | Frontend Lead | -            |
-| ARCH-005 | ⏳ Pendiente | Full Stack    | -            |
-| ARCH-006 | ⏳ Pendiente | Backend Lead  | -            |
+| ID       | Completada            | Responsable   | Fecha      |
+| -------- | --------------------- | ------------- | ---------- |
+| ARCH-001 | ✅ Parcial (finanzas) | Backend Lead  | 2026-02-06 |
+| ARCH-002 | ✅ Completado         | Backend Lead  | 2026-02-06 |
+| ARCH-003 | ⏳ Pendiente          | Tech Lead     | -          |
+| ARCH-004 | ✅ Completado         | Frontend Lead | 2026-02-06 |
+| ARCH-005 | ⏳ Pendiente          | Full Stack    | -          |
+| ARCH-006 | ✅ Completado         | Backend Lead  | 2026-02-06 |
 
-**Progreso total**: 0/6 (0%)
+**Progreso total**: 4/6 (67%)
 
 ---
 
 ## 🗺️ Roadmap Recomendado
 
-### Sprint 3-4 (Fundamentos)
+### Sprint 3-4 (Fundamentos) ✅
 
-- [ ] ARCH-002: Error handler mejorado (1h)
+- [x] ARCH-002: Error handler mejorado (1h) ✅
 - [ ] ARCH-003: Setup de testing (4h)
-- [ ] ARCH-006: Refresh tokens (2h)
+- [x] ARCH-006: Refresh tokens (2h) ✅
 
-**Total**: 7 horas
+**Total**: 7 horas (5h completadas)
 
-### Sprint 5-6 (Refactors)
+### Sprint 5-6 (Refactors) ✅
 
-- [ ] ARCH-001: Split finanzas.controller.ts (6h)
-- [ ] ARCH-004: Virtual lists (4h)
+- [x] ARCH-001: Split finanzas.controller.ts (6h) ✅
+- [x] ARCH-004: Virtual lists (4h) ✅ (implementado en fase UX)
 
-**Total**: 10 horas
+**Total**: 10 horas ✅ Completado
 
 ### Sprint 7-8 (Features Avanzados)
 
 - [ ] ARCH-005: WebSockets real-time (8h)
-- [ ] ARCH-001: Split otros controllers (8h)
+- [ ] ARCH-001: Split ticket.controller.ts y obra.controller.ts (8h)
 
 **Total**: 16 horas
 
@@ -476,5 +508,5 @@ sequenceDiagram
 
 ---
 
-**Última actualización**: 2026-02-04
+**Última actualización**: 2026-02-06
 **Responsable**: Tech Lead

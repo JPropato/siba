@@ -1,33 +1,24 @@
 import { prisma } from '../lib/prisma.js';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import jwt, { type SignOptions } from 'jsonwebtoken';
-// const prisma = new PrismaClient();
 
-const JWT_SECRET = process.env.JWT_SECRET;
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '15m';
-const JWT_REFRESH_EXPIRES_IN = process.env.JWT_REFRESH_EXPIRES_IN || '7d';
+const REFRESH_TOKEN_EXPIRY_DAYS = parseInt(process.env.REFRESH_TOKEN_EXPIRY_DAYS || '7', 10);
 
-// Validar JWT secrets al startup
-if (!JWT_SECRET) {
-  throw new Error('CRITICAL SECURITY ERROR: JWT_SECRET environment variable must be set');
-}
-
-if (JWT_SECRET.length < 32) {
-  throw new Error(
-    `CRITICAL SECURITY ERROR: JWT_SECRET must be at least 32 characters long (current: ${JWT_SECRET.length})`
-  );
-}
-
-if (!JWT_REFRESH_SECRET) {
-  throw new Error('CRITICAL SECURITY ERROR: JWT_REFRESH_SECRET environment variable must be set');
-}
-
-if (JWT_REFRESH_SECRET.length < 32) {
-  throw new Error(
-    `CRITICAL SECURITY ERROR: JWT_REFRESH_SECRET must be at least 32 characters long (current: ${JWT_REFRESH_SECRET.length})`
-  );
-}
+// Validar JWT secret al startup
+const JWT_SECRET: string = (() => {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error('CRITICAL SECURITY ERROR: JWT_SECRET environment variable must be set');
+  }
+  if (secret.length < 32) {
+    throw new Error(
+      `CRITICAL SECURITY ERROR: JWT_SECRET must be at least 32 characters long (current: ${secret.length})`
+    );
+  }
+  return secret;
+})();
 
 // OWASP 2026 recommendation: 12 rounds minimum
 const BCRYPT_ROUNDS = 12;
@@ -38,10 +29,6 @@ interface UserPayload {
   email: string;
   roles: string[];
   permisos: string[];
-}
-
-interface RefreshPayload {
-  id: number;
 }
 
 export class AuthService {
@@ -93,7 +80,7 @@ export class AuthService {
     };
   }
 
-  // Generar Access Token
+  // Generar Access Token (JWT de vida corta)
   static generateAccessToken(user: UserPayload): string {
     return jwt.sign(
       {
@@ -107,24 +94,68 @@ export class AuthService {
     );
   }
 
-  // Generar Refresh Token
-  static generateRefreshToken(user: RefreshPayload): string {
-    return jwt.sign(
-      {
-        id: user.id,
+  // Crear Refresh Token (random string, persistido en DB)
+  static async createRefreshToken(userId: number): Promise<string> {
+    const token = crypto.randomBytes(64).toString('hex');
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + REFRESH_TOKEN_EXPIRY_DAYS);
+
+    await prisma.refreshToken.create({
+      data: {
+        token,
+        usuarioId: userId,
+        expiresAt,
       },
-      JWT_REFRESH_SECRET,
-      { expiresIn: JWT_REFRESH_EXPIRES_IN } as SignOptions
-    );
+    });
+
+    return token;
   }
 
-  // Verificar Refresh Token
-  static verifyRefreshToken(token: string): RefreshPayload | null {
-    try {
-      return jwt.verify(token, JWT_REFRESH_SECRET) as RefreshPayload;
-    } catch {
+  // Validar Refresh Token contra la DB
+  static async validateRefreshToken(token: string) {
+    const storedToken = await prisma.refreshToken.findUnique({
+      where: { token },
+    });
+
+    if (!storedToken) {
       return null;
     }
+
+    // Verificar expiración
+    if (storedToken.expiresAt < new Date()) {
+      // Limpiar token expirado
+      await prisma.refreshToken.delete({ where: { id: storedToken.id } });
+      return null;
+    }
+
+    return storedToken;
+  }
+
+  // Rotar Refresh Token: elimina el viejo y crea uno nuevo (previene reutilización)
+  static async rotateRefreshToken(oldToken: string, userId: number): Promise<string> {
+    // Eliminar el token viejo
+    await prisma.refreshToken.deleteMany({ where: { token: oldToken } });
+
+    // Crear nuevo token
+    return AuthService.createRefreshToken(userId);
+  }
+
+  // Eliminar un refresh token específico (logout)
+  static async deleteRefreshToken(token: string): Promise<void> {
+    await prisma.refreshToken.deleteMany({ where: { token } });
+  }
+
+  // Eliminar todos los refresh tokens de un usuario (logout de todos los dispositivos)
+  static async deleteAllRefreshTokens(userId: number): Promise<void> {
+    await prisma.refreshToken.deleteMany({ where: { usuarioId: userId } });
+  }
+
+  // Limpiar tokens expirados (mantenimiento, se puede llamar periódicamente)
+  static async cleanupExpiredTokens(): Promise<number> {
+    const result = await prisma.refreshToken.deleteMany({
+      where: { expiresAt: { lt: new Date() } },
+    });
+    return result.count;
   }
 
   // Obtener usuario por ID (numérico)

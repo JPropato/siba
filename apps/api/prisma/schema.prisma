@@ -60,8 +60,9 @@ model Usuario {
   fechaActualizacion DateTime @updatedAt @map("fecha_actualizacion")
   fechaEliminacion DateTime? @map("fecha_eliminacion")
 
-  roles    UsuarioRol[]
-  empleado Empleado?
+  roles          UsuarioRol[]
+  empleado       Empleado?
+  refreshTokens  RefreshToken[]
 
   // Ticket relations
   ticketsCreadoPor        Ticket[]          @relation("TicketCreadoPor")
@@ -127,6 +128,20 @@ model RolPermiso {
 
   @@unique([rolId, permisoId])
   @@map("rol_permisos")
+}
+
+model RefreshToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  usuarioId Int      @map("usuario_id")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@index([usuarioId])
+  @@index([expiresAt])
+  @@map("refresh_tokens")
 }
 
 // ============ MAESTROS ============
