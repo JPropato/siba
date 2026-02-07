@@ -1,6 +1,7 @@
 import { Loader2, AlertCircle, ClipboardList } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Plus, Save, Check, Building2, Upload, X, Edit2, Trash2 } from 'lucide-react';
 import type { Ticket } from '../../types/tickets';
@@ -147,7 +148,7 @@ export default function TicketTabOT({ ticket, onSuccess }: TicketOTTabProps) {
                     {ot.descripcionTrabajo}
                   </p>
                   <p className="text-xs text-slate-400 mt-2">
-                    Creada: {formatDate(ot.createdAt || ot.fechaCreacion)}
+                    Creada: {formatDate(ot.fechaCreacion)}
                     {ot.archivos && ot.archivos.length > 0 && (
                       <span className="ml-2">• {ot.archivos.length} archivo(s)</span>
                     )}

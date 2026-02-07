@@ -34,7 +34,7 @@ export default function VehiculosPage() {
   }, [debouncedSearch]);
 
   // TanStack Query hooks
-  const { data, isLoading, refetch } = useVehiculos(debouncedSearch, page);
+  const { data, isLoading } = useVehiculos(debouncedSearch, page);
   const vehiculos = data?.data ?? [];
   const totalPages = data?.totalPages ?? 1;
   const createVehiculo = useCreateVehiculo();

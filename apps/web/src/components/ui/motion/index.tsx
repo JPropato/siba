@@ -78,7 +78,10 @@ interface SlideInProps extends HTMLMotionProps<'div'> {
   distance?: number;
 }
 
-const slideVariants: Record<SlideDirection, { initial: object; animate: object }> = {
+const slideVariants: Record<
+  SlideDirection,
+  { initial: Record<string, number>; animate: Record<string, number> }
+> = {
   up: { initial: { y: 20, opacity: 0 }, animate: { y: 0, opacity: 1 } },
   down: { initial: { y: -20, opacity: 0 }, animate: { y: 0, opacity: 1 } },
   left: { initial: { x: 20, opacity: 0 }, animate: { x: 0, opacity: 1 } },

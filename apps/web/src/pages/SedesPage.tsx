@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Search, Building2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Building2 } from 'lucide-react';
 import { toast } from 'sonner';
 import SedeTable from '../components/sedes/SedeTable';
 import SedeDialog from '../components/sedes/SedeDialog';

@@ -11,6 +11,7 @@ export interface OrdenTrabajo {
   materialesUsados: string | null;
   firmaResponsable: string | null;
   aclaracionResponsable: string | null;
+  estado?: string;
   fechaCreacion: string;
   fechaActualizacion: string;
 

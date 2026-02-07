@@ -1,4 +1,4 @@
-import { Loader2, AlertCircle } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { Upload, Trash2, Download, FileText } from 'lucide-react';

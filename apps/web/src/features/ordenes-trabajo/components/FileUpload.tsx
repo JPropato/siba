@@ -1,13 +1,4 @@
-import {
-  Loader2,
-  CloudUpload,
-  AlertCircle,
-  Eye,
-  Trash2,
-  FileText,
-  FileIcon,
-  Paperclip,
-} from 'lucide-react';
+import { Loader2, CloudUpload, AlertCircle, Eye, Trash2, FileIcon, Paperclip } from 'lucide-react';
 import { useState, useRef, useCallback } from 'react';
 import type { Archivo } from '../types';
 

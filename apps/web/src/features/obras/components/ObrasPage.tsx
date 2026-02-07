@@ -284,7 +284,6 @@ export default function ObrasPage() {
                             className="p-2 text-slate-400 hover:text-brand hover:bg-brand/10 rounded-lg transition-colors"
                             title="Ver detalle"
                             aria-label="Ver detalle"
-                            aria-label="Ver detalle"
                           >
                             <Eye className="h-5 w-5" />
                           </button>
@@ -293,7 +292,6 @@ export default function ObrasPage() {
                               onClick={() => handleDelete(obra)}
                               className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
                               title="Eliminar"
-                              aria-label="Eliminar"
                               aria-label="Eliminar"
                             >
                               <Trash2 className="h-5 w-5" />

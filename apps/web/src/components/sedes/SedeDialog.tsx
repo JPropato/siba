@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Save, User } from 'lucide-react';
+import { Save, User, MapPin } from 'lucide-react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -12,7 +12,6 @@ import { DialogBase } from '../ui/core/DialogBase';
 import { Input } from '../ui/core/Input';
 import { Button } from '../ui/core/Button';
 import { Select } from '../ui/core/Select';
-import { User, MapPin } from 'lucide-react';
 
 const sedeSchema = z.object({
   clienteId: z.string().min(1, 'Debe seleccionar un cliente'),

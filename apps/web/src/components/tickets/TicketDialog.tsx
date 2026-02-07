@@ -5,8 +5,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { toast } from 'sonner';
 import api from '../../lib/api';
-import type { Ticket, TicketFormData, RubroTicket, PrioridadTicket } from '../../types/tickets';
-import { RUBRO_LABELS, PRIORIDAD_LABELS } from '../../types/tickets';
+import type { Ticket, TicketFormData, RubroTicket, TipoTicket } from '../../types/tickets';
+import { RUBRO_LABELS, TIPO_TICKET_LABELS } from '../../types/tickets';
 import { DialogBase } from '../ui/core/DialogBase';
 import { Button } from '../ui/core/Button';
 
@@ -32,7 +32,7 @@ const ticketSchema = z.object({
     'LIMPIEZA',
     'TERMINACIONES',
   ]),
-  prioridad: z.enum(['PROGRAMADO', 'EMERGENCIA', 'URGENCIA', 'BAJA', 'MEDIA', 'ALTA']),
+  tipoTicket: z.enum(['SEA', 'SEP', 'SN']),
   sucursalId: z.string().min(1, 'Debe seleccionar una sucursal'),
   tecnicoId: z.string().optional().or(z.literal('')),
 });
@@ -61,7 +61,7 @@ export default function TicketDialog({ isOpen, onClose, onSuccess, ticket }: Tic
     defaultValues: {
       descripcion: '',
       rubro: 'VARIOS',
-      prioridad: 'MEDIA',
+      tipoTicket: 'SN',
       sucursalId: '',
       tecnicoId: '',
     },
@@ -82,7 +82,7 @@ export default function TicketDialog({ isOpen, onClose, onSuccess, ticket }: Tic
         reset({
           descripcion: ticket.descripcion,
           rubro: ticket.rubro as RubroTicket,
-          prioridad: ticket.prioridad as PrioridadTicket,
+          tipoTicket: ticket.tipoTicket as TipoTicket,
           sucursalId: ticket.sucursalId.toString(),
           tecnicoId: ticket.tecnicoId?.toString() || '',
         });
@@ -90,7 +90,7 @@ export default function TicketDialog({ isOpen, onClose, onSuccess, ticket }: Tic
         reset({
           descripcion: '',
           rubro: 'VARIOS',
-          prioridad: 'MEDIA',
+          tipoTicket: 'SN',
           sucursalId: '',
           tecnicoId: '',
         });
@@ -103,7 +103,7 @@ export default function TicketDialog({ isOpen, onClose, onSuccess, ticket }: Tic
       const data: TicketFormData = {
         descripcion: values.descripcion.trim(),
         rubro: values.rubro as RubroTicket,
-        prioridad: values.prioridad as PrioridadTicket,
+        tipoTicket: values.tipoTicket as TipoTicket,
         sucursalId: Number(values.sucursalId),
         tecnicoId: values.tecnicoId ? Number(values.tecnicoId) : null,
       };
@@ -218,17 +218,17 @@ export default function TicketDialog({ isOpen, onClose, onSuccess, ticket }: Tic
             </div>
             <div className="space-y-1.5">
               <label
-                htmlFor="prioridad"
+                htmlFor="tipoTicket"
                 className="text-xs font-bold text-slate-500 uppercase tracking-wider"
               >
-                Prioridad *
+                Tipo / SLA *
               </label>
               <select
-                id="prioridad"
-                {...register('prioridad')}
+                id="tipoTicket"
+                {...register('tipoTicket')}
                 className="w-full h-10 px-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none focus:border-brand transition-all font-semibold text-slate-900 dark:text-white"
               >
-                {Object.entries(PRIORIDAD_LABELS).map(([k, v]) => (
+                {Object.entries(TIPO_TICKET_LABELS).map(([k, v]) => (
                   <option key={k} value={k}>
                     {v as string}
                   </option>
