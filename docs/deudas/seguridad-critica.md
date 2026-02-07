@@ -2,23 +2,23 @@
 
 > Vulnerabilidades que DEBEN resolverse antes de deployment a producción.
 
-**Estado**: ⏳ Todas pendientes
+**Estado**: ✅ Todas resueltas (commit fac1a9a)
 **Esfuerzo total**: ~2 horas
-**Prioridad**: P0 - BLOQUEANTE
+**Prioridad**: P0 - BLOQUEANTE (resuelto)
 
 ---
 
 ## 📊 Índice de Vulnerabilidades
 
-| ID                                                       | Título                               | CVSS Score | Severidad  | Esfuerzo | Estado       |
-| -------------------------------------------------------- | ------------------------------------ | ---------- | ---------- | -------- | ------------ |
-| [SEC-001](#sec-001-jwt_secret-con-fallback-inseguro)     | JWT_SECRET con fallback inseguro     | 9.8        | 🔴 Crítico | 15 min   | ⏳ Pendiente |
-| [SEC-002](#sec-002-rutas-sin-autenticación)              | Rutas sin autenticación              | 9.1        | 🔴 Crítico | 30 min   | ⏳ Pendiente |
-| [SEC-003](#sec-003-sin-rate-limiting)                    | Sin rate limiting                    | 7.5        | 🔴 Alto    | 1 hora   | ⏳ Pendiente |
-| [SEC-004](#sec-004-bcrypt-rounds-insuficientes)          | Bcrypt rounds insuficientes          | 5.3        | 🟡 Medio   | 5 min    | ⏳ Pendiente |
-| [SEC-005](#sec-005-upload-sin-validación-de-magic-bytes) | Upload sin validación de magic bytes | 6.1        | 🟡 Medio   | 30 min   | ⏳ Pendiente |
+| ID                                                       | Título                               | CVSS Score | Severidad  | Esfuerzo | Estado      |
+| -------------------------------------------------------- | ------------------------------------ | ---------- | ---------- | -------- | ----------- |
+| [SEC-001](#sec-001-jwt_secret-con-fallback-inseguro)     | JWT_SECRET con fallback inseguro     | 9.8        | 🔴 Crítico | 15 min   | ✅ Resuelto |
+| [SEC-002](#sec-002-rutas-sin-autenticación)              | Rutas sin autenticación              | 9.1        | 🔴 Crítico | 30 min   | ✅ Resuelto |
+| [SEC-003](#sec-003-sin-rate-limiting)                    | Sin rate limiting                    | 7.5        | 🔴 Alto    | 1 hora   | ✅ Resuelto |
+| [SEC-004](#sec-004-bcrypt-rounds-insuficientes)          | Bcrypt rounds insuficientes          | 5.3        | 🟡 Medio   | 5 min    | ✅ Resuelto |
+| [SEC-005](#sec-005-upload-sin-validación-de-magic-bytes) | Upload sin validación de magic bytes | 6.1        | 🟡 Medio   | 30 min   | ✅ Resuelto |
 
-**Total**: 5 vulnerabilidades | **Tiempo estimado**: ~2 horas
+**Total**: 5 vulnerabilidades | ✅ Todas resueltas
 
 ---
 
@@ -645,27 +645,31 @@ curl -F "file=@malware.exe;type=image/jpeg" http://localhost:3003/api/upload
 
 ## 📊 Dashboard de Progreso
 
-| ID      | Estado       | Responsable  | Fecha Límite |
-| ------- | ------------ | ------------ | ------------ |
-| SEC-001 | ⏳ Pendiente | Backend Lead | -            |
-| SEC-002 | ⏳ Pendiente | Backend Lead | -            |
-| SEC-003 | ⏳ Pendiente | Backend Lead | -            |
-| SEC-004 | ⏳ Pendiente | Backend Lead | -            |
-| SEC-005 | ⏳ Pendiente | Backend Lead | -            |
+| ID      | Estado      | Responsable  | Fecha      |
+| ------- | ----------- | ------------ | ---------- |
+| SEC-001 | ✅ Resuelto | Backend Lead | 2026-02-04 |
+| SEC-002 | ✅ Resuelto | Backend Lead | 2026-02-04 |
+| SEC-003 | ✅ Resuelto | Backend Lead | 2026-02-04 |
+| SEC-004 | ✅ Resuelto | Backend Lead | 2026-02-04 |
+| SEC-005 | ✅ Resuelto | Backend Lead | 2026-02-04 |
 
-**Progreso total**: 0/5 (0%)
+**Progreso total**: 5/5 (100%)
 
 ---
 
 ## 🚨 Recomendación Final
 
-**ESTAS 5 VULNERABILIDADES BLOQUEAN EL DEPLOYMENT A PRODUCCIÓN.**
+✅ **TODAS LAS VULNERABILIDADES HAN SIDO RESUELTAS** (commit `fac1a9a`, 2026-02-04).
 
-No desplegar el sistema hasta resolver al menos SEC-001, SEC-002 y SEC-003 (vulnerabilidades críticas).
+Implementaciones:
 
-**Tiempo estimado total**: 2 horas de desarrollo + 1 hora de testing y code review = 3 horas.
+- **SEC-001**: JWT_SECRET validado al startup (min 32 chars, sin fallback)
+- **SEC-002**: `authenticateToken` middleware en todas las rutas protegidas
+- **SEC-003**: Rate limiting global (100 req/15min) + login estricto (5 req/15min)
+- **SEC-004**: Bcrypt rounds aumentado a 12
+- **SEC-005**: Validación de magic bytes en uploads (file-type)
 
 ---
 
-**Última actualización**: 2026-02-04
+**Última actualización**: 2026-02-06
 **Responsable**: Tech Lead / Security Lead
