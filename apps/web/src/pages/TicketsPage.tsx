@@ -1,4 +1,5 @@
 import { useState, useCallback, lazy, Suspense, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import api from '../lib/api';
 import type { Ticket, EstadoTicket, RubroTicket, TipoTicket } from '../types/tickets';
@@ -50,6 +51,8 @@ export default function TicketsPage() {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [detailTicketIdSheet, setDetailTicketIdSheet] = useState<number | null>(null);
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+
+  const navigate = useNavigate();
 
   // Accesibilidad: anuncios para screen readers
   const { announce, message } = useLiveAnnounce();
@@ -333,6 +336,7 @@ export default function TicketsPage() {
                         key={t.id}
                         className="hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors cursor-pointer"
                         onClick={() => handleViewDetail(t)}
+                        onDoubleClick={() => navigate(`/dashboard/tickets/${t.id}`)}
                         onMouseEnter={() => handleRowMouseEnter(t.id)}
                         onMouseLeave={handleRowMouseLeave}
                       >

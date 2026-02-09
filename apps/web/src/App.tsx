@@ -23,6 +23,7 @@ const VacacionesPage = lazy(() => import('./pages/VacacionesPage'));
 const SueldosPage = lazy(() => import('./pages/SueldosPage'));
 const AusenciasPage = lazy(() => import('./pages/AusenciasPage'));
 const TicketsPage = lazy(() => import('./pages/TicketsPage'));
+const TicketDetailPage = lazy(() => import('./pages/TicketDetailPage'));
 const ObrasPage = lazy(() => import('./features/obras').then((m) => ({ default: m.ObrasPage })));
 const FinanzasDashboard = lazy(() =>
   import('./features/finanzas').then((m) => ({ default: m.FinanzasDashboard }))
@@ -153,6 +154,8 @@ function DashboardWrapper({ children }: { children: React.ReactNode }) {
       return { id: 'sueldos', label: 'Sueldos', parentLabel: 'Recursos Humanos' };
     if (path.includes('ausencias'))
       return { id: 'ausencias', label: 'Ausencias', parentLabel: 'Recursos Humanos' };
+    if (path.match(/\/tickets\/\d+/))
+      return { id: 'tickets', label: 'Detalle Ticket', parentLabel: 'Comercial' };
     if (path.includes('tickets'))
       return { id: 'tickets', label: 'Tickets', parentLabel: 'Comercial' };
     if (path.includes('obras')) return { id: 'obras', label: 'Obras', parentLabel: 'Comercial' };
@@ -284,6 +287,14 @@ export default function App() {
               element={
                 <DashboardWrapper>
                   <TicketsPage />
+                </DashboardWrapper>
+              }
+            />
+            <Route
+              path="/dashboard/tickets/:id"
+              element={
+                <DashboardWrapper>
+                  <TicketDetailPage />
                 </DashboardWrapper>
               }
             />

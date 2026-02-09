@@ -1,6 +1,7 @@
 import { Loader2, Ticket as TicketIcon } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import {
@@ -12,6 +13,7 @@ import {
   History,
   ChevronDown,
   Check,
+  ExternalLink,
 } from 'lucide-react';
 import api from '../../lib/api';
 import type { Ticket, EstadoTicket } from '../../types/tickets';
@@ -59,6 +61,7 @@ export default function TicketDetailSheet({
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showEstadoDropdown, setShowEstadoDropdown] = useState(false);
+  const navigate = useNavigate();
 
   // QueryClient para usar data prefetcheada
   const queryClient = useQueryClient();
@@ -218,12 +221,26 @@ export default function TicketDetailSheet({
               </div>
             )}
 
-            <button
-              onClick={onClose}
-              className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
-            >
-              <X className="h-5 w-5" />
-            </button>
+            <div className="flex items-center gap-1">
+              {ticket && (
+                <button
+                  onClick={() => {
+                    onClose();
+                    navigate(`/dashboard/tickets/${ticket.id}`);
+                  }}
+                  className="p-2 text-slate-400 hover:text-brand rounded-lg hover:bg-brand/10 transition-colors"
+                  title="Ver página completa"
+                >
+                  <ExternalLink className="h-5 w-5" />
+                </button>
+              )}
+              <button
+                onClick={onClose}
+                className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
           </div>
 
           {/* Tabs */}

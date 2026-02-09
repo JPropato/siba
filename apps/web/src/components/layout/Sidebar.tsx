@@ -2,18 +2,8 @@ import { useState, useMemo } from 'react';
 import { usePermissions } from '../../hooks/usePermissions';
 import { cn } from '../../lib/utils';
 import logoBauman from '../../assets/logo-bauman.png';
-import {
-  LayoutDashboard,
-  TrendingUp,
-  Wallet,
-  Building2,
-  Package,
-  Users,
-  ShieldCheck,
-  Settings,
-  ChevronDown,
-  X,
-} from 'lucide-react';
+import { ChevronDown, X } from 'lucide-react';
+import { type NavItem, allNavItems, bottomNavItems, iconMap, menuPermissions } from './nav-data';
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -22,105 +12,8 @@ interface SidebarProps {
   onNavigate: (pageId: string, label: string, parentLabel?: string) => void;
   isMobileOpen?: boolean;
   onMobileClose?: () => void;
+  hideDesktop?: boolean;
 }
-
-interface NavItem {
-  id: string;
-  label: string;
-  icon: string;
-  subItems?: { id: string; label: string }[];
-}
-
-// Mapeo de iconos Material Symbols → Lucide
-const iconMap: Record<string, React.ElementType> = {
-  dashboard: LayoutDashboard,
-  trending_up: TrendingUp,
-  account_balance_wallet: Wallet,
-  corporate_fare: Building2,
-  inventory_2: Package,
-  groups: Users,
-  admin_panel_settings: ShieldCheck,
-  settings: Settings,
-  expand_more: ChevronDown,
-  close: X,
-};
-
-// Mapeo de permisos requeridos por cada menú
-const menuPermissions: Record<string, string | null> = {
-  dashboard: 'dashboard:leer',
-  comercial: 'comercial:leer',
-  finanzas: 'finanzas:leer',
-  administracion: 'admin:leer',
-  catalogo: 'admin:leer',
-  rrhh: 'empleados:leer',
-  seguridad: 'seguridad:leer',
-  configuracion: null, // Siempre visible
-};
-
-const allNavItems: NavItem[] = [
-  { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
-  {
-    id: 'comercial',
-    label: 'Comercial',
-    icon: 'trending_up',
-    subItems: [
-      { id: 'tickets', label: 'Tickets' },
-      { id: 'obras', label: 'Obras' },
-    ],
-  },
-  {
-    id: 'finanzas',
-    label: 'Finanzas',
-    icon: 'account_balance_wallet',
-    subItems: [
-      { id: 'finanzas-dashboard', label: 'Dashboard' },
-      { id: 'finanzas-movimientos', label: 'Movimientos' },
-      { id: 'finanzas-cuentas', label: 'Cuentas/Bancos' },
-      { id: 'finanzas-inversiones', label: 'Inversiones' },
-    ],
-  },
-  {
-    id: 'administracion',
-    label: 'Administración',
-    icon: 'corporate_fare',
-    subItems: [
-      { id: 'clientes', label: 'Clientes' },
-      { id: 'sedes', label: 'Sedes' },
-      { id: 'vehiculos', label: 'Vehículos' },
-      { id: 'zonas', label: 'Zonas' },
-    ],
-  },
-  {
-    id: 'catalogo',
-    label: 'Catálogo',
-    icon: 'inventory_2',
-    subItems: [{ id: 'materiales', label: 'Materiales' }],
-  },
-  {
-    id: 'rrhh',
-    label: 'Recursos Humanos',
-    icon: 'groups',
-    subItems: [
-      { id: 'empleados', label: 'Empleados' },
-      { id: 'vacaciones', label: 'Vacaciones' },
-      { id: 'sueldos', label: 'Sueldos' },
-      { id: 'ausencias', label: 'Ausencias' },
-    ],
-  },
-  {
-    id: 'seguridad',
-    label: 'Seguridad',
-    icon: 'admin_panel_settings',
-    subItems: [
-      { id: 'usuarios', label: 'Usuarios' },
-      { id: 'roles', label: 'Roles' },
-    ],
-  },
-];
-
-const bottomNavItems: NavItem[] = [
-  { id: 'configuracion', label: 'Configuración', icon: 'settings' },
-];
 
 export function Sidebar({
   isCollapsed,
@@ -128,6 +21,7 @@ export function Sidebar({
   onNavigate,
   isMobileOpen = false,
   onMobileClose,
+  hideDesktop = false,
 }: SidebarProps) {
   const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
   const { hasPermission, isSuperAdmin } = usePermissions();
@@ -173,17 +67,18 @@ export function Sidebar({
       <div key={item.id} className="relative group">
         <div
           onClick={() => handleItemClick(item)}
-          className={`relative flex items-center gap-3 px-3 py-3 rounded-lg cursor-pointer transition-all
-            ${
-              isActive
-                ? 'bg-brand/10 text-brand'
-                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
-            }
-            ${hasSubItems && showLabels ? 'justify-between' : ''}
-            ${!showLabels ? 'justify-center' : ''}
-          `}
+          className={cn(
+            'relative flex items-center gap-3 px-3 py-1.5 rounded-lg cursor-pointer transition-all',
+            isActive
+              ? 'bg-brand/8 text-brand'
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white',
+            hasSubItems && showLabels && 'justify-between',
+            !showLabels && 'justify-center'
+          )}
         >
-          {isActive && <div className="sidebar-active-indicator" />}
+          {isActive && (
+            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-brand rounded-r-full" />
+          )}
           <div className={`flex items-center gap-3 ${!showLabels ? 'justify-center' : ''}`}>
             {IconComponent && <IconComponent className="h-5 w-5" />}
             {showLabels && (
@@ -236,22 +131,27 @@ export function Sidebar({
 
         {/* Submenus */}
         {hasSubItems && isExpanded && showLabels && (
-          <div className="ml-4 mt-1 space-y-1 border-l border-[var(--border)] pl-4">
-            {item.subItems!.map((subItem) => (
-              <div
-                key={subItem.id}
-                onClick={() => handleSubItemClick(subItem, item.label)}
-                className={`px-3 py-2 rounded-lg cursor-pointer text-sm transition-all
-                  ${
-                    currentPage === subItem.id
+          <div className="mt-0.5 space-y-0.5 pl-11">
+            {item.subItems!.map((subItem) => {
+              const isSubActive = currentPage === subItem.id;
+              return (
+                <div
+                  key={subItem.id}
+                  onClick={() => handleSubItemClick(subItem, item.label)}
+                  className={cn(
+                    'relative px-3 py-1.5 rounded-lg cursor-pointer text-sm transition-all',
+                    isSubActive
                       ? 'text-brand font-medium'
-                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                  }
-                `}
-              >
-                {subItem.label}
-              </div>
-            ))}
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  )}
+                >
+                  {isSubActive && (
+                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-4 bg-brand rounded-r-full" />
+                  )}
+                  {subItem.label}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
@@ -263,7 +163,7 @@ export function Sidebar({
       {/* Logo Header */}
       <div
         className={`mb-2 flex items-center gap-3 transition-all duration-300
-                ${isMobile ? 'p-4' : isCollapsed ? 'p-2 justify-center' : 'p-4'}
+                ${isMobile ? 'p-3' : isCollapsed ? 'p-2 justify-center' : 'p-3'}
             `}
       >
         {isMobile || !isCollapsed ? (
@@ -290,12 +190,12 @@ export function Sidebar({
       </div>
 
       {/* Main Navigation */}
-      <nav className="flex-1 px-4 space-y-1.5 overflow-y-auto">
+      <nav className="flex-1 px-4 space-y-0.5 overflow-y-auto">
         {navItems.map((item) => renderNavItem(item, isMobile))}
       </nav>
 
       {/* Bottom Navigation */}
-      <div className="p-4 mt-auto border-t border-[var(--border)] space-y-1">
+      <div className="p-3 mt-auto border-t border-[var(--border)] space-y-1">
         {bottomNavItems.map((item) => {
           const IconComponent = iconMap[item.icon];
           return (
@@ -305,14 +205,13 @@ export function Sidebar({
                   onNavigate(item.id, item.label);
                   onMobileClose?.();
                 }}
-                className={`flex items-center gap-3 px-3 py-2 cursor-pointer transition-colors rounded-lg
-                  ${
-                    currentPage === item.id
-                      ? 'text-brand'
-                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'
-                  }
-                  ${!isMobile && isCollapsed ? 'justify-center' : ''}
-                `}
+                className={cn(
+                  'relative flex items-center gap-3 px-3 py-1.5 cursor-pointer transition-colors rounded-lg',
+                  currentPage === item.id
+                    ? 'text-brand'
+                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white',
+                  !isMobile && isCollapsed && 'justify-center'
+                )}
               >
                 {IconComponent && <IconComponent className="h-5 w-5" />}
                 {(isMobile || !isCollapsed) && (
@@ -336,13 +235,15 @@ export function Sidebar({
   return (
     <>
       {/* Desktop Sidebar */}
-      <aside
-        className={`hidden lg:flex flex-shrink-0 bg-[var(--surface)] dark:bg-surface-dark border-r border-[var(--border)] flex-col z-40 transition-[width] duration-300 ease-in-out overflow-x-hidden
-          ${isCollapsed ? 'w-16' : 'w-[260px]'}
-        `}
-      >
-        {sidebarContent(false)}
-      </aside>
+      {!hideDesktop && (
+        <aside
+          className={`hidden lg:flex flex-shrink-0 bg-[var(--surface)] dark:bg-surface-dark border-r border-[var(--border)] flex-col z-40 transition-[width] duration-300 ease-in-out overflow-x-hidden
+            ${isCollapsed ? 'w-16' : 'w-[260px]'}
+          `}
+        >
+          {sidebarContent(false)}
+        </aside>
+      )}
 
       {/* Mobile Overlay */}
       {isMobileOpen && (

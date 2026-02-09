@@ -1,6 +1,6 @@
 import { Loader2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { Clock, User, ArrowRight } from 'lucide-react';
+import { Clock, User, ArrowRightLeft, UserPlus, PenLine, Plus } from 'lucide-react';
 import api from '../../lib/api';
 import { ESTADO_LABELS, RUBRO_LABELS, TIPO_TICKET_LABELS } from '../../types/tickets';
 
@@ -20,6 +20,31 @@ interface HistorialItem {
     apellido: string;
   };
 }
+
+// Event type config for timeline visuals
+const EVENT_CONFIG: Record<string, { icon: typeof Clock; color: string; bgColor: string }> = {
+  estado: {
+    icon: ArrowRightLeft,
+    color: 'text-green-600 dark:text-green-400',
+    bgColor: 'bg-green-100 dark:bg-green-900/30',
+  },
+  tecnicoId: {
+    icon: UserPlus,
+    color: 'text-blue-600 dark:text-blue-400',
+    bgColor: 'bg-blue-100 dark:bg-blue-900/30',
+  },
+  creacion: {
+    icon: Plus,
+    color: 'text-slate-500 dark:text-slate-400',
+    bgColor: 'bg-slate-100 dark:bg-slate-800',
+  },
+};
+
+const DEFAULT_EVENT = {
+  icon: PenLine,
+  color: 'text-amber-600 dark:text-amber-400',
+  bgColor: 'bg-amber-100 dark:bg-amber-900/30',
+};
 
 export default function TicketTabHistorial({ ticketId }: TicketTabHistorialProps) {
   const [historial, setHistorial] = useState<HistorialItem[]>([]);
@@ -42,29 +67,31 @@ export default function TicketTabHistorial({ ticketId }: TicketTabHistorialProps
     }
   };
 
-  const formatDate = (date: string) => {
-    return new Date(date).toLocaleString('es-AR', {
+  const formatRelativeTime = (date: string) => {
+    const now = new Date();
+    const d = new Date(date);
+    const diffMs = now.getTime() - d.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'Hace un momento';
+    if (diffMins < 60) return `Hace ${diffMins} min`;
+    if (diffHours < 24) return `Hace ${diffHours}h`;
+    if (diffDays < 7) return `Hace ${diffDays}d`;
+    return d.toLocaleDateString('es-AR', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
     });
   };
 
   const formatValue = (campo: string, valor: string | null): string => {
     if (!valor) return '-';
-
-    // Formatear según el campo
-    if (campo === 'estado') {
-      return ESTADO_LABELS[valor as keyof typeof ESTADO_LABELS] || valor;
-    }
-    if (campo === 'rubro') {
-      return RUBRO_LABELS[valor as keyof typeof RUBRO_LABELS] || valor;
-    }
-    if (campo === 'tipoTicket') {
+    if (campo === 'estado') return ESTADO_LABELS[valor as keyof typeof ESTADO_LABELS] || valor;
+    if (campo === 'rubro') return RUBRO_LABELS[valor as keyof typeof RUBRO_LABELS] || valor;
+    if (campo === 'tipoTicket')
       return TIPO_TICKET_LABELS[valor as keyof typeof TIPO_TICKET_LABELS] || valor;
-    }
     return valor;
   };
 
@@ -80,6 +107,26 @@ export default function TicketTabHistorial({ ticketId }: TicketTabHistorialProps
       codigoCliente: 'N° Ticket Externo',
     };
     return labels[campo] || campo;
+  };
+
+  const getEventDescription = (item: HistorialItem): string => {
+    const userName = item.usuario ? `${item.usuario.nombre} ${item.usuario.apellido}` : 'Sistema';
+
+    if (item.campoModificado === 'estado') {
+      const nuevoEstado = formatValue('estado', item.valorNuevo);
+      return `${userName} cambió el estado a ${nuevoEstado}`;
+    }
+    if (item.campoModificado === 'tecnicoId') {
+      if (!item.valorAnterior) return `${userName} asignó un técnico`;
+      return `${userName} reasignó el técnico`;
+    }
+
+    const campo = getCampoLabel(item.campoModificado);
+    return `${userName} modificó ${campo}`;
+  };
+
+  const getEventConfig = (campo: string) => {
+    return EVENT_CONFIG[campo] || DEFAULT_EVENT;
   };
 
   if (isLoading) {
@@ -100,43 +147,73 @@ export default function TicketTabHistorial({ ticketId }: TicketTabHistorialProps
   }
 
   return (
-    <div className="space-y-4">
-      {historial.map((item) => (
-        <div
-          key={item.id}
-          className="p-4 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800"
-        >
-          <div className="flex items-start justify-between mb-2">
-            <div className="flex items-center gap-2 text-sm text-slate-500">
-              <Clock className="h-4 w-4" />
-              {formatDate(item.fechaCambio)}
-            </div>
-            {item.usuario && (
-              <div className="flex items-center gap-1 text-sm text-slate-500">
-                <User className="h-4 w-4" />
-                {item.usuario.nombre} {item.usuario.apellido}
+    <div className="relative">
+      {/* Timeline connector line */}
+      <div className="absolute left-5 top-3 bottom-3 w-px bg-slate-200 dark:bg-slate-700" />
+
+      <div className="space-y-1">
+        {historial.map((item) => {
+          const config = getEventConfig(item.campoModificado);
+          const IconComponent = config.icon;
+
+          return (
+            <div key={item.id} className="relative flex gap-4 py-3">
+              {/* Timeline dot */}
+              <div
+                className={`relative z-10 flex-shrink-0 w-10 h-10 rounded-full ${config.bgColor} flex items-center justify-center`}
+              >
+                <IconComponent className={`h-4 w-4 ${config.color}`} />
               </div>
-            )}
-          </div>
 
-          <div className="flex items-center gap-2 text-sm">
-            <span className="font-medium text-slate-700 dark:text-slate-300">
-              {getCampoLabel(item.campoModificado)}:
-            </span>
-            <span className="text-slate-500">
-              {formatValue(item.campoModificado, item.valorAnterior)}
-            </span>
-            <ArrowRight className="h-4 w-4 text-slate-400" />
-            <span className="font-medium text-slate-900 dark:text-white">
-              {formatValue(item.campoModificado, item.valorNuevo)}
-            </span>
-          </div>
+              {/* Content */}
+              <div className="flex-1 min-w-0 pt-1">
+                <p className="text-sm font-medium text-slate-900 dark:text-white">
+                  {getEventDescription(item)}
+                </p>
 
-          {item.observacion && (
-            <p className="mt-2 text-sm text-slate-500 italic">{item.observacion}</p>
-          )}
-        </div>
-      ))}
+                {/* Value change detail */}
+                {item.campoModificado !== 'estado' &&
+                  item.campoModificado !== 'tecnicoId' &&
+                  (item.valorAnterior || item.valorNuevo) && (
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                      {formatValue(item.campoModificado, item.valorAnterior)} →{' '}
+                      {formatValue(item.campoModificado, item.valorNuevo)}
+                    </p>
+                  )}
+
+                {item.campoModificado === 'estado' && item.valorAnterior && (
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    {formatValue('estado', item.valorAnterior)} →{' '}
+                    {formatValue('estado', item.valorNuevo)}
+                  </p>
+                )}
+
+                {item.observacion && (
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 italic">
+                    {item.observacion}
+                  </p>
+                )}
+
+                {/* Timestamp */}
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-xs text-slate-400">
+                    {formatRelativeTime(item.fechaCambio)}
+                  </span>
+                  {item.usuario && (
+                    <>
+                      <span className="text-slate-300 dark:text-slate-600">·</span>
+                      <span className="text-xs text-slate-400 flex items-center gap-1">
+                        <User className="h-3 w-3" />
+                        {item.usuario.nombre} {item.usuario.apellido}
+                      </span>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
