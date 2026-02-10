@@ -4,14 +4,21 @@ import type { Zona, ZonaFormData } from '../../types/zona';
 
 const ZONAS_KEY = ['zonas'];
 
-export function useZonas(search?: string) {
+export function useZonas(search?: string, page = 1, limit = 10) {
   return useQuery({
-    queryKey: [...ZONAS_KEY, { search }],
+    queryKey: [...ZONAS_KEY, { search, page, limit }],
     queryFn: async () => {
       const res = await api.get('/zones', {
-        params: { search: search || undefined },
+        params: {
+          search: search || undefined,
+          page,
+          limit,
+        },
       });
-      return (res.data?.data ?? []) as Zona[];
+      return {
+        data: (res.data?.data ?? []) as Zona[],
+        totalPages: (res.data?.meta?.totalPages ?? 1) as number,
+      };
     },
     placeholderData: (prev) => prev,
   });

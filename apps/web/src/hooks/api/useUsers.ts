@@ -12,14 +12,21 @@ export interface UserFormData {
 
 const USERS_KEY = ['users'];
 
-export function useUsers(search?: string) {
+export function useUsers(search?: string, page = 1, limit = 10) {
   return useQuery({
-    queryKey: [...USERS_KEY, { search }],
+    queryKey: [...USERS_KEY, { search, page, limit }],
     queryFn: async () => {
       const res = await api.get('/users', {
-        params: { search: search || undefined },
+        params: {
+          search: search || undefined,
+          page,
+          limit,
+        },
       });
-      return (res.data?.data ?? []) as User[];
+      return {
+        data: (res.data?.data ?? []) as User[],
+        totalPages: (res.data?.meta?.totalPages ?? 1) as number,
+      };
     },
     placeholderData: (prev) => prev,
   });

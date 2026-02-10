@@ -16,11 +16,13 @@ import { FloatingActionButton } from '../components/layout/FloatingActionButton'
 import { CollapsibleFilters } from '../components/layout/CollapsibleFilters';
 import { PullToRefresh } from '../components/ui/PullToRefresh';
 import type { Cliente, ClienteFormData } from '../types/client';
+import { Pagination } from '../components/ui/Pagination';
 import { useConfirm } from '../hooks/useConfirm';
 
 export default function ClientsPage() {
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [page, setPage] = useState(1);
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -33,7 +35,9 @@ export default function ClientsPage() {
   }, [search]);
 
   // TanStack Query hooks
-  const { data: clients = [], isLoading, refetch } = useClients(debouncedSearch);
+  const { data, isLoading, refetch } = useClients(debouncedSearch, page);
+  const clients = data?.data ?? [];
+  const totalPages = data?.totalPages ?? 1;
   const createClient = useCreateClient();
   const updateClient = useUpdateClient();
   const deleteClient = useDeleteClient();
@@ -120,6 +124,8 @@ export default function ClientsPage() {
           onDelete={handleDelete}
           isLoading={isLoading}
         />
+
+        <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
 
         {/* Dialog - Lazy loaded */}
         {isModalOpen && (

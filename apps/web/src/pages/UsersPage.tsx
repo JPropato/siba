@@ -9,11 +9,13 @@ import { FloatingActionButton } from '../components/layout/FloatingActionButton'
 import { PullToRefresh } from '../components/ui/PullToRefresh';
 import { useUsers, useCreateUser, useUpdateUser, useDeleteUser } from '../hooks/api/useUsers';
 import type { User } from '../types/user';
+import { Pagination } from '../components/ui/Pagination';
 import { useConfirm } from '../hooks/useConfirm';
 
 export default function UsersPage() {
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [page, setPage] = useState(1);
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -26,7 +28,9 @@ export default function UsersPage() {
   }, [search]);
 
   // TanStack Query hooks
-  const { data: users = [], isLoading, refetch } = useUsers(debouncedSearch);
+  const { data, isLoading, refetch } = useUsers(debouncedSearch, page);
+  const users = data?.data ?? [];
+  const totalPages = data?.totalPages ?? 1;
   const createUser = useCreateUser();
   const updateUser = useUpdateUser();
   const deleteUser = useDeleteUser();
@@ -119,6 +123,8 @@ export default function UsersPage() {
           onDelete={handleDelete}
           isLoading={isLoading}
         />
+
+        <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
 
         {/* Dialog */}
         <UserDialog

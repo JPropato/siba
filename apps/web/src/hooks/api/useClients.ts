@@ -4,14 +4,21 @@ import type { Cliente, ClienteFormData } from '../../types/client';
 
 const CLIENTS_KEY = ['clients'];
 
-export function useClients(search?: string) {
+export function useClients(search?: string, page = 1, limit = 10) {
   return useQuery({
-    queryKey: [...CLIENTS_KEY, { search }],
+    queryKey: [...CLIENTS_KEY, { search, page, limit }],
     queryFn: async () => {
       const res = await api.get('/clients', {
-        params: { search: search || undefined },
+        params: {
+          search: search || undefined,
+          page,
+          limit,
+        },
       });
-      return (res.data?.data ?? []) as Cliente[];
+      return {
+        data: (res.data?.data ?? []) as Cliente[],
+        totalPages: (res.data?.meta?.totalPages ?? 1) as number,
+      };
     },
     placeholderData: (prev) => prev,
   });

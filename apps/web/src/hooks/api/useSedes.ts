@@ -4,14 +4,21 @@ import type { Sede, SedeFormData } from '../../types/sedes';
 
 const SEDES_KEY = ['sedes'];
 
-export function useSedes(search?: string) {
+export function useSedes(search?: string, page = 1, limit = 10) {
   return useQuery({
-    queryKey: [...SEDES_KEY, { search }],
+    queryKey: [...SEDES_KEY, { search, page, limit }],
     queryFn: async () => {
       const res = await api.get('/sedes', {
-        params: { search: search || undefined },
+        params: {
+          search: search || undefined,
+          page,
+          limit,
+        },
       });
-      return (res.data?.data ?? []) as Sede[];
+      return {
+        data: (res.data?.data ?? []) as Sede[],
+        totalPages: (res.data?.meta?.totalPages ?? 1) as number,
+      };
     },
     placeholderData: (prev) => prev,
   });

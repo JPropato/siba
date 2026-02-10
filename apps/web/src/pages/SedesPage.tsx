@@ -9,11 +9,13 @@ import { FloatingActionButton } from '../components/layout/FloatingActionButton'
 import { PullToRefresh } from '../components/ui/PullToRefresh';
 import { useSedes, useCreateSede, useUpdateSede, useDeleteSede } from '../hooks/api/useSedes';
 import type { Sede, SedeFormData } from '../types/sedes';
+import { Pagination } from '../components/ui/Pagination';
 import { useConfirm } from '../hooks/useConfirm';
 
 export default function SedesPage() {
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [page, setPage] = useState(1);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedSede, setSelectedSede] = useState<Sede | null>(null);
@@ -25,7 +27,9 @@ export default function SedesPage() {
   }, [search]);
 
   // TanStack Query hooks
-  const { data: sedes = [], isLoading, refetch } = useSedes(debouncedSearch);
+  const { data, isLoading, refetch } = useSedes(debouncedSearch, page);
+  const sedes = data?.data ?? [];
+  const totalPages = data?.totalPages ?? 1;
   const createSede = useCreateSede();
   const updateSede = useUpdateSede();
   const deleteSede = useDeleteSede();
@@ -105,14 +109,14 @@ export default function SedesPage() {
           </div>
         </CollapsibleFilters>
 
-        <div className="space-y-4">
-          <SedeTable
-            sedes={sedes}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-            isLoading={isLoading}
-          />
-        </div>
+        <SedeTable
+          sedes={sedes}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          isLoading={isLoading}
+        />
+
+        <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
 
         <SedeDialog
           isOpen={isModalOpen}

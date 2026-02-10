@@ -9,11 +9,13 @@ import { FloatingActionButton } from '../components/layout/FloatingActionButton'
 import { PullToRefresh } from '../components/ui/PullToRefresh';
 import { useZonas, useCreateZona, useUpdateZona, useDeleteZona } from '../hooks/api/useZonas';
 import type { Zona, ZonaFormData } from '../types/zona';
+import { Pagination } from '../components/ui/Pagination';
 import { useConfirm } from '../hooks/useConfirm';
 
 export default function ZonasPage() {
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [page, setPage] = useState(1);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedZone, setSelectedZone] = useState<Zona | null>(null);
@@ -25,7 +27,9 @@ export default function ZonasPage() {
   }, [search]);
 
   // TanStack Query hooks
-  const { data: zones = [], isLoading, refetch } = useZonas(debouncedSearch);
+  const { data, isLoading, refetch } = useZonas(debouncedSearch, page);
+  const zones = data?.data ?? [];
+  const totalPages = data?.totalPages ?? 1;
   const createZona = useCreateZona();
   const updateZona = useUpdateZona();
   const deleteZona = useDeleteZona();
@@ -111,6 +115,8 @@ export default function ZonasPage() {
           onDelete={handleDelete}
           isLoading={isLoading}
         />
+
+        <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
 
         <ZonaDialog
           isOpen={isModalOpen}
