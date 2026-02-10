@@ -261,6 +261,7 @@ export default function MaterialDialog({
             <Input
               label="Costo Unitario ($)"
               type="number"
+              step="0.01"
               placeholder="0.00"
               {...register('precioCosto')}
               error={errors.precioCosto?.message}
@@ -276,6 +277,7 @@ export default function MaterialDialog({
                 <input
                   id="porcentajeRentabilidad"
                   type="number"
+                  step="0.01"
                   {...register('porcentajeRentabilidad')}
                   className="w-full h-10 px-3 bg-white dark:bg-slate-900 border border-blue-300 dark:border-blue-700 rounded-lg text-sm font-bold text-blue-600 dark:text-blue-400 text-center outline-none focus:border-blue-500 transition-all"
                   placeholder="0"
@@ -288,6 +290,7 @@ export default function MaterialDialog({
             <Input
               label="Precio Venta ($)"
               type="number"
+              step="0.01"
               placeholder="0.00"
               {...register('precioVenta')}
               error={errors.precioVenta?.message}

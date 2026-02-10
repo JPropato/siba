@@ -289,6 +289,7 @@ export default function CuentaDrawer({ isOpen, onClose, cuenta, onSuccess }: Cue
               </span>
               <input
                 type="number"
+                step="0.01"
                 disabled={isEditing}
                 {...register('saldoInicial')}
                 className="w-full h-10 pl-7 pr-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none focus:border-brand transition-all disabled:opacity-60 text-slate-900 dark:text-white"

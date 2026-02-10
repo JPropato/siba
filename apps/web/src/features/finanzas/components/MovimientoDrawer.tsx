@@ -12,7 +12,12 @@ import type {
   CategoriaIngreso,
   CategoriaEgreso,
 } from '../types';
-import { CATEGORIA_INGRESO_LABELS, CATEGORIA_EGRESO_LABELS, MEDIO_PAGO_LABELS } from '../types';
+import {
+  CATEGORIA_INGRESO_LABELS,
+  CATEGORIA_EGRESO_LABELS,
+  MEDIO_PAGO_LABELS,
+  MEDIO_PAGO_POR_DEFECTO,
+} from '../types';
 import { DialogBase } from '../../../components/ui/core/DialogBase';
 import { Input } from '../../../components/ui/core/Input';
 import { Button } from '../../../components/ui/core/Button';
@@ -162,6 +167,7 @@ export default function MovimientoDrawer({ isOpen, onClose, onSuccess }: Movimie
   });
 
   const tipo = watch('tipo');
+  const cuentaIdValue = watch('cuentaId');
   const clienteId = watch('clienteId');
 
   useEffect(() => {
@@ -194,6 +200,15 @@ export default function MovimientoDrawer({ isOpen, onClose, onSuccess }: Movimie
     };
     fetchCuentas();
   }, []);
+
+  useEffect(() => {
+    if (cuentaIdValue) {
+      const cuenta = cuentas.find((c) => c.id.toString() === cuentaIdValue);
+      if (cuenta) {
+        setValue('medioPago', MEDIO_PAGO_POR_DEFECTO[cuenta.tipo]);
+      }
+    }
+  }, [cuentaIdValue, cuentas, setValue]);
 
   useEffect(() => {
     const fetchClientes = async () => {

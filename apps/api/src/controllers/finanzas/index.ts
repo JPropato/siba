@@ -18,3 +18,5 @@ export {
 } from './movimiento.controller.js';
 
 export { getDashboard, getSaldos } from './dashboard.controller.js';
+
+export { createTransferencia } from './transferencia.controller.js';

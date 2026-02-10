@@ -631,6 +631,7 @@ enum CategoriaIngreso {
   REINTEGRO
   RENDIMIENTO_INVERSION
   RESCATE_INVERSION
+  TRANSFERENCIA_ENTRADA
   OTRO_INGRESO
 }
 
@@ -644,6 +645,7 @@ enum CategoriaEgreso {
   IMPUESTOS
   SERVICIOS
   TRASPASO_INVERSION
+  TRANSFERENCIA_SALIDA
   OTRO_EGRESO
 }
 
@@ -732,6 +734,9 @@ model Movimiento {
   estado            EstadoMovimiento  @default(PENDIENTE)
   registradoPorId   Int               @map("registrado_por_id")
   
+  // Transferencia entre cuentas (referencia compartida entre par de movimientos)
+  transferenciaRef  String?           @map("transferencia_ref")
+
   // Carga masiva
   importacionId     Int?              @map("importacion_id")
   

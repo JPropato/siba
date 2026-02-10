@@ -27,6 +27,13 @@ router.delete(
   finanzasController.deleteCuenta
 );
 
+// === TRANSFERENCIAS ===
+router.post(
+  '/transferencias',
+  requirePermission('finanzas:escribir'),
+  finanzasController.createTransferencia
+);
+
 // === MOVIMIENTOS ===
 router.get('/movimientos', requirePermission('finanzas:leer'), finanzasController.getMovimientos);
 router.post(

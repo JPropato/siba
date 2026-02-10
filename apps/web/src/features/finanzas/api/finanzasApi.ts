@@ -10,6 +10,7 @@ import type {
   UpdateCuentaDto,
   CreateMovimientoDto,
   UpdateMovimientoDto,
+  CreateTransferenciaDto,
 } from '../types';
 
 const BASE_URL = '/finanzas';
@@ -108,6 +109,14 @@ export const finanzasApi = {
 
   confirmarMovimiento: async (id: number): Promise<Movimiento> => {
     const response = await api.post(`${BASE_URL}/movimientos/${id}/confirmar`);
+    return response.data;
+  },
+
+  // === TRANSFERENCIAS ===
+  createTransferencia: async (
+    data: CreateTransferenciaDto
+  ): Promise<{ egreso: Movimiento; ingreso: Movimiento; transferenciaRef: string }> => {
+    const response = await api.post(`${BASE_URL}/transferencias`, data);
     return response.data;
   },
 };

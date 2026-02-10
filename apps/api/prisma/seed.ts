@@ -9,12 +9,13 @@ const __dirname = path.dirname(__filename);
 
 const prisma = new PrismaClient();
 
-/**
- * SEED LIMPIO - Solo datos esenciales:
- * 1. Roles y Permisos
- * 2. Usuario Admin
- * 3. Cliente Correo Argentino + Zonas + Sucursales (desde CSV consolidado)
- */
+type Modulo = 'seguridad' | 'maestros' | 'todo';
+
+const MODULOS_VALIDOS: Modulo[] = ['seguridad', 'maestros', 'todo'];
+
+// -------------------------------------------------------
+// Utilidades
+// -------------------------------------------------------
 
 async function readCSV(filePath: string): Promise<Record<string, string>[]> {
   return new Promise((resolve, reject) => {
@@ -31,12 +32,11 @@ async function readCSV(filePath: string): Promise<Record<string, string>[]> {
   });
 }
 
-async function main() {
-  console.log('🌱 Seed limpio SIBA - Solo datos esenciales...');
+// -------------------------------------------------------
+// Seed: Seguridad (Roles, Permisos, Admin)
+// -------------------------------------------------------
 
-  // ----------------------------------------------------
-  // 1. Roles y Permisos
-  // ----------------------------------------------------
+async function seedSeguridad() {
   console.log('🛡️  Configurando permisos y roles...');
 
   const permisos = [
@@ -130,10 +130,14 @@ async function main() {
   });
 
   console.log('✅ Permisos, roles y usuario admin configurados.');
+}
 
-  // ----------------------------------------------------
-  // 2. Cliente Correo Argentino y Zonas
-  // ----------------------------------------------------
+// -------------------------------------------------------
+// Seed: Maestros (Cliente, Zonas, Sucursales, Técnicos)
+// -------------------------------------------------------
+
+async function seedMaestros() {
+  // --- Cliente Correo Argentino ---
   console.log('🏢 Creando cliente Correo Argentino...');
 
   const cliente = await prisma.cliente.upsert({
@@ -151,9 +155,7 @@ async function main() {
 
   console.log('✅ Cliente Correo Argentino creado.');
 
-  // ----------------------------------------------------
-  // 3. Zonas y Sucursales desde CSV consolidado
-  // ----------------------------------------------------
+  // --- Zonas y Sucursales desde CSV ---
   console.log('📍 Cargando zonas y sucursales desde CSV consolidado...');
 
   const csvPath = path.join(__dirname, 'sucursales-consolidado.csv');
@@ -190,14 +192,13 @@ async function main() {
     create: { nombre: 'SIN ASIGNAR', descripcion: 'Sucursales sin zona asignada' },
   });
   zonasMap.set('SIN ASIGNAR', zonaSinAsignar.id);
-  zonasMap.set('GENERAL', zonaSinAsignar.id); // Map GENERAL to SIN ASIGNAR if it appears
+  zonasMap.set('GENERAL', zonaSinAsignar.id);
 
   // Crear sucursales
   console.log(`🏪 Creando ${sucursalesCSV.length} sucursales...`);
   let creadas = 0;
   let existentes = 0;
 
-  // Sucursales a excluir explícitamente
   const blacklist = [
     'CAPITAL HUMANO',
     'MINISTERIO (JP)',
@@ -210,13 +211,11 @@ async function main() {
     const nombre = s['NOMBRE']?.trim();
     if (!nombre) continue;
 
-    // Filtrar blacklist
     if (blacklist.some((b) => nombre.toUpperCase().includes(b))) {
       console.log(`   ⛔ Saltando sucursal excluida: ${nombre}`);
       continue;
     }
 
-    // Verificar si ya existe
     const existe = await prisma.sucursal.findFirst({
       where: { nombre, clienteId: cliente.id },
     });
@@ -227,15 +226,12 @@ async function main() {
     }
 
     let zonaNombre = s['ZONA']?.trim().toUpperCase();
-
-    // Si la zona es OTRAS o vacía, usar SIN ASIGNAR
     if (!zonaNombre || zonaNombre === 'OTRAS') {
       zonaNombre = 'SIN ASIGNAR';
     }
 
     const zonaId = zonasMap.get(zonaNombre) || zonasMap.get('SIN ASIGNAR')!;
 
-    // Nuevos campos del Pliego N° 040/2025
     const m2Raw = s['METROS_CUADRADOS']?.trim();
     const metrosCuadrados = m2Raw ? parseFloat(m2Raw) : null;
 
@@ -246,7 +242,6 @@ async function main() {
         telefono: s['TELEFONO'] || null,
         clienteId: cliente.id,
         zonaId,
-        // Campos específicos Correo Argentino (Pliego N° 040/2025)
         areaInterna: s['AREA_INTERNA'] || null,
         regionOperativa: s['REGION_OPERATIVA'] || null,
         usoDestino: s['USO_DESTINO'] || null,
@@ -263,9 +258,7 @@ async function main() {
 
   console.log(`✅ Sucursales: ${creadas} creadas, ${existentes} ya existían.`);
 
-  // ----------------------------------------------------
-  // 4. Técnicos desde CSV
-  // ----------------------------------------------------
+  // --- Técnicos desde CSV ---
   console.log('👷 Cargando técnicos desde CSV...');
 
   const tecnicosPath = path.join(__dirname, 'tecnicos.csv');
@@ -290,7 +283,6 @@ async function main() {
       const contratacion =
         t['CONTRATACION']?.trim() === 'CONTRATO_MARCO' ? ('CONTRATO_MARCO' as const) : null;
 
-      // Buscar si ya existe por apellido + nombre (no tienen email único)
       const existe = await prisma.empleado.findFirst({
         where: {
           apellido,
@@ -300,7 +292,6 @@ async function main() {
       });
 
       if (existe) {
-        // Actualizar campos nuevos si cambiaron
         await prisma.empleado.update({
           where: { id: existe.id },
           data: { esReferente, puesto, zonaId, telefono, contratacion },
@@ -330,7 +321,7 @@ async function main() {
     );
   }
 
-  // Resumen final
+  // Resumen
   const totalSucursales = await prisma.sucursal.count({ where: { clienteId: cliente.id } });
   const totalZonas = await prisma.zona.count();
   const totalTecnicos = await prisma.empleado.count({
@@ -338,11 +329,47 @@ async function main() {
   });
 
   console.log('');
-  console.log('🎉 Seed completado!');
+  console.log('📊 Resumen maestros:');
   console.log(`   - Zonas: ${totalZonas}`);
   console.log(`   - Sucursales Correo Argentino: ${totalSucursales}`);
   console.log(`   - Técnicos: ${totalTecnicos}`);
-  console.log(`   - Usuario: admin@bauman.com.ar / admin123`);
+}
+
+// -------------------------------------------------------
+// CLI: parsear --module=X
+// -------------------------------------------------------
+
+function parseModulo(): Modulo {
+  const arg = process.argv.find((a) => a.startsWith('--module='));
+  if (!arg) return 'todo';
+
+  const valor = arg.split('=')[1] as Modulo;
+  if (!MODULOS_VALIDOS.includes(valor)) {
+    console.error(`❌ Módulo inválido: "${valor}"`);
+    console.error(`   Módulos válidos: ${MODULOS_VALIDOS.join(', ')}`);
+    process.exit(1);
+  }
+  return valor;
+}
+
+async function main() {
+  const modulo = parseModulo();
+  console.log(`🌱 Seed SIBA — módulo: ${modulo}\n`);
+
+  if (modulo === 'seguridad' || modulo === 'todo') {
+    await seedSeguridad();
+    console.log('');
+  }
+
+  if (modulo === 'maestros' || modulo === 'todo') {
+    await seedMaestros();
+    console.log('');
+  }
+
+  console.log('🎉 Seed completado!');
+  if (modulo === 'todo' || modulo === 'seguridad') {
+    console.log('   - Usuario: admin@bauman.com.ar / admin123');
+  }
 }
 
 main()

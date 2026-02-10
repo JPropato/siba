@@ -23,6 +23,7 @@ export type CategoriaIngreso =
   | 'REINTEGRO'
   | 'RENDIMIENTO_INVERSION'
   | 'RESCATE_INVERSION'
+  | 'TRANSFERENCIA_ENTRADA'
   | 'OTRO_INGRESO';
 
 export type CategoriaEgreso =
@@ -35,6 +36,7 @@ export type CategoriaEgreso =
   | 'IMPUESTOS'
   | 'SERVICIOS'
   | 'TRASPASO_INVERSION'
+  | 'TRANSFERENCIA_SALIDA'
   | 'OTRO_EGRESO';
 
 export type EstadoMovimiento = 'PENDIENTE' | 'CONFIRMADO' | 'CONCILIADO' | 'ANULADO';
@@ -88,6 +90,7 @@ export interface Movimiento {
   empleadoId?: number | null;
   estado: EstadoMovimiento;
   registradoPorId: number;
+  transferenciaRef?: string | null;
   importacionId?: number | null;
   fechaActualizacion: string;
   // Relations
@@ -163,6 +166,15 @@ export type CreateMovimientoDto = Omit<
 > & { moneda?: string };
 export type UpdateMovimientoDto = Partial<CreateMovimientoDto>;
 
+export interface CreateTransferenciaDto {
+  cuentaOrigenId: number;
+  cuentaDestinoId: number;
+  monto: number;
+  descripcion: string;
+  fechaMovimiento: string;
+  comprobante?: string | null;
+}
+
 // Configs para UI
 export const TIPO_CUENTA_CONFIG: Record<TipoCuenta, { label: string; icon: string }> = {
   CAJA_CHICA: { label: 'Caja Chica', icon: 'Wallet' },
@@ -188,6 +200,7 @@ export const CATEGORIA_INGRESO_LABELS: Record<CategoriaIngreso, string> = {
   REINTEGRO: 'Reintegro',
   RENDIMIENTO_INVERSION: 'Rendimiento Inversión',
   RESCATE_INVERSION: 'Rescate Inversión',
+  TRANSFERENCIA_ENTRADA: 'Transferencia Entrada',
   OTRO_INGRESO: 'Otro Ingreso',
 };
 
@@ -201,6 +214,7 @@ export const CATEGORIA_EGRESO_LABELS: Record<CategoriaEgreso, string> = {
   IMPUESTOS: 'Impuestos',
   SERVICIOS: 'Servicios',
   TRASPASO_INVERSION: 'Traspaso a Inversión',
+  TRANSFERENCIA_SALIDA: 'Transferencia Salida',
   OTRO_EGRESO: 'Otro Egreso',
 };
 
@@ -211,4 +225,12 @@ export const MEDIO_PAGO_LABELS: Record<MedioPago, string> = {
   TARJETA_DEBITO: 'Tarjeta de Débito',
   TARJETA_CREDITO: 'Tarjeta de Crédito',
   MERCADOPAGO: 'Mercado Pago',
+};
+
+export const MEDIO_PAGO_POR_DEFECTO: Record<TipoCuenta, MedioPago> = {
+  CAJA_CHICA: 'EFECTIVO',
+  CUENTA_CORRIENTE: 'TRANSFERENCIA',
+  CAJA_AHORRO: 'TRANSFERENCIA',
+  BILLETERA_VIRTUAL: 'MERCADOPAGO',
+  INVERSION: 'TRANSFERENCIA',
 };
