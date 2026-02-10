@@ -1,112 +1,37 @@
-import { StatCard } from '../components/dashboard/StatCard';
+import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import {
-  ClipboardList,
-  Clock,
-  HardHat,
-  DollarSign,
   LayoutDashboard,
-  CalendarDays,
-  Plus,
+  ClipboardList,
+  AlertCircle,
+  Siren,
+  TrendingUp,
+  RefreshCw,
 } from 'lucide-react';
+import { StatCard } from '../components/dashboard/StatCard';
+import { DashboardSkeleton } from '../components/dashboard/DashboardSkeleton';
+import { EstadoChart } from '../components/dashboard/EstadoChart';
+import { RubroChart } from '../components/dashboard/RubroChart';
+import { TipoSLAChart } from '../components/dashboard/TipoSLAChart';
+import { SucursalChart } from '../components/dashboard/SucursalChart';
+import { UrgentTicketsList } from '../components/dashboard/UrgentTicketsList';
+import { RecentActivityList } from '../components/dashboard/RecentActivityList';
+import { useDashboard } from '../hooks/api/useDashboard';
 import { usePermissions } from '../hooks/usePermissions';
-import { StaggerContainer, StaggerItem, SlideIn } from '../components/ui/motion';
+import { PageHeader } from '../components/ui/PageHeader';
+import { StaggerContainer, StaggerItem, FadeIn } from '../components/ui/motion';
 
 export function DashboardPage() {
   const { isSuperAdmin, hasPermission } = usePermissions();
+  const { data, isLoading, error } = useDashboard();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
-  const kpis = [
-    {
-      id: 'tickets-abiertos',
-      title: 'Tickets Abiertos',
-      value: '24',
-      icon: ClipboardList,
-      color: 'gold' as const,
-      claim: 'dashboard:kpi_tickets_abiertos',
-      trend: { value: '12%', positive: false },
-      description: 'Tickets pendientes de atención',
-    },
-    {
-      id: 'tickets-promedio',
-      title: 'Resolución Promedio',
-      value: '4.2h',
-      icon: Clock,
-      color: 'indigo' as const,
-      claim: 'dashboard:kpi_tickets_promedio',
-      trend: { value: '0.5h', positive: true },
-      description: 'Tiempo medio de cierre',
-    },
-    {
-      id: 'obras-activas',
-      title: 'Obras en Ejecución',
-      value: '18',
-      icon: HardHat,
-      color: 'orange' as const,
-      claim: 'dashboard:kpi_obras_activas',
-      trend: { value: '+2', positive: true },
-      description: 'Frentes de trabajo abiertos',
-    },
-    {
-      id: 'obras-presupuesto',
-      title: 'Presupuesto Total',
-      value: '$4.2M',
-      icon: DollarSign,
-      color: 'emerald' as const,
-      claim: 'dashboard:kpi_obras_presupuesto',
-      trend: { value: '5%', positive: true },
-      description: 'Monto total obras activas',
-    },
-  ];
+  const canViewTickets = isSuperAdmin() || hasPermission('tickets:leer');
 
-  // Filtrar KPIs por permiso
-  const visibleKpis = kpis.filter(
-    (kpi) => !kpi.claim || isSuperAdmin() || hasPermission(kpi.claim)
-  );
-
-  return (
-    <div className="space-y-8">
-      {/* Page Header */}
-      <SlideIn
-        direction="down"
-        className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
-      >
-        <div>
-          <h1 className="text-fluid-3xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-3">
-            <div className="p-2 bg-brand/10 rounded-lg">
-              <LayoutDashboard className="h-6 w-6 text-brand" />
-            </div>
-            Dashboard General
-          </h1>
-          <p className="text-slate-500 dark:text-slate-400 text-fluid-sm mt-1">
-            Resumen operativo y comercial en tiempo real
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="hidden sm:flex items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-1 shadow-sm">
-            <button className="px-3 py-1.5 text-xs font-bold text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">
-              Hoy
-            </button>
-            <button className="px-3 py-1.5 text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white rounded-lg shadow-sm">
-              Semana
-            </button>
-            <button className="px-3 py-1.5 text-xs font-bold text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">
-              Mes
-            </button>
-          </div>
-          <button className="p-2.5 bg-brand hover:bg-brand-dark text-white rounded-xl shadow-lg shadow-brand/20 transition-all hover:scale-105 active:scale-95">
-            <Plus className="h-5 w-5" />
-          </button>
-        </div>
-      </SlideIn>
-
-      {visibleKpis.length > 0 ? (
-        <StaggerContainer className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {visibleKpis.map((kpi) => (
-            <StaggerItem key={kpi.id}>
-              <StatCard {...kpi} />
-            </StaggerItem>
-          ))}
-        </StaggerContainer>
-      ) : (
+  if (!canViewTickets) {
+    return (
+      <div className="px-4 pt-3 pb-6 sm:px-6">
         <div className="bg-white dark:bg-slate-900 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 p-12 text-center">
           <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl w-fit mx-auto mb-4">
             <LayoutDashboard className="h-8 w-8 text-slate-300" />
@@ -119,74 +44,125 @@ export function DashboardPage() {
             administrador.
           </p>
         </div>
-      )}
+      </div>
+    );
+  }
 
-      {/* Secciones de Actividad (Mock) */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-fluid-xl font-bold text-slate-900 dark:text-white">
-              Tendencias Semanales
-            </h2>
-            <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest">
-              <CalendarDays className="h-4 w-4" />
-              Últimos 7 días
-            </div>
+  if (isLoading) return <DashboardSkeleton />;
+
+  if (error || !data) {
+    return (
+      <div className="px-4 pt-3 pb-6 sm:px-6">
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-dashed border-red-200 dark:border-red-900/30 p-12 text-center">
+          <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-2xl w-fit mx-auto mb-4">
+            <AlertCircle className="h-8 w-8 text-red-400" />
           </div>
-          <div className="h-80 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 flex items-center justify-center relative overflow-hidden group">
-            <div className="absolute inset-0 bg-gradient-to-br from-brand/5 to-transparent" />
-            <div className="relative text-center">
-              <p className="text-sm text-slate-400 font-medium">
-                Visualización de gráficos en preparación
-              </p>
-              <div className="mt-4 flex items-center gap-2 justify-center">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <div
-                    key={i}
-                    className="w-1.5 h-8 bg-brand/20 rounded-full animate-pulse"
-                    style={{
-                      animationDelay: `${i * 150}ms`,
-                      height: `${20 + Math.random() * 40}px`,
-                    }}
-                  />
-                ))}
-              </div>
-            </div>
-          </div>
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1">
+            Error al cargar datos
+          </h3>
+          <p className="text-sm text-slate-400 max-w-xs mx-auto">
+            No se pudieron obtener los datos del dashboard. Intenta nuevamente.
+          </p>
+          <button
+            onClick={() => queryClient.invalidateQueries({ queryKey: ['dashboard'] })}
+            className="mt-4 px-4 py-2 text-sm font-medium bg-brand text-white rounded-lg hover:bg-brand-dark transition-colors"
+          >
+            Reintentar
+          </button>
         </div>
+      </div>
+    );
+  }
 
-        <div className="space-y-6">
-          <h2 className="text-fluid-xl font-bold text-slate-900 dark:text-white">
-            Alertas Críticas
-          </h2>
-          <div className="space-y-4">
-            <div className="p-4 bg-rose-50 dark:bg-rose-900/10 border border-rose-100 dark:border-rose-900/20 rounded-2xl flex gap-4">
-              <div className="h-10 w-10 bg-rose-500 rounded-full flex items-center justify-center shrink-0">
-                <Clock className="h-5 w-5 text-white" />
-              </div>
-              <div>
-                <p className="text-sm font-bold text-rose-900 dark:text-rose-100 italic">
-                  Ticket Vencido
-                </p>
-                <p className="text-xs text-rose-700/70 dark:text-rose-400">
-                  TKT-00452 requiere intervención inmediata.
-                </p>
-              </div>
-            </div>
-            <div className="p-4 bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/20 rounded-2xl flex gap-4">
-              <div className="h-10 w-10 bg-amber-500 rounded-full flex items-center justify-center shrink-0">
-                <DollarSign className="h-5 w-5 text-white" />
-              </div>
-              <div>
-                <p className="text-sm font-bold text-amber-900 dark:text-amber-100 italic">
-                  Desvío Obra
-                </p>
-                <p className="text-xs text-amber-700/70 dark:text-amber-400">
-                  Obra "Sede Norte" superó presupuesto en 15%.
-                </p>
-              </div>
-            </div>
-          </div>
+  const handleClickTicket = (id: number) => navigate(`/dashboard/tickets/${id}`);
+
+  return (
+    <div className="px-4 pt-3 pb-6 sm:px-6 space-y-5 animate-in fade-in duration-500">
+      <PageHeader
+        icon={<LayoutDashboard className="h-5 w-5" />}
+        title="Dashboard"
+        subtitle="Resumen operativo de tickets en tiempo real"
+        action={
+          <button
+            onClick={() => queryClient.invalidateQueries({ queryKey: ['dashboard'] })}
+            className="p-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-xl transition-all hover:scale-105 active:scale-95"
+            title="Actualizar datos"
+          >
+            <RefreshCw className="h-4 w-4" />
+          </button>
+        }
+      />
+
+      {/* KPI Cards */}
+      <StaggerContainer className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StaggerItem>
+          <StatCard
+            title="Tickets Abiertos"
+            value={data.kpis.ticketsAbiertos}
+            icon={ClipboardList}
+            color="gold"
+            description="En estados activos"
+          />
+        </StaggerItem>
+        <StaggerItem>
+          <StatCard
+            title="Sin Asignar"
+            value={data.kpis.sinAsignar}
+            icon={AlertCircle}
+            color="orange"
+            description="Requieren técnico"
+          />
+        </StaggerItem>
+        <StaggerItem>
+          <StatCard
+            title="Emergencias Activas"
+            value={data.kpis.emergenciasActivas}
+            icon={Siren}
+            color="indigo"
+            description="Tickets SEA abiertos"
+          />
+        </StaggerItem>
+        <StaggerItem>
+          <StatCard
+            title="Resolución Mensual"
+            value={`${data.kpis.tasaResolucion}%`}
+            icon={TrendingUp}
+            color="emerald"
+            description={`${data.kpis.finalizadosMes} de ${data.kpis.totalMes} este mes`}
+          />
+        </StaggerItem>
+      </StaggerContainer>
+
+      {/* Charts Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <FadeIn delay={0.1}>
+          <EstadoChart data={data.charts.porEstado} />
+        </FadeIn>
+        <FadeIn delay={0.15}>
+          <RubroChart data={data.charts.porRubro} />
+        </FadeIn>
+        <FadeIn delay={0.2}>
+          <TipoSLAChart data={data.charts.porTipoSLA} />
+        </FadeIn>
+        <FadeIn delay={0.25}>
+          <SucursalChart data={data.charts.porSucursal} />
+        </FadeIn>
+      </div>
+
+      {/* Bottom: Urgent Tickets + Recent Activity */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <div className="lg:col-span-2">
+          <FadeIn delay={0.3}>
+            <UrgentTicketsList tickets={data.urgentTickets} onClickTicket={handleClickTicket} />
+          </FadeIn>
+        </div>
+        <div>
+          <FadeIn delay={0.35}>
+            <RecentActivityList
+              activities={data.recentActivity}
+              onClickTicket={handleClickTicket}
+            />
+          </FadeIn>
         </div>
       </div>
     </div>

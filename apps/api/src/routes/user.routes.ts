@@ -8,13 +8,10 @@ const router = Router();
 router.use(authenticateToken);
 
 // CRUD con permisos
-// GET: requiere lectura de seguridad
-router.get('/', requirePermission('seguridad:leer'), UserController.getAll);
-router.get('/:id', requirePermission('seguridad:leer'), UserController.getOne);
-
-// POST/PUT/DELETE: requiere escritura de seguridad
-router.post('/', requirePermission('seguridad:escribir'), UserController.create);
-router.put('/:id', requirePermission('seguridad:escribir'), UserController.update);
-router.delete('/:id', requirePermission('seguridad:escribir'), UserController.deleteOne);
+router.get('/', requirePermission('usuarios:leer'), UserController.getAll);
+router.get('/:id', requirePermission('usuarios:leer'), UserController.getOne);
+router.post('/', requirePermission('usuarios:escribir'), UserController.create);
+router.put('/:id', requirePermission('usuarios:escribir'), UserController.update);
+router.delete('/:id', requirePermission('usuarios:escribir'), UserController.deleteOne);
 
 export default router;

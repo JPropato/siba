@@ -11,6 +11,12 @@ export interface Empleado {
   inicioRelacionLaboral: string;
   tipo: TipoEmpleado;
   contratacion: TipoContratacion | null;
+  esReferente: boolean;
+  puesto: string | null;
+  foto: string | null;
+  notas: string | null;
+  fechaVencimientoSeguro: string | null;
+  fechaVencimientoRegistro: string | null;
   zonaId: number | null;
   usuarioId: number | null;
   fechaCreacion: string;
@@ -35,6 +41,12 @@ export interface EmpleadoFormData {
   inicioRelacionLaboral: string;
   tipo: TipoEmpleado;
   contratacion?: TipoContratacion | null;
+  esReferente?: boolean;
+  puesto?: string | null;
+  foto?: string | null;
+  notas?: string | null;
+  fechaVencimientoSeguro?: string | null;
+  fechaVencimientoRegistro?: string | null;
   zonaId?: number | null;
   usuarioId?: number | null;
 }

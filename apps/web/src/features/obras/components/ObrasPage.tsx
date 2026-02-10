@@ -7,6 +7,8 @@ import { ESTADO_OBRA_CONFIG, TIPO_OBRA_CONFIG } from '../types';
 import ObraDrawer from './ObraDrawer';
 import { Building2, Plus, Search, Filter, Wrench, LayoutGrid, Activity } from 'lucide-react';
 import { Select } from '@/components/ui/core/Select';
+import { useConfirm } from '../../../hooks/useConfirm';
+import { toast } from 'sonner';
 
 export default function ObrasPage() {
   const [obras, setObras] = useState<Obra[]>([]);
@@ -22,6 +24,7 @@ export default function ObrasPage() {
   const [selectedObra, setSelectedObra] = useState<Obra | null>(null);
   const [initialTicketId, setInitialTicketId] = useState<number | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
+  const { confirm, ConfirmDialog } = useConfirm();
 
   // Handle createFrom=ticket param from OTDialog
   useEffect(() => {
@@ -76,10 +79,16 @@ export default function ObrasPage() {
 
   const handleDelete = async (obra: Obra) => {
     if (obra.estado !== 'BORRADOR') {
-      alert('Solo se pueden eliminar obras en estado BORRADOR');
+      toast.error('Solo se pueden eliminar obras en estado BORRADOR');
       return;
     }
-    if (!confirm(`¿Eliminar la obra ${obra.codigo}?`)) return;
+    const ok = await confirm({
+      title: 'Eliminar obra',
+      message: `¿Eliminar la obra ${obra.codigo}?`,
+      confirmLabel: 'Eliminar',
+      variant: 'danger',
+    });
+    if (!ok) return;
     try {
       await obrasApi.delete(obra.id);
       fetchObras();
@@ -330,6 +339,8 @@ export default function ObrasPage() {
           </button>
         </div>
       )}
+
+      {ConfirmDialog}
 
       {/* Drawer */}
       <ObraDrawer

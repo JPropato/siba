@@ -3,6 +3,8 @@ import { obrasApi } from '../api/obrasApi';
 import type { ComentarioObra, HistorialEstadoObra } from '../types';
 import { ESTADO_OBRA_CONFIG } from '../types';
 import { MessageSquare, History, Send, Trash2, ArrowRight } from 'lucide-react';
+import { useConfirm } from '../../../hooks/useConfirm';
+import { toast } from 'sonner';
 
 interface TabHistorialProps {
   obraId: number;
@@ -15,6 +17,7 @@ export default function TabHistorial({ obraId }: TabHistorialProps) {
   const [nuevoComentario, setNuevoComentario] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
+  const { confirm, ConfirmDialog } = useConfirm();
 
   useEffect(() => {
     loadData();
@@ -46,21 +49,27 @@ export default function TabHistorial({ obraId }: TabHistorialProps) {
       await loadData();
     } catch (error) {
       console.error('Error sending comentario:', error);
-      alert('Error al enviar comentario');
+      toast.error('Error al enviar comentario');
     } finally {
       setIsSending(false);
     }
   };
 
   const handleDeleteComentario = async (comentarioId: number) => {
-    if (!confirm('¿Eliminar este comentario?')) return;
+    const ok = await confirm({
+      title: 'Eliminar comentario',
+      message: '¿Eliminar este comentario?',
+      confirmLabel: 'Eliminar',
+      variant: 'danger',
+    });
+    if (!ok) return;
 
     try {
       await obrasApi.deleteComentario(obraId, comentarioId);
       await loadData();
     } catch (error) {
       console.error('Error deleting comentario:', error);
-      alert('Error al eliminar comentario');
+      toast.error('Error al eliminar comentario');
     }
   };
 
@@ -227,6 +236,7 @@ export default function TabHistorial({ obraId }: TabHistorialProps) {
           )}
         </div>
       )}
+      {ConfirmDialog}
     </div>
   );
 }

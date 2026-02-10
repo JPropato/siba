@@ -1,11 +1,15 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../lib/prisma.js';
+import { authenticateToken, requirePermission } from '../middlewares/auth.middleware.js';
+import { getUserId, logHistorial } from '../controllers/ticket/utils.js';
 
 type IdParams = { id: string };
 
 const router = Router();
-const prisma = new PrismaClient();
+
+// Proteger TODAS las rutas de OT con autenticación
+router.use(authenticateToken);
 
 // Validation schemas
 const createOTSchema = z.object({
@@ -26,7 +30,7 @@ const updateOTSchema = z.object({
  * GET /api/ordenes-trabajo
  * List all work orders with filters
  */
-router.get('/', async (req: Request, res: Response) => {
+router.get('/', requirePermission('ordenes:leer'), async (req: Request, res: Response) => {
   try {
     const { page = '1', limit = '10', ticketId } = req.query;
     const skip = (parseInt(page as string, 10) - 1) * parseInt(limit as string, 10);
@@ -80,47 +84,51 @@ router.get('/', async (req: Request, res: Response) => {
  * GET /api/ordenes-trabajo/:id
  * Get single work order by ID
  */
-router.get('/:id', async (req: Request<IdParams>, res: Response) => {
-  try {
-    const id = parseInt(req.params.id, 10);
+router.get(
+  '/:id',
+  requirePermission('ordenes:leer'),
+  async (req: Request<IdParams>, res: Response) => {
+    try {
+      const id = parseInt(req.params.id, 10);
 
-    const orden = await prisma.ordenTrabajo.findUnique({
-      where: { id },
-      include: {
-        ticket: {
-          select: {
-            id: true,
-            codigoInterno: true,
-            descripcion: true,
-            rubro: true,
-            estado: true,
+      const orden = await prisma.ordenTrabajo.findUnique({
+        where: { id },
+        include: {
+          ticket: {
+            select: {
+              id: true,
+              codigoInterno: true,
+              descripcion: true,
+              rubro: true,
+              estado: true,
+            },
           },
+          cliente: true,
+          sucursal: true,
+          tecnico: {
+            select: { id: true, nombre: true, apellido: true, email: true },
+          },
+          archivos: true,
         },
-        cliente: true,
-        sucursal: true,
-        tecnico: {
-          select: { id: true, nombre: true, apellido: true, email: true },
-        },
-        archivos: true,
-      },
-    });
+      });
 
-    if (!orden) {
-      return res.status(404).json({ error: 'Orden de trabajo no encontrada' });
+      if (!orden) {
+        return res.status(404).json({ error: 'Orden de trabajo no encontrada' });
+      }
+
+      return res.json(orden);
+    } catch (error) {
+      console.error('[OT] Get Error:', error);
+      return res.status(500).json({ error: 'Error al obtener orden de trabajo' });
     }
-
-    return res.json(orden);
-  } catch (error) {
-    console.error('[OT] Get Error:', error);
-    return res.status(500).json({ error: 'Error al obtener orden de trabajo' });
   }
-});
+);
 
 /**
  * POST /api/ordenes-trabajo
  * Create work order from ticket
  */
-router.post('/', async (req: Request, res: Response) => {
+router.post('/', requirePermission('ordenes:escribir'), async (req: Request, res: Response) => {
   try {
     const data = createOTSchema.parse(req.body);
 
@@ -171,11 +179,26 @@ router.post('/', async (req: Request, res: Response) => {
     });
 
     // Update ticket status to EN_CURSO if it's not already
+    const estadoAnterior = ticket.estado;
     if (ticket.estado !== 'EN_CURSO') {
       await prisma.ticket.update({
         where: { id: ticket.id },
         data: { estado: 'EN_CURSO' },
       });
+    }
+
+    // Log OT creation and estado change in historial
+    const userId = getUserId(req);
+    await logHistorial(
+      ticket.id,
+      userId,
+      'ot_creacion',
+      null,
+      `OT #${orden.id}`,
+      `Orden de trabajo creada: ${data.descripcionTrabajo}`
+    );
+    if (estadoAnterior !== 'EN_CURSO') {
+      await logHistorial(ticket.id, userId, 'estado', estadoAnterior, 'EN_CURSO');
     }
 
     return res.status(201).json(orden);
@@ -192,102 +215,158 @@ router.post('/', async (req: Request, res: Response) => {
  * PUT /api/ordenes-trabajo/:id
  * Update work order
  */
-router.put('/:id', async (req: Request<IdParams>, res: Response) => {
-  try {
-    const id = parseInt(req.params.id, 10);
-    const data = updateOTSchema.parse(req.body);
+router.put(
+  '/:id',
+  requirePermission('ordenes:escribir'),
+  async (req: Request<IdParams>, res: Response) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      const data = updateOTSchema.parse(req.body);
 
-    const orden = await prisma.ordenTrabajo.findUnique({ where: { id } });
-    if (!orden) {
-      return res.status(404).json({ error: 'Orden de trabajo no encontrada' });
+      const orden = await prisma.ordenTrabajo.findUnique({ where: { id } });
+      if (!orden) {
+        return res.status(404).json({ error: 'Orden de trabajo no encontrada' });
+      }
+
+      const updated = await prisma.ordenTrabajo.update({
+        where: { id },
+        data,
+        include: {
+          ticket: { select: { id: true, codigoInterno: true } },
+          archivos: true,
+        },
+      });
+
+      // Log OT update in historial
+      const userId = getUserId(req);
+      const cambios: string[] = [];
+      if (data.descripcionTrabajo && data.descripcionTrabajo !== orden.descripcionTrabajo)
+        cambios.push('descripción del trabajo');
+      if (data.materialesUsados !== undefined && data.materialesUsados !== orden.materialesUsados)
+        cambios.push('materiales usados');
+      if (cambios.length > 0) {
+        await logHistorial(
+          orden.ticketId,
+          userId,
+          'ot_actualizacion',
+          null,
+          `OT #${orden.id}`,
+          `Se actualizó: ${cambios.join(', ')}`
+        );
+      }
+
+      return res.json(updated);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      console.error('[OT] Update Error:', error);
+      return res.status(500).json({ error: 'Error al actualizar orden de trabajo' });
     }
-
-    const updated = await prisma.ordenTrabajo.update({
-      where: { id },
-      data,
-      include: {
-        ticket: { select: { id: true, codigoInterno: true } },
-        archivos: true,
-      },
-    });
-
-    return res.json(updated);
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: error.errors });
-    }
-    console.error('[OT] Update Error:', error);
-    return res.status(500).json({ error: 'Error al actualizar orden de trabajo' });
   }
-});
+);
 
 /**
  * POST /api/ordenes-trabajo/:id/finalizar
  * Complete work order and finalize ticket
  */
-router.post('/:id/finalizar', async (req: Request<IdParams>, res: Response) => {
-  try {
-    const id = parseInt(req.params.id, 10);
-    const { firmaResponsable, aclaracionResponsable } = req.body;
+router.post(
+  '/:id/finalizar',
+  requirePermission('ordenes:escribir'),
+  async (req: Request<IdParams>, res: Response) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      const { firmaResponsable, aclaracionResponsable } = req.body;
 
-    const orden = await prisma.ordenTrabajo.findUnique({
-      where: { id },
-      include: { ticket: true },
-    });
+      const orden = await prisma.ordenTrabajo.findUnique({
+        where: { id },
+        include: { ticket: true },
+      });
 
-    if (!orden) {
-      return res.status(404).json({ error: 'Orden de trabajo no encontrada' });
+      if (!orden) {
+        return res.status(404).json({ error: 'Orden de trabajo no encontrada' });
+      }
+
+      // Update OT with signature
+      await prisma.ordenTrabajo.update({
+        where: { id },
+        data: {
+          firmaResponsable,
+          aclaracionResponsable,
+        },
+      });
+
+      // Finalize ticket
+      const estadoAnterior = orden.ticket.estado;
+      await prisma.ticket.update({
+        where: { id: orden.ticketId },
+        data: {
+          estado: 'FINALIZADO',
+          fechaFinalizacion: new Date(),
+        },
+      });
+
+      // Log OT finalization and estado change
+      const userId = getUserId(req);
+      await logHistorial(
+        orden.ticketId,
+        userId,
+        'ot_finalizacion',
+        null,
+        `OT #${orden.id}`,
+        'Orden de trabajo finalizada'
+      );
+      if (estadoAnterior !== 'FINALIZADO') {
+        await logHistorial(orden.ticketId, userId, 'estado', estadoAnterior, 'FINALIZADO');
+      }
+
+      return res.json({ success: true, message: 'Orden de trabajo finalizada' });
+    } catch (error) {
+      console.error('[OT] Finalizar Error:', error);
+      return res.status(500).json({ error: 'Error al finalizar orden de trabajo' });
     }
-
-    // Update OT with signature
-    await prisma.ordenTrabajo.update({
-      where: { id },
-      data: {
-        firmaResponsable,
-        aclaracionResponsable,
-      },
-    });
-
-    // Finalize ticket
-    await prisma.ticket.update({
-      where: { id: orden.ticketId },
-      data: {
-        estado: 'FINALIZADO',
-        fechaFinalizacion: new Date(),
-      },
-    });
-
-    return res.json({ success: true, message: 'Orden de trabajo finalizada' });
-  } catch (error) {
-    console.error('[OT] Finalizar Error:', error);
-    return res.status(500).json({ error: 'Error al finalizar orden de trabajo' });
   }
-});
+);
 
 /**
  * DELETE /api/ordenes-trabajo/:id
  * Delete work order (soft delete would be better for production)
  */
-router.delete('/:id', async (req: Request<IdParams>, res: Response) => {
-  try {
-    const id = parseInt(req.params.id, 10);
+router.delete(
+  '/:id',
+  requirePermission('ordenes:escribir'),
+  async (req: Request<IdParams>, res: Response) => {
+    try {
+      const id = parseInt(req.params.id, 10);
 
-    const orden = await prisma.ordenTrabajo.findUnique({ where: { id } });
-    if (!orden) {
-      return res.status(404).json({ error: 'Orden de trabajo no encontrada' });
+      const orden = await prisma.ordenTrabajo.findUnique({ where: { id } });
+      if (!orden) {
+        return res.status(404).json({ error: 'Orden de trabajo no encontrada' });
+      }
+
+      // Log OT deletion before deleting
+      const userId = getUserId(req);
+      await logHistorial(
+        orden.ticketId,
+        userId,
+        'ot_eliminacion',
+        `OT #${orden.id}`,
+        null,
+        'Orden de trabajo eliminada'
+      );
+
+      // Delete associated files first
+      await prisma.archivo.deleteMany({ where: { ordenTrabajoId: id } });
+
+      // Delete OT
+      await prisma.ordenTrabajo.delete({ where: { id } });
+
+      return res.json({ success: true, message: 'Orden de trabajo eliminada' });
+    } catch (error) {
+      console.error('[OT] Delete Error:', error);
+      return res.status(500).json({ error: 'Error al eliminar orden de trabajo' });
     }
-
-    // Delete associated files first
-    await prisma.archivo.deleteMany({ where: { ordenTrabajoId: id } });
-
-    // Delete OT
-    await prisma.ordenTrabajo.delete({ where: { id } });
-
-    return res.json({ success: true, message: 'Orden de trabajo eliminada' });
-  } catch (error) {
-    console.error('[OT] Delete Error:', error);
-    return res.status(500).json({ error: 'Error al eliminar orden de trabajo' });
   }
-});
+);
 
 export default router;

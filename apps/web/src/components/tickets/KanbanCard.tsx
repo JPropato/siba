@@ -1,8 +1,9 @@
-import { memo } from 'react';
+import { memo, useRef, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
+import { draggable } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
 import type { Ticket } from '../../types/tickets';
 import { TIPO_TICKET_LABELS, TIPO_TICKET_COLORS, RUBRO_LABELS } from '../../types/tickets';
-import { Building2, Wrench, Pencil, Trash2 } from 'lucide-react';
+import { Building2, Wrench, Pencil, Trash2, UserPlus } from 'lucide-react';
 import { useActionSheet } from '../../hooks/useActionSheet';
 import { MobileActionSheet } from '../ui/MobileActionSheet';
 
@@ -10,6 +11,7 @@ interface KanbanCardProps {
   ticket: Ticket;
   onEdit: (ticket: Ticket) => void;
   onDelete: (ticket: Ticket) => void;
+  onAssign?: (ticket: Ticket) => void;
 }
 
 /**
@@ -17,8 +19,15 @@ interface KanbanCardProps {
  * Solo se re-renderiza cuando cambian las props (ticket, onEdit, onDelete).
  * Long-press en mobile abre ActionSheet con acciones.
  */
-const KanbanCard = memo(function KanbanCard({ ticket, onEdit, onDelete }: KanbanCardProps) {
+const KanbanCard = memo(function KanbanCard({
+  ticket,
+  onEdit,
+  onDelete,
+  onAssign,
+}: KanbanCardProps) {
   const actionSheet = useActionSheet<Ticket>();
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const formatCode = (code: number) => `TKT-${String(code).padStart(5, '0')}`;
 
   const formatDate = (date: string | null) => {
@@ -34,18 +43,40 @@ const KanbanCard = memo(function KanbanCard({ ticket, onEdit, onDelete }: Kanban
     return `${ticket.tecnico.nombre.charAt(0)}${ticket.tecnico.apellido.charAt(0)}`.toUpperCase();
   };
 
+  useEffect(() => {
+    const el = cardRef.current;
+    if (!el) return;
+
+    return draggable({
+      element: el,
+      getInitialData: () => ({
+        ticketId: ticket.id,
+        estado: ticket.estado,
+      }),
+      onDragStart: () => setIsDragging(true),
+      onDrop: () => setIsDragging(false),
+    });
+  }, [ticket.id, ticket.estado]);
+
   return (
     <motion.div
-      className="group bg-white dark:bg-charcoal/30 rounded-xl border border-[#e5e5e3] dark:border-[#37322a] p-4 cursor-pointer"
+      ref={cardRef}
+      className={`group bg-white dark:bg-charcoal/30 rounded-xl border border-[#e5e5e3] dark:border-[#37322a] p-4 cursor-grab active:cursor-grabbing ${
+        isDragging ? 'opacity-40' : ''
+      }`}
       onClick={() => {
         if (!actionSheet.shouldPreventClick()) onEdit(ticket);
       }}
-      whileHover={{
-        y: -2,
-        boxShadow: '0 8px 25px rgba(0,0,0,0.1)',
-        borderColor: 'rgba(189, 142, 61, 0.3)',
-      }}
-      whileTap={{ scale: 0.98 }}
+      whileHover={
+        isDragging
+          ? undefined
+          : {
+              y: -2,
+              boxShadow: '0 8px 25px rgba(0,0,0,0.1)',
+              borderColor: 'rgba(189, 142, 61, 0.3)',
+            }
+      }
+      whileTap={isDragging ? undefined : { scale: 0.98 }}
       transition={{ duration: 0.15, ease: [0.4, 0, 0.2, 1] }}
       {...actionSheet.getLongPressHandlers(ticket)}
     >
@@ -92,6 +123,17 @@ const KanbanCard = memo(function KanbanCard({ ticket, onEdit, onDelete }: Kanban
                 {ticket.tecnico.nombre}
               </span>
             </div>
+          ) : onAssign && ticket.estado === 'NUEVO' ? (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onAssign(ticket);
+              }}
+              className="flex items-center gap-1.5 text-xs text-brand hover:text-brand/80 font-medium transition-colors"
+            >
+              <UserPlus className="h-3.5 w-3.5" />
+              Asignar
+            </button>
           ) : (
             <span className="text-xs text-slate-400 italic">Sin técnico</span>
           )}
@@ -138,6 +180,18 @@ const KanbanCard = memo(function KanbanCard({ ticket, onEdit, onDelete }: Kanban
           actionSheet.selectedItem ? formatCode(actionSheet.selectedItem.codigoInterno) : undefined
         }
         actions={[
+          ...(onAssign &&
+          actionSheet.selectedItem?.estado === 'NUEVO' &&
+          !actionSheet.selectedItem?.tecnico
+            ? [
+                {
+                  id: 'assign' as const,
+                  label: 'Asignar técnico',
+                  icon: <UserPlus className="h-5 w-5" />,
+                  onClick: () => actionSheet.selectedItem && onAssign(actionSheet.selectedItem),
+                },
+              ]
+            : []),
           {
             id: 'edit',
             label: 'Editar ticket',
@@ -148,7 +202,7 @@ const KanbanCard = memo(function KanbanCard({ ticket, onEdit, onDelete }: Kanban
             id: 'delete',
             label: 'Eliminar ticket',
             icon: <Trash2 className="h-5 w-5" />,
-            variant: 'destructive',
+            variant: 'destructive' as const,
             onClick: () => actionSheet.selectedItem && onDelete(actionSheet.selectedItem),
           },
         ]}

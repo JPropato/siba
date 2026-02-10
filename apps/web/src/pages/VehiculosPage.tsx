@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Search, Truck } from 'lucide-react';
+import { PageHeader } from '../components/ui/PageHeader';
 import { toast } from 'sonner';
 import VehiculoTable from '../components/vehiculos/VehiculoTable';
 import VehiculoDialog from '../components/vehiculos/VehiculoDialog';
@@ -13,6 +14,7 @@ import {
 } from '../hooks/api/useVehiculos';
 import type { Vehiculo, VehiculoFormData } from '../types/vehiculos';
 import { Pagination } from '../components/ui/Pagination';
+import { useConfirm } from '../hooks/useConfirm';
 
 export default function VehiculosPage() {
   const [search, setSearch] = useState('');
@@ -40,6 +42,7 @@ export default function VehiculosPage() {
   const createVehiculo = useCreateVehiculo();
   const updateVehiculo = useUpdateVehiculo();
   const deleteVehiculo = useDeleteVehiculo();
+  const { confirm, ConfirmDialog } = useConfirm();
 
   const handleCreate = () => {
     setSelectedVehiculo(null);
@@ -52,7 +55,13 @@ export default function VehiculosPage() {
   };
 
   const handleDelete = async (v: Vehiculo) => {
-    if (!window.confirm(`¿Está seguro de eliminar el vehículo con patente "${v.patente}"?`)) return;
+    const ok = await confirm({
+      title: 'Eliminar vehículo',
+      message: `¿Está seguro de eliminar el vehículo con patente "${v.patente}"?`,
+      confirmLabel: 'Eliminar',
+      variant: 'danger',
+    });
+    if (!ok) return;
 
     try {
       await deleteVehiculo.mutateAsync(v.id);
@@ -71,24 +80,23 @@ export default function VehiculosPage() {
   };
 
   return (
-    <div className="p-6 space-y-6 animate-in fade-in duration-500">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-fluid-2xl font-bold text-slate-900 dark:text-white tracking-tight">
-            Gestión de Vehículos
-          </h1>
-          <p className="text-fluid-sm text-slate-500 dark:text-slate-400 mt-1">
-            Administre la flota de transporte y asigne zonas de operación.
-          </p>
-        </div>
-        <button
-          onClick={handleCreate}
-          className="px-4 py-2 bg-brand hover:bg-brand-dark text-white text-sm font-bold rounded-lg shadow-lg shadow-brand/20 transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
-        >
-          <Truck className="h-5 w-5" />
-          NUEVO VEHÍCULO
-        </button>
-      </div>
+    <div className="px-4 pt-3 pb-6 sm:px-6 space-y-5 animate-in fade-in duration-500">
+      <PageHeader
+        icon={<Truck className="h-5 w-5" />}
+        breadcrumb={['Logística', 'Vehículos']}
+        title="Vehículos"
+        subtitle="Flota de transporte y zonas"
+        count={vehiculos.length}
+        action={
+          <button
+            onClick={handleCreate}
+            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-brand hover:bg-brand-dark text-white text-xs font-bold rounded-lg shadow-sm transition-all"
+          >
+            <Truck className="h-4 w-4" />
+            Nuevo
+          </button>
+        }
+      />
 
       {/* Filters - Colapsables en móvil */}
       <CollapsibleFilters activeFiltersCount={search ? 1 : 0}>
@@ -119,6 +127,8 @@ export default function VehiculosPage() {
         onSave={handleSave}
         initialData={selectedVehiculo}
       />
+
+      {ConfirmDialog}
 
       {/* FAB para móvil */}
       <FloatingActionButton

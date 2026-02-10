@@ -12,7 +12,7 @@ import { Input } from '../ui/core/Input';
 import { Button } from '../ui/core/Button';
 import { Select } from '../ui/core/Select';
 import { DatePicker } from '../ui/core/DatePicker';
-import { Activity, Car, MapPin, Wrench } from 'lucide-react';
+import { Activity, Car, MapPin, Wrench, ShieldCheck } from 'lucide-react';
 
 const vehiculoSchema = z.object({
   patente: z.string().min(1, 'La patente es requerida'),
@@ -23,6 +23,7 @@ const vehiculoSchema = z.object({
   zonaId: z.string().optional().or(z.literal('')),
   proximosKm: z.string().optional().or(z.literal('')),
   proximoService: z.string().optional().or(z.literal('')),
+  fechaVencimientoVTV: z.string().optional().or(z.literal('')),
   estado: z.enum(['ACTIVO', 'TALLER', 'FUERA_SERVICIO']),
 });
 
@@ -61,6 +62,7 @@ export default function VehiculoDialog({
       zonaId: '',
       proximosKm: '',
       proximoService: '',
+      fechaVencimientoVTV: '',
       estado: 'ACTIVO',
     },
   });
@@ -92,6 +94,9 @@ export default function VehiculoDialog({
           proximoService: initialData.proximoService
             ? new Date(initialData.proximoService).toISOString().split('T')[0]
             : '',
+          fechaVencimientoVTV: initialData.fechaVencimientoVTV
+            ? new Date(initialData.fechaVencimientoVTV).toISOString().split('T')[0]
+            : '',
           estado: initialData.estado || 'ACTIVO',
         });
       } else {
@@ -104,6 +109,7 @@ export default function VehiculoDialog({
           zonaId: '',
           proximosKm: '',
           proximoService: '',
+          fechaVencimientoVTV: '',
           estado: 'ACTIVO',
         });
       }
@@ -123,6 +129,9 @@ export default function VehiculoDialog({
         proximoService: values.proximoService
           ? new Date(values.proximoService).toISOString()
           : undefined,
+        fechaVencimientoVTV: values.fechaVencimientoVTV
+          ? new Date(values.fechaVencimientoVTV).toISOString()
+          : null,
         estado: values.estado,
       });
       toast.success(initialData ? 'Vehículo actualizado' : 'Vehículo creado correctamente');
@@ -248,13 +257,27 @@ export default function VehiculoDialog({
               control={control}
               render={({ field }) => (
                 <DatePicker
-                  label="Próximo Service (Fecha)"
+                  label="Próximo Service"
                   value={field.value || ''}
                   onChange={field.onChange}
                   icon={<Wrench className="h-4 w-4" />}
                 />
               )}
             />
+            <Controller
+              name="fechaVencimientoVTV"
+              control={control}
+              render={({ field }) => (
+                <DatePicker
+                  label="Vto. VTV"
+                  value={field.value || ''}
+                  onChange={field.onChange}
+                  icon={<ShieldCheck className="h-4 w-4" />}
+                />
+              )}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
             <Input
               label="Kms Próx. Revisión"
               type="number"

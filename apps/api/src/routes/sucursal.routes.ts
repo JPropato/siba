@@ -7,9 +7,9 @@ const router = Router();
 // Todas las rutas requieren autenticación
 router.use(authenticateToken);
 
-router.get('/', requirePermission('admin:leer'), SedeController.getAll);
-router.post('/', requirePermission('admin:escribir'), SedeController.create);
-router.put('/:id', requirePermission('admin:escribir'), SedeController.update);
-router.delete('/:id', requirePermission('admin:escribir'), SedeController.deleteOne);
+router.get('/', requirePermission('sedes:leer'), SedeController.getAll);
+router.post('/', requirePermission('sedes:escribir'), SedeController.create);
+router.put('/:id', requirePermission('sedes:escribir'), SedeController.update);
+router.delete('/:id', requirePermission('sedes:escribir'), SedeController.deleteOne);
 
 export default router;

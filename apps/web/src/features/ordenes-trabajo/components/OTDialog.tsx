@@ -14,6 +14,7 @@ import { useNavigate } from 'react-router-dom';
 import type { OrdenTrabajo, Archivo, CreateOTPayload, UpdateOTPayload } from '../types';
 import type { Ticket } from '../../../types/tickets';
 import { otApi } from '../api/otApi';
+import { useConfirm } from '../../../hooks/useConfirm';
 
 interface PendingFile {
   id: string; // temporary ID for UI
@@ -46,6 +47,7 @@ export default function OTDialog({
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
+  const { confirm, ConfirmDialog } = useConfirm();
 
   // Reset state when dialog opens/closes
   useEffect(() => {
@@ -147,9 +149,13 @@ export default function OTDialog({
   const handleFinalizar = async () => {
     if (!ot) return;
 
-    if (!confirm('¿Finalizar la orden de trabajo? Esto marcará el ticket como FINALIZADO.')) {
-      return;
-    }
+    const ok = await confirm({
+      title: 'Finalizar OT',
+      message: '¿Finalizar la orden de trabajo? Esto marcará el ticket como FINALIZADO.',
+      confirmLabel: 'Finalizar',
+      variant: 'warning',
+    });
+    if (!ok) return;
 
     setIsSaving(true);
     try {
@@ -166,13 +172,14 @@ export default function OTDialog({
   const handleGenerarObra = async () => {
     if (!ot) return;
 
-    if (
-      !confirm(
-        '¿Cerrar ticket y generar obra/presupuesto?\n\nEl ticket será marcado como FINALIZADO y se abrirá el módulo de Obras.'
-      )
-    ) {
-      return;
-    }
+    const ok = await confirm({
+      title: 'Generar obra',
+      message:
+        '¿Cerrar ticket y generar obra/presupuesto? El ticket será marcado como FINALIZADO y se abrirá el módulo de Obras.',
+      confirmLabel: 'Generar Obra',
+      variant: 'warning',
+    });
+    if (!ok) return;
 
     setIsSaving(true);
     try {
@@ -487,6 +494,7 @@ export default function OTDialog({
           </div>
         </div>
       </div>
+      {ConfirmDialog}
     </div>
   );
 }

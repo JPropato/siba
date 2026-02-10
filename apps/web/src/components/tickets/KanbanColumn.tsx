@@ -1,6 +1,7 @@
-import { memo } from 'react';
+import { memo, useRef, useEffect, useState } from 'react';
+import { dropTargetForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
 import type { Ticket, EstadoTicket } from '../../types/tickets';
-import { ESTADO_LABELS } from '../../types/tickets';
+import { ESTADO_LABELS, esTransicionValida } from '../../types/tickets';
 import KanbanCard from './KanbanCard';
 import { Sparkles, UserPlus, Wrench, Clock, CheckCircle, Ban, Inbox } from 'lucide-react';
 
@@ -9,6 +10,7 @@ interface KanbanColumnProps {
   tickets: Ticket[];
   onEditTicket: (ticket: Ticket) => void;
   onDeleteTicket: (ticket: Ticket) => void;
+  onAssignTicket?: (ticket: Ticket) => void;
 }
 
 const COLUMN_COLORS: Record<EstadoTicket, { border: string; bg: string; text: string }> = {
@@ -55,19 +57,45 @@ const COLUMN_ICONS: Record<EstadoTicket, React.ElementType> = {
 
 /**
  * KanbanColumn - Memoizado para evitar re-renders cuando otras columnas cambian.
+ * Drop target para pragmatic-drag-and-drop.
  */
 const KanbanColumn = memo(function KanbanColumn({
   estado,
   tickets,
   onEditTicket,
   onDeleteTicket,
+  onAssignTicket,
 }: KanbanColumnProps) {
   const colors = COLUMN_COLORS[estado];
   const IconComponent = COLUMN_ICONS[estado];
+  const columnRef = useRef<HTMLDivElement>(null);
+  const [isDraggedOver, setIsDraggedOver] = useState(false);
+
+  useEffect(() => {
+    const el = columnRef.current;
+    if (!el) return;
+
+    return dropTargetForElements({
+      element: el,
+      getData: () => ({ estado }),
+      canDrop: ({ source }) => {
+        const sourceEstado = source.data.estado as EstadoTicket;
+        return sourceEstado !== estado && esTransicionValida(sourceEstado, estado);
+      },
+      onDragEnter: () => setIsDraggedOver(true),
+      onDragLeave: () => setIsDraggedOver(false),
+      onDrop: () => setIsDraggedOver(false),
+    });
+  }, [estado]);
 
   return (
     <div
-      className={`flex flex-col w-80 min-w-[320px] bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-800 border-t-4 ${colors.border}`}
+      ref={columnRef}
+      className={`flex flex-col w-80 min-w-[320px] rounded-xl border border-t-4 transition-all duration-200 ${
+        isDraggedOver
+          ? `bg-gold/5 dark:bg-gold/10 border-gold/40 dark:border-gold/30 ring-2 ring-gold/30 ${colors.border}`
+          : `bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 ${colors.border}`
+      }`}
     >
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-800">
@@ -85,7 +113,7 @@ const KanbanColumn = memo(function KanbanColumn({
         {tickets.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-8 text-slate-400">
             <Inbox className="h-8 w-8 mb-2 opacity-50" />
-            <p className="text-xs">Sin tickets</p>
+            <p className="text-xs">{isDraggedOver ? 'Soltar aquí' : 'Sin tickets'}</p>
           </div>
         ) : (
           tickets.map((ticket) => (
@@ -94,6 +122,7 @@ const KanbanColumn = memo(function KanbanColumn({
               ticket={ticket}
               onEdit={onEditTicket}
               onDelete={onDeleteTicket}
+              onAssign={onAssignTicket}
             />
           ))
         )}

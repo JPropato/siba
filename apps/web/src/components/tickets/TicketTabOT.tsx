@@ -8,6 +8,7 @@ import type { Ticket } from '../../types/tickets';
 import { otApi } from '../../features/ordenes-trabajo/api/otApi';
 import type { OrdenTrabajo, Archivo } from '../../features/ordenes-trabajo/types';
 import { Button } from '../ui/core/Button';
+import { useConfirm } from '../../hooks/useConfirm';
 
 interface PendingFile {
   id: string;
@@ -205,6 +206,7 @@ function OTMiniDrawer({ ticket, ot, onClose, onSuccess }: OTMiniDrawerProps) {
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
+  const { confirm, ConfirmDialog } = useConfirm();
 
   const handleSave = async () => {
     if (!descripcion.trim()) {
@@ -253,7 +255,13 @@ function OTMiniDrawer({ ticket, ot, onClose, onSuccess }: OTMiniDrawerProps) {
   const handleFinalizar = async () => {
     if (!ot) return;
 
-    if (!confirm('¿Finalizar esta OT?')) return;
+    const ok = await confirm({
+      title: 'Finalizar OT',
+      message: '¿Finalizar esta OT?',
+      confirmLabel: 'Finalizar',
+      variant: 'warning',
+    });
+    if (!ok) return;
 
     setIsSaving(true);
     try {
@@ -270,7 +278,13 @@ function OTMiniDrawer({ ticket, ot, onClose, onSuccess }: OTMiniDrawerProps) {
   const handleGenerarObra = async () => {
     if (!ot) return;
 
-    if (!confirm('¿Cerrar ticket y generar obra?')) return;
+    const ok = await confirm({
+      title: 'Generar obra',
+      message: '¿Cerrar ticket y generar obra?',
+      confirmLabel: 'Generar',
+      variant: 'warning',
+    });
+    if (!ok) return;
 
     setIsSaving(true);
     try {
@@ -486,5 +500,10 @@ function OTMiniDrawer({ ticket, ot, onClose, onSuccess }: OTMiniDrawerProps) {
     </>
   );
 
-  return createPortal(drawerContent, document.body);
+  return (
+    <>
+      {createPortal(drawerContent, document.body)}
+      {ConfirmDialog}
+    </>
+  );
 }

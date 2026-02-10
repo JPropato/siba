@@ -1,3 +1,14 @@
-export { getAll, getById, create, update, deleteOne } from './ticket-crud.controller.js';
+export {
+  getAll,
+  getById,
+  create,
+  update,
+  deleteOne,
+  getHistorial,
+} from './ticket-crud.controller.js';
 
 export { cambiarEstado } from './ticket-status.controller.js';
+
+export { addNota } from './ticket-notes.controller.js';
+
+export { getDashboard } from './ticket-dashboard.controller.js';

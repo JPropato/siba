@@ -1,8 +1,10 @@
 import { useSortableTable } from '../../hooks/useSortableTable';
 import { useActionSheet } from '../../hooks/useActionSheet';
-import { ChevronUp, ChevronDown, ArrowUpDown, Loader2, Pencil, Trash2 } from 'lucide-react';
+import { Building2, Loader2, Pencil, Trash2 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { SortableHeader } from '../ui/core/SortableHeader';
 import { MobileActionSheet } from '../ui/MobileActionSheet';
+import { EmptyState } from '../ui/EmptyState';
 import type { Cliente } from '../../types/client';
 
 interface ClientTableProps {
@@ -16,15 +18,6 @@ export default function ClientTable({ clients, onEdit, onDelete, isLoading }: Cl
   const { items: sortedClients, requestSort, sortConfig } = useSortableTable(clients);
   const actionSheet = useActionSheet<Cliente>();
 
-  const getSortIcon = (key: keyof Cliente) => {
-    if (sortConfig.key !== key) return <ArrowUpDown className="h-3 w-3 opacity-30" />;
-    return sortConfig.direction === 'asc' ? (
-      <ChevronUp className="h-3 w-3 text-brand" />
-    ) : (
-      <ChevronDown className="h-3 w-3 text-brand" />
-    );
-  };
-
   if (isLoading) {
     return (
       <div className="w-full h-40 flex items-center justify-center">
@@ -35,9 +28,11 @@ export default function ClientTable({ clients, onEdit, onDelete, isLoading }: Cl
 
   if (clients.length === 0) {
     return (
-      <div className="w-full p-8 text-center border border-dashed border-slate-300 dark:border-slate-700 rounded-lg">
-        <p className="text-slate-500 dark:text-slate-400">No se encontraron clientes.</p>
-      </div>
+      <EmptyState
+        icon={<Building2 className="h-6 w-6 text-brand" />}
+        title="Sin clientes"
+        description="No se encontraron clientes con los filtros aplicados."
+      />
     );
   }
 
@@ -47,37 +42,28 @@ export default function ClientTable({ clients, onEdit, onDelete, isLoading }: Cl
         <table className="w-full text-left text-sm border-collapse">
           <thead className="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
             <tr>
-              <th
-                className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors group"
-                onClick={() => requestSort('codigo')}
-              >
-                <div className="flex items-center gap-2">
-                  Cód.
-                  {getSortIcon('codigo')}
-                </div>
-              </th>
-              <th
-                className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors group"
-                onClick={() => requestSort('razonSocial')}
-              >
-                <div className="flex items-center gap-2">
-                  Razón Social
-                  {getSortIcon('razonSocial')}
-                </div>
-              </th>
-              <th
-                className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors group"
-                onClick={() => requestSort('cuit')}
-              >
-                <div className="flex items-center gap-2">
-                  CUIT / ID Fiscal
-                  {getSortIcon('cuit')}
-                </div>
-              </th>
-              <th className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">
+              <SortableHeader<Cliente>
+                label="Cód."
+                sortKey="codigo"
+                sortConfig={sortConfig}
+                onSort={requestSort}
+              />
+              <SortableHeader<Cliente>
+                label="Razón Social"
+                sortKey="razonSocial"
+                sortConfig={sortConfig}
+                onSort={requestSort}
+              />
+              <SortableHeader<Cliente>
+                label="CUIT / ID Fiscal"
+                sortKey="cuit"
+                sortConfig={sortConfig}
+                onSort={requestSort}
+              />
+              <th className="px-3 py-2 font-semibold text-slate-900 dark:text-slate-100">
                 Contacto
               </th>
-              <th className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100 text-right hidden sm:table-cell">
+              <th className="px-3 py-2 font-semibold text-slate-900 dark:text-slate-100 text-right hidden sm:table-cell">
                 Acciones
               </th>
             </tr>
@@ -89,18 +75,16 @@ export default function ClientTable({ clients, onEdit, onDelete, isLoading }: Cl
                 className="bg-white dark:bg-slate-950"
                 whileHover={{
                   backgroundColor: 'rgba(248, 250, 252, 1)',
-                  scale: 1.005,
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
                 }}
                 transition={{ duration: 0.15, ease: 'easeOut' }}
                 {...actionSheet.getLongPressHandlers(client)}
               >
-                <td className="px-4 py-3">
+                <td className="px-3 py-1.5">
                   <span className="px-2 py-0.5 rounded-full bg-brand/10 text-brand text-[10px] font-bold tracking-wider border border-brand/20">
                     #{client.codigo?.toString().padStart(4, '0') || '----'}
                   </span>
                 </td>
-                <td className="px-4 py-3">
+                <td className="px-3 py-1.5">
                   <div className="flex flex-col">
                     <span className="font-medium text-slate-900 dark:text-white">
                       {client.razonSocial}
@@ -112,7 +96,7 @@ export default function ClientTable({ clients, onEdit, onDelete, isLoading }: Cl
                     )}
                   </div>
                 </td>
-                <td className="px-4 py-3">
+                <td className="px-3 py-1.5">
                   {client.cuit ? (
                     <span className="text-slate-600 dark:text-slate-300 font-medium">
                       {client.cuit}
@@ -121,7 +105,7 @@ export default function ClientTable({ clients, onEdit, onDelete, isLoading }: Cl
                     <span className="text-slate-400 italic text-xs">No informado</span>
                   )}
                 </td>
-                <td className="px-4 py-3">
+                <td className="px-3 py-1.5">
                   <div className="flex flex-col gap-0.5">
                     {client.email && (
                       <span className="text-[11px] text-slate-600 dark:text-slate-400">
@@ -138,23 +122,23 @@ export default function ClientTable({ clients, onEdit, onDelete, isLoading }: Cl
                     )}
                   </div>
                 </td>
-                <td className="px-4 py-3 text-right hidden sm:table-cell">
+                <td className="px-2 py-1 text-right hidden sm:table-cell">
                   <div className="flex items-center justify-end gap-2">
                     <button
                       onClick={() => onEdit(client)}
-                      className="min-h-11 min-w-11 flex items-center justify-center text-slate-400 hover:text-brand transition-colors rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 focus-visible:ring-2 focus-visible:ring-brand/50"
+                      className="h-7 w-7 flex items-center justify-center text-slate-400 hover:text-brand transition-colors rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 focus-visible:ring-2 focus-visible:ring-brand/50"
                       title="Editar"
                       aria-label="Editar"
                     >
-                      <Pencil className="h-[18px] w-[18px]" />
+                      <Pencil className="h-4 w-4" />
                     </button>
                     <button
                       onClick={() => onDelete(client)}
-                      className="min-h-11 min-w-11 flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-900/10 focus-visible:ring-2 focus-visible:ring-red-500/50"
+                      className="h-7 w-7 flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-900/10 focus-visible:ring-2 focus-visible:ring-red-500/50"
                       title="Eliminar"
                       aria-label="Eliminar"
                     >
-                      <Trash2 className="h-[18px] w-[18px]" />
+                      <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
                 </td>

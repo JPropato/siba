@@ -34,7 +34,7 @@ export const StatCard = memo(function StatCard({
   };
 
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 flex flex-col gap-4 luxury-shadow transition-all hover:border-brand/30 group">
+    <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 flex flex-col gap-2 luxury-shadow transition-all hover:border-brand/30 group">
       <div className="flex items-center justify-between">
         <div
           className={cn(
@@ -63,7 +63,7 @@ export const StatCard = memo(function StatCard({
           {title}
         </h3>
         <div className="flex items-baseline gap-2">
-          <span className="text-2xl font-black text-slate-900 dark:text-white tabular-nums tracking-tight">
+          <span className="text-xl font-black text-slate-900 dark:text-white tabular-nums tracking-tight">
             {value}
           </span>
         </div>

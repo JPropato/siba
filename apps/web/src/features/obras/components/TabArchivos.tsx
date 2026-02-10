@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { obrasApi } from '../api/obrasApi';
 import type { ArchivoObra } from '../types';
 import { Upload, FileText, Image, File, Trash2, Download } from 'lucide-react';
+import { useConfirm } from '../../../hooks/useConfirm';
+import { toast } from 'sonner';
 
 interface TabArchivosProps {
   obraId: number;
@@ -34,6 +36,7 @@ export default function TabArchivos({ obraId, isReadOnly }: TabArchivosProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [tipoArchivo, setTipoArchivo] = useState('OTRO');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { confirm, ConfirmDialog } = useConfirm();
 
   useEffect(() => {
     loadArchivos();
@@ -62,21 +65,27 @@ export default function TabArchivos({ obraId, isReadOnly }: TabArchivosProps) {
       if (fileInputRef.current) fileInputRef.current.value = '';
     } catch (error) {
       console.error('Error uploading archivo:', error);
-      alert('Error al subir el archivo');
+      toast.error('Error al subir el archivo');
     } finally {
       setIsUploading(false);
     }
   };
 
   const handleDelete = async (archivoId: number) => {
-    if (!confirm('¿Eliminar este archivo?')) return;
+    const ok = await confirm({
+      title: 'Eliminar archivo',
+      message: '¿Eliminar este archivo?',
+      confirmLabel: 'Eliminar',
+      variant: 'danger',
+    });
+    if (!ok) return;
 
     try {
       await obrasApi.deleteArchivo(obraId, archivoId);
       await loadArchivos();
     } catch (error) {
       console.error('Error deleting archivo:', error);
-      alert('Error al eliminar el archivo');
+      toast.error('Error al eliminar el archivo');
     }
   };
 
@@ -200,6 +209,7 @@ export default function TabArchivos({ obraId, isReadOnly }: TabArchivosProps) {
           })}
         </div>
       )}
+      {ConfirmDialog}
     </div>
   );
 }

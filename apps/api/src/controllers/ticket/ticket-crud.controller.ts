@@ -33,8 +33,24 @@ export const getAll = async (req: Request, res: Response) => {
     const estado = req.query.estado as EstadoTicket;
     const rubro = req.query.rubro as RubroTicket;
     const tipoTicket = req.query.tipoTicket as TipoTicket;
+    const sortBy = req.query.sortBy as string;
+    const sortDir = (req.query.sortDir as string) === 'asc' ? 'asc' : 'desc';
 
     const skip = (page - 1) * limit;
+
+    // Server-side sorting
+    const allowedSortFields = [
+      'codigoInterno',
+      'descripcion',
+      'estado',
+      'tipoTicket',
+      'fechaCreacion',
+      'rubro',
+    ];
+    const orderBy: Prisma.TicketOrderByWithRelationInput =
+      sortBy && allowedSortFields.includes(sortBy)
+        ? { [sortBy]: sortDir }
+        : { fechaCreacion: 'desc' };
 
     const whereClause: Prisma.TicketWhereInput = {
       fechaEliminacion: null,
@@ -63,7 +79,7 @@ export const getAll = async (req: Request, res: Response) => {
         },
         skip,
         take: limit,
-        orderBy: { fechaCreacion: 'desc' },
+        orderBy,
       }),
     ]);
 
@@ -268,9 +284,25 @@ export const update = async (req: Request, res: Response) => {
       }
     }
 
-    // Log changes
+    // Log ALL field changes
     const changes: { campo: string; anterior: string | null; nuevo: string | null }[] = [];
 
+    if (body.descripcion !== undefined && body.descripcion !== ticket.descripcion) {
+      changes.push({ campo: 'descripcion', anterior: ticket.descripcion, nuevo: body.descripcion });
+    }
+    if (body.rubro !== undefined && body.rubro !== ticket.rubro) {
+      changes.push({ campo: 'rubro', anterior: ticket.rubro, nuevo: body.rubro });
+    }
+    if (body.tipoTicket !== undefined && body.tipoTicket !== ticket.tipoTicket) {
+      changes.push({ campo: 'tipoTicket', anterior: ticket.tipoTicket, nuevo: body.tipoTicket });
+    }
+    if (body.sucursalId !== undefined && body.sucursalId !== ticket.sucursalId) {
+      changes.push({
+        campo: 'sucursalId',
+        anterior: String(ticket.sucursalId),
+        nuevo: String(body.sucursalId),
+      });
+    }
     if (body.tecnicoId !== undefined && body.tecnicoId !== ticket.tecnicoId) {
       changes.push({
         campo: 'tecnicoId',
@@ -278,8 +310,33 @@ export const update = async (req: Request, res: Response) => {
         nuevo: String(body.tecnicoId),
       });
     }
-    if (body.tipoTicket && body.tipoTicket !== ticket.tipoTicket) {
-      changes.push({ campo: 'tipoTicket', anterior: ticket.tipoTicket, nuevo: body.tipoTicket });
+    if (body.codigoCliente !== undefined && body.codigoCliente !== ticket.codigoCliente) {
+      changes.push({
+        campo: 'codigoCliente',
+        anterior: ticket.codigoCliente,
+        nuevo: body.codigoCliente || null,
+      });
+    }
+    if (body.fechaProgramada !== undefined) {
+      const oldDate = ticket.fechaProgramada
+        ? new Date(ticket.fechaProgramada).toISOString().split('T')[0]
+        : null;
+      const newDate = body.fechaProgramada
+        ? new Date(body.fechaProgramada).toISOString().split('T')[0]
+        : null;
+      if (oldDate !== newDate) {
+        changes.push({ campo: 'fechaProgramada', anterior: oldDate, nuevo: newDate });
+      }
+    }
+    if (body.trabajo !== undefined && body.trabajo !== ticket.trabajo) {
+      changes.push({ campo: 'trabajo', anterior: ticket.trabajo, nuevo: body.trabajo || null });
+    }
+    if (body.observaciones !== undefined && body.observaciones !== ticket.observaciones) {
+      changes.push({
+        campo: 'observaciones',
+        anterior: ticket.observaciones,
+        nuevo: body.observaciones || null,
+      });
     }
 
     const updated = await prisma.ticket.update({
@@ -354,5 +411,24 @@ export const deleteOne = async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Error al eliminar ticket:', error);
     res.status(500).json({ error: 'Error al eliminar ticket' });
+  }
+};
+
+export const getHistorial = async (req: Request, res: Response) => {
+  try {
+    const id = Number(req.params.id);
+
+    const historial = await prisma.ticketHistorial.findMany({
+      where: { ticketId: id },
+      orderBy: { fechaCambio: 'desc' },
+      include: {
+        usuario: { select: { nombre: true, apellido: true } },
+      },
+    });
+
+    res.json(historial);
+  } catch (error) {
+    console.error('Error al obtener historial:', error);
+    res.status(500).json({ error: 'Error al obtener historial' });
   }
 };

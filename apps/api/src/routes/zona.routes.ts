@@ -7,11 +7,10 @@ const router = Router();
 // Todas las rutas requieren autenticación
 router.use(authenticateToken);
 
-router.get('/', requirePermission('admin:leer'), ZonaController.getAll);
-router.get('/:id', requirePermission('admin:leer'), ZonaController.getOne);
-
-router.post('/', requirePermission('admin:escribir'), ZonaController.create);
-router.put('/:id', requirePermission('admin:escribir'), ZonaController.update);
-router.delete('/:id', requirePermission('admin:escribir'), ZonaController.deleteOne);
+router.get('/', requirePermission('zonas:leer'), ZonaController.getAll);
+router.get('/:id', requirePermission('zonas:leer'), ZonaController.getOne);
+router.post('/', requirePermission('zonas:escribir'), ZonaController.create);
+router.put('/:id', requirePermission('zonas:escribir'), ZonaController.update);
+router.delete('/:id', requirePermission('zonas:escribir'), ZonaController.deleteOne);
 
 export default router;

@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { Upload, Trash2, Download, FileText } from 'lucide-react';
 import api from '../../lib/api';
+import { useConfirm } from '../../hooks/useConfirm';
 
 interface TicketTabArchivosProps {
   ticketId: number;
@@ -21,6 +22,7 @@ export default function TicketTabArchivos({ ticketId }: TicketTabArchivosProps) 
   const [archivos, setArchivos] = useState<Archivo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
+  const { confirm, ConfirmDialog } = useConfirm();
 
   useEffect(() => {
     loadArchivos();
@@ -65,7 +67,13 @@ export default function TicketTabArchivos({ ticketId }: TicketTabArchivosProps) 
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm('¿Eliminar este archivo?')) return;
+    const ok = await confirm({
+      title: 'Eliminar archivo',
+      message: '¿Eliminar este archivo?',
+      confirmLabel: 'Eliminar',
+      variant: 'danger',
+    });
+    if (!ok) return;
 
     try {
       await api.delete(`/tickets/${ticketId}/archivos/${id}`);
@@ -93,77 +101,80 @@ export default function TicketTabArchivos({ ticketId }: TicketTabArchivosProps) 
   }
 
   return (
-    <div className="space-y-6">
-      {/* Upload Area */}
-      <label className="block border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-gold/50 rounded-xl p-6 text-center cursor-pointer transition-colors">
-        <input
-          type="file"
-          accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx"
-          multiple
-          onChange={handleUpload}
-          disabled={isUploading}
-          className="hidden"
-        />
-        <div className="flex flex-col items-center gap-2">
-          <div className="size-10 rounded-full bg-gold/10 flex items-center justify-center">
-            <Upload className="h-5 w-5 text-gold" />
-          </div>
-          <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
-            {isUploading ? 'Subiendo...' : 'Click para agregar archivos'}
-          </p>
-          <p className="text-xs text-slate-400">Imágenes, PDF, Word, Excel</p>
-        </div>
-      </label>
-
-      {/* File List */}
-      {archivos.length === 0 ? (
-        <div className="text-center py-8 text-slate-400">
-          <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
-          <p>No hay archivos adjuntos</p>
-        </div>
-      ) : (
-        <div className="space-y-2">
-          {archivos.map((archivo) => (
-            <div
-              key={archivo.id}
-              className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800"
-            >
-              {/* Thumbnail */}
-              {isImage(archivo.mimeType) && archivo.url ? (
-                <img src={archivo.url} alt="" className="size-10 rounded object-cover" />
-              ) : (
-                <div className="size-10 rounded bg-slate-200 dark:bg-slate-800 flex items-center justify-center">
-                  <FileText className="h-5 w-5 text-slate-500" />
-                </div>
-              )}
-
-              {/* Info */}
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-slate-700 dark:text-slate-300 truncate">
-                  {archivo.nombreOriginal}
-                </p>
-                <p className="text-xs text-slate-400">{formatSize(archivo.tamanio)}</p>
-              </div>
-
-              {/* Actions */}
-              <a
-                href={archivo.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-2 text-slate-400 hover:text-blue-500 hover:bg-blue-500/10 rounded-lg transition-colors"
-              >
-                <Download className="h-4 w-4" />
-              </a>
-              <button
-                onClick={() => handleDelete(archivo.id)}
-                className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
-              >
-                <Trash2 className="h-4 w-4" />
-              </button>
+    <>
+      <div className="space-y-6">
+        {/* Upload Area */}
+        <label className="block border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-gold/50 rounded-xl p-6 text-center cursor-pointer transition-colors">
+          <input
+            type="file"
+            accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx"
+            multiple
+            onChange={handleUpload}
+            disabled={isUploading}
+            className="hidden"
+          />
+          <div className="flex flex-col items-center gap-2">
+            <div className="size-10 rounded-full bg-gold/10 flex items-center justify-center">
+              <Upload className="h-5 w-5 text-gold" />
             </div>
-          ))}
-        </div>
-      )}
-    </div>
+            <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+              {isUploading ? 'Subiendo...' : 'Click para agregar archivos'}
+            </p>
+            <p className="text-xs text-slate-400">Imágenes, PDF, Word, Excel</p>
+          </div>
+        </label>
+
+        {/* File List */}
+        {archivos.length === 0 ? (
+          <div className="text-center py-8 text-slate-400">
+            <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
+            <p>No hay archivos adjuntos</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {archivos.map((archivo) => (
+              <div
+                key={archivo.id}
+                className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800"
+              >
+                {/* Thumbnail */}
+                {isImage(archivo.mimeType) && archivo.url ? (
+                  <img src={archivo.url} alt="" className="size-10 rounded object-cover" />
+                ) : (
+                  <div className="size-10 rounded bg-slate-200 dark:bg-slate-800 flex items-center justify-center">
+                    <FileText className="h-5 w-5 text-slate-500" />
+                  </div>
+                )}
+
+                {/* Info */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-slate-700 dark:text-slate-300 truncate">
+                    {archivo.nombreOriginal}
+                  </p>
+                  <p className="text-xs text-slate-400">{formatSize(archivo.tamanio)}</p>
+                </div>
+
+                {/* Actions */}
+                <a
+                  href={archivo.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-2 text-slate-400 hover:text-blue-500 hover:bg-blue-500/10 rounded-lg transition-colors"
+                >
+                  <Download className="h-4 w-4" />
+                </a>
+                <button
+                  onClick={() => handleDelete(archivo.id)}
+                  className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+      {ConfirmDialog}
+    </>
   );
 }

@@ -1,7 +1,8 @@
 import type { Sede } from '../../types/sedes';
 import { useSortableTable } from '../../hooks/useSortableTable';
 import { useActionSheet } from '../../hooks/useActionSheet';
-import { Loader2, Pencil, Trash2 } from 'lucide-react';
+import { Loader2, MapPin, Pencil, Trash2 } from 'lucide-react';
+import { EmptyState } from '../ui/EmptyState';
 import { motion } from 'framer-motion';
 import { SortableHeader } from '../ui/core/SortableHeader';
 import { MobileActionSheet } from '../ui/MobileActionSheet';
@@ -27,9 +28,11 @@ export default function SedeTable({ sedes, onEdit, onDelete, isLoading }: SedeTa
 
   if (sedes.length === 0) {
     return (
-      <div className="w-full p-8 text-center border border-dashed border-slate-300 dark:border-slate-700 rounded-lg">
-        <p className="text-slate-500 dark:text-slate-400">No se encontraron sedes.</p>
-      </div>
+      <EmptyState
+        icon={<MapPin className="h-6 w-6 text-brand" />}
+        title="Sin sedes"
+        description="No se encontraron sedes con los filtros aplicados."
+      />
     );
   }
 
@@ -51,14 +54,14 @@ export default function SedeTable({ sedes, onEdit, onDelete, isLoading }: SedeTa
                 sortConfig={sortConfig}
                 onSort={requestSort}
               />
-              <th className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">Zona</th>
-              <th className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">
+              <th className="px-3 py-2 font-semibold text-slate-900 dark:text-slate-100">Zona</th>
+              <th className="px-3 py-2 font-semibold text-slate-900 dark:text-slate-100">
                 Ubicación
               </th>
-              <th className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">
+              <th className="px-3 py-2 font-semibold text-slate-900 dark:text-slate-100">
                 Contacto
               </th>
-              <th className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100 text-right hidden sm:table-cell">
+              <th className="px-3 py-2 font-semibold text-slate-900 dark:text-slate-100 text-right hidden sm:table-cell">
                 Acciones
               </th>
             </tr>
@@ -70,13 +73,11 @@ export default function SedeTable({ sedes, onEdit, onDelete, isLoading }: SedeTa
                 className="bg-white dark:bg-slate-950"
                 whileHover={{
                   backgroundColor: 'rgba(248, 250, 252, 1)',
-                  scale: 1.005,
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
                 }}
                 transition={{ duration: 0.15, ease: 'easeOut' }}
                 {...actionSheet.getLongPressHandlers(sede)}
               >
-                <td className="px-4 py-3">
+                <td className="px-3 py-1.5">
                   <div className="flex flex-col">
                     <span className="text-slate-400 text-[10px] font-mono">
                       #{sede.codigoInterno.toString().padStart(4, '0')}
@@ -86,7 +87,7 @@ export default function SedeTable({ sedes, onEdit, onDelete, isLoading }: SedeTa
                     )}
                   </div>
                 </td>
-                <td className="px-4 py-3">
+                <td className="px-3 py-1.5">
                   <div className="flex flex-col">
                     <span className="font-bold text-slate-900 dark:text-white uppercase text-xs tracking-tight">
                       {sede.nombre}
@@ -96,12 +97,12 @@ export default function SedeTable({ sedes, onEdit, onDelete, isLoading }: SedeTa
                     </span>
                   </div>
                 </td>
-                <td className="px-4 py-3">
+                <td className="px-3 py-1.5">
                   <span className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 text-[10px] font-bold border border-slate-200 dark:border-white/10 uppercase">
                     {sede.zona?.nombre}
                   </span>
                 </td>
-                <td className="px-4 py-3">
+                <td className="px-3 py-1.5">
                   <div className="flex flex-col gap-0.5">
                     <span className="text-xs text-slate-700 dark:text-slate-300 line-clamp-1">
                       {sede.direccion}
@@ -111,7 +112,7 @@ export default function SedeTable({ sedes, onEdit, onDelete, isLoading }: SedeTa
                     )}
                   </div>
                 </td>
-                <td className="px-4 py-3">
+                <td className="px-3 py-1.5">
                   <div className="flex flex-col">
                     <span className="text-[11px] font-medium text-slate-700 dark:text-slate-300">
                       {sede.contactoNombre || (
@@ -123,23 +124,23 @@ export default function SedeTable({ sedes, onEdit, onDelete, isLoading }: SedeTa
                     )}
                   </div>
                 </td>
-                <td className="px-4 py-3 text-right hidden sm:table-cell">
+                <td className="px-2 py-1 text-right hidden sm:table-cell">
                   <div className="flex items-center justify-end gap-2">
                     <button
                       onClick={() => onEdit(sede)}
-                      className="min-h-11 min-w-11 flex items-center justify-center text-slate-400 hover:text-brand transition-colors rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 focus-visible:ring-2 focus-visible:ring-brand/50"
+                      className="h-7 w-7 flex items-center justify-center text-slate-400 hover:text-brand transition-colors rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 focus-visible:ring-2 focus-visible:ring-brand/50"
                       title="Editar"
                       aria-label="Editar"
                     >
-                      <Pencil className="h-[18px] w-[18px]" />
+                      <Pencil className="h-4 w-4" />
                     </button>
                     <button
                       onClick={() => onDelete(sede)}
-                      className="min-h-11 min-w-11 flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-900/10 focus-visible:ring-2 focus-visible:ring-red-500/50"
+                      className="h-7 w-7 flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-900/10 focus-visible:ring-2 focus-visible:ring-red-500/50"
                       title="Eliminar"
                       aria-label="Eliminar"
                     >
-                      <Trash2 className="h-[18px] w-[18px]" />
+                      <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
                 </td>

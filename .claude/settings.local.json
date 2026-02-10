@@ -7,7 +7,25 @@
       "Bash(npm install:*)",
       "Bash(openssl rand:*)",
       "Bash(git add:*)",
-      "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat\\(security\\): resolve 5 critical vulnerabilities and consolidate technical debt documentation\n\nSECURITY FIXES \\(Blocking for production deployment\\):\n- SEC-001: Remove JWT_SECRET fallback, enforce 32+ character validation\n- SEC-002: Protect /api/tickets and /api/upload routes with authentication\n- SEC-003: Implement rate limiting \\(100 req/15min global, 5 req/15min login\\)\n- SEC-004: Increase bcrypt rounds from 10 to 12 \\(OWASP 2026 recommendation\\)\n- SEC-005: Add magic bytes validation for file uploads \\(prevent malicious files\\)\n\nDOCUMENTATION CONSOLIDATION:\n- Create PROJECT_MASTER.md with executive view and health dashboard\n- Consolidate ~50 technical debts into 7 structured documents\n- Organize debts by severity: Security \\(5\\), UX/Performance \\(25\\), Architecture \\(6\\)\n- Add detailed roadmap with code snippets and testing commands\n- Archive original audit files with redirection headers\n\nDEPENDENCIES:\n- Install express-rate-limit for DoS/brute-force protection\n- Install file-type for magic bytes validation\n\nFiles modified:\n- 8 backend files \\(auth, routes, index\\)\n- 7 documentation files created\n- README.md updated with documentation links\n- 2 npm packages installed\n\nEstimated time to resolve critical issues: ~2 hours\nDocumentation consolidation: Hub-and-Spoke model for maintainability\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")"
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat\\(security\\): resolve 5 critical vulnerabilities and consolidate technical debt documentation\n\nSECURITY FIXES \\(Blocking for production deployment\\):\n- SEC-001: Remove JWT_SECRET fallback, enforce 32+ character validation\n- SEC-002: Protect /api/tickets and /api/upload routes with authentication\n- SEC-003: Implement rate limiting \\(100 req/15min global, 5 req/15min login\\)\n- SEC-004: Increase bcrypt rounds from 10 to 12 \\(OWASP 2026 recommendation\\)\n- SEC-005: Add magic bytes validation for file uploads \\(prevent malicious files\\)\n\nDOCUMENTATION CONSOLIDATION:\n- Create PROJECT_MASTER.md with executive view and health dashboard\n- Consolidate ~50 technical debts into 7 structured documents\n- Organize debts by severity: Security \\(5\\), UX/Performance \\(25\\), Architecture \\(6\\)\n- Add detailed roadmap with code snippets and testing commands\n- Archive original audit files with redirection headers\n\nDEPENDENCIES:\n- Install express-rate-limit for DoS/brute-force protection\n- Install file-type for magic bytes validation\n\nFiles modified:\n- 8 backend files \\(auth, routes, index\\)\n- 7 documentation files created\n- README.md updated with documentation links\n- 2 npm packages installed\n\nEstimated time to resolve critical issues: ~2 hours\nDocumentation consolidation: Hub-and-Spoke model for maintainability\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(find:*)",
+      "Read(//c/repo/siba/**)",
+      "Bash(for file in apps/web/src/components/clients/ClientTable.tsx apps/web/src/components/empleados/EmpleadoTable.tsx apps/web/src/components/materiales/MaterialTable.tsx apps/web/src/components/sedes/SedeTable.tsx apps/web/src/components/users/UserTable.tsx apps/web/src/components/vehiculos/VehiculoTable.tsx apps/web/src/components/zonas/ZonaTable.tsx)",
+      "Bash(do)",
+      "Bash(perl -i -pe:*)",
+      "Bash(echo:*)",
+      "Bash(__NEW_LINE_b4c6d68121bc8881__ perl -i -pe 's/title=\"\"Editar\"\"/title=\"\"Editar\"\" aria-label=\"\"Editar\"\"/g' apps/web/src/features/obras/components/TabPresupuesto.tsx)",
+      "Bash(__NEW_LINE_b4c6d68121bc8881__ perl -i -pe 's/title=\"\"Ver archivo\"\"/title=\"\"Ver archivo\"\" aria-label=\"\"Ver archivo\"\"/g' apps/web/src/features/ordenes-trabajo/components/FileUpload.tsx)",
+      "Bash(__NEW_LINE_c9324e261c41f276__ echo \"\")",
+      "Bash(__NEW_LINE_9ada415f49a14fd2__ perl -i -pe 's/hover:bg-brand\\\\/10\"\"/hover:bg-brand\\\\/10 focus-visible:ring-2 focus-visible:ring-brand\\\\/50\"\"/g' apps/web/src/pages/TicketsPage.tsx)",
+      "Bash(__NEW_LINE_27d65fd5b53dec8f__ echo \"\")",
+      "Bash(for file in apps/web/src/components/clients/ClientDialog.tsx apps/web/src/components/empleados/EmpleadoDialog.tsx apps/web/src/components/materiales/MaterialDialog.tsx apps/web/src/components/sedes/SedeDialog.tsx apps/web/src/components/vehiculos/VehiculoDialog.tsx apps/web/src/components/zonas/ZonaDialog.tsx)",
+      "Bash(for file in apps/web/src/components/clients/ClientDialog.tsx apps/web/src/components/materiales/MaterialDialog.tsx apps/web/src/components/sedes/SedeDialog.tsx apps/web/src/components/vehiculos/VehiculoDialog.tsx apps/web/src/components/zonas/ZonaDialog.tsx)",
+      "Bash(npm run dev)",
+      "Bash(npx prisma generate:*)",
+      "Bash(git commit:*)",
+      "Bash(npx tsx:*)",
+      "WebFetch(domain:stitch.withgoogle.com)"
     ]
   }
 }

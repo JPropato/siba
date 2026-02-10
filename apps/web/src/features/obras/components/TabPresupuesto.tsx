@@ -26,6 +26,8 @@ import {
   AlertCircle,
   FileText,
 } from 'lucide-react';
+import { useConfirm } from '../../../hooks/useConfirm';
+import { toast } from 'sonner';
 
 interface TabPresupuestoProps {
   obraId: number;
@@ -52,6 +54,7 @@ export default function TabPresupuesto({
   const [isSaving, setIsSaving] = useState(false);
   const [editingItem, setEditingItem] = useState<ItemPresupuesto | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
+  const { confirm, ConfirmDialog } = useConfirm();
 
   // Material search
   const [materials, setMaterials] = useState<Material[]>([]);
@@ -129,7 +132,7 @@ export default function TabPresupuesto({
 
   const handleAddItem = async () => {
     if (!formData.descripcion) {
-      alert('Ingrese una descripción');
+      toast.error('Ingrese una descripción');
       return;
     }
 
@@ -142,28 +145,30 @@ export default function TabPresupuesto({
       setShowAddForm(false);
     } catch (error) {
       console.error('Error adding item:', error);
-      alert('Error al agregar item');
+      toast.error('Error al agregar item');
     } finally {
       setIsSaving(false);
     }
   };
 
   const handleCreateVersion = async () => {
-    if (
-      !confirm(
-        '¿Desea crear una nueva versión? La versión actual se guardará como historial y la nueva será la vigente.'
-      )
-    )
-      return;
+    const ok = await confirm({
+      title: 'Nueva versión',
+      message:
+        '¿Desea crear una nueva versión? La versión actual se guardará como historial y la nueva será la vigente.',
+      confirmLabel: 'Crear versión',
+      variant: 'warning',
+    });
+    if (!ok) return;
 
     try {
       setIsSaving(true);
       const newVersion = await presupuestoApi.createVersion(obraId);
       await loadData(newVersion.id);
-      alert(`Versión ${newVersion.version} creada correctamente.`);
+      toast.success(`Versión ${newVersion.version} creada correctamente.`);
     } catch (error) {
       console.error('Error creating version:', error);
-      alert('Error al crear nueva versión');
+      toast.error('Error al crear nueva versión');
     } finally {
       setIsSaving(false);
     }
@@ -188,7 +193,7 @@ export default function TabPresupuesto({
       }
     } catch (error) {
       console.error('Error generating PDF:', error);
-      alert('Error al generar el PDF');
+      toast.error('Error al generar el PDF');
     } finally {
       setIsLoading(false);
     }
@@ -206,14 +211,20 @@ export default function TabPresupuesto({
       setEditingItem(null);
     } catch (error) {
       console.error('Error updating item:', error);
-      alert('Error al actualizar item');
+      toast.error('Error al actualizar item');
     } finally {
       setIsSaving(false);
     }
   };
 
   const handleDeleteItem = async (itemId: number) => {
-    if (!confirm('¿Eliminar este item?')) return;
+    const ok = await confirm({
+      title: 'Eliminar item',
+      message: '¿Eliminar este item?',
+      confirmLabel: 'Eliminar',
+      variant: 'danger',
+    });
+    if (!ok) return;
 
     try {
       await presupuestoApi.deleteItem(obraId, itemId);
@@ -221,7 +232,7 @@ export default function TabPresupuesto({
       onTotalsChange?.(Number(version?.subtotal || 0), Number(version?.total || 0));
     } catch (error) {
       console.error('Error deleting item:', error);
-      alert('Error al eliminar item');
+      toast.error('Error al eliminar item');
     }
   };
 
@@ -788,6 +799,7 @@ export default function TabPresupuesto({
           </span>
         </div>
       )}
+      {ConfirmDialog}
     </div>
   );
 }

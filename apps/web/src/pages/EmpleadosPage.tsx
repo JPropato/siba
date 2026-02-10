@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Search, UserPlus } from 'lucide-react';
+import { Search, UserPlus, Users } from 'lucide-react';
+import { PageHeader } from '../components/ui/PageHeader';
 import { toast } from 'sonner';
 import EmpleadoTable from '../components/empleados/EmpleadoTable';
 import EmpleadoDialog from '../components/empleados/EmpleadoDialog';
@@ -14,6 +15,7 @@ import { CollapsibleFilters } from '../components/layout/CollapsibleFilters';
 import { PullToRefresh } from '../components/ui/PullToRefresh';
 import type { Empleado, EmpleadoFormData } from '../types/empleados';
 import { Pagination } from '../components/ui/Pagination';
+import { useConfirm } from '../hooks/useConfirm';
 
 export default function EmpleadosPage() {
   const [search, setSearch] = useState('');
@@ -37,6 +39,7 @@ export default function EmpleadosPage() {
   const createEmpleado = useCreateEmpleado();
   const updateEmpleado = useUpdateEmpleado();
   const deleteEmpleado = useDeleteEmpleado();
+  const { confirm, ConfirmDialog } = useConfirm();
 
   const handleCreate = () => {
     setSelectedEmpleado(null);
@@ -49,8 +52,13 @@ export default function EmpleadosPage() {
   };
 
   const handleDelete = async (e: Empleado) => {
-    if (!window.confirm(`¿Está seguro de eliminar al empleado "${e.apellido}, ${e.nombre}"?`))
-      return;
+    const ok = await confirm({
+      title: 'Eliminar empleado',
+      message: `¿Está seguro de eliminar al empleado "${e.apellido}, ${e.nombre}"?`,
+      confirmLabel: 'Eliminar',
+      variant: 'danger',
+    });
+    if (!ok) return;
 
     try {
       await deleteEmpleado.mutateAsync(e.id);
@@ -75,24 +83,23 @@ export default function EmpleadosPage() {
 
   return (
     <PullToRefresh onRefresh={handleRefresh} className="min-h-screen">
-      <div className="p-6 space-y-6 animate-in fade-in duration-500">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <h1 className="text-fluid-2xl font-bold text-slate-900 dark:text-white tracking-tight">
-              Gestión de Empleados
-            </h1>
-            <p className="text-fluid-sm text-slate-500 dark:text-slate-400 mt-1">
-              Administre el personal de la empresa y sus asignaciones.
-            </p>
-          </div>
-          <button
-            onClick={handleCreate}
-            className="px-4 py-2 bg-brand hover:bg-brand-dark text-white text-sm font-bold rounded-lg shadow-lg shadow-brand/20 transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
-          >
-            <UserPlus className="h-5 w-5" />
-            NUEVO EMPLEADO
-          </button>
-        </div>
+      <div className="px-4 pt-3 pb-6 sm:px-6 space-y-5 animate-in fade-in duration-500">
+        <PageHeader
+          icon={<Users className="h-5 w-5" />}
+          breadcrumb={['RRHH', 'Empleados']}
+          title="Empleados"
+          subtitle="Personal y asignaciones"
+          count={empleados.length}
+          action={
+            <button
+              onClick={handleCreate}
+              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-brand hover:bg-brand-dark text-white text-xs font-bold rounded-lg shadow-sm transition-all"
+            >
+              <UserPlus className="h-4 w-4" />
+              Nuevo
+            </button>
+          }
+        />
 
         {/* Filters - Colapsables en móvil */}
         <CollapsibleFilters activeFiltersCount={search ? 1 : 0}>
@@ -123,6 +130,8 @@ export default function EmpleadosPage() {
           onSave={handleSave}
           initialData={selectedEmpleado}
         />
+
+        {ConfirmDialog}
 
         {/* FAB para móvil */}
         <FloatingActionButton

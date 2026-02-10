@@ -227,6 +227,7 @@ model Vehiculo {
   anio            Int?
   tipo            String?
   kilometros      Int?
+  fechaVencimientoVTV DateTime? @map("fecha_vencimiento_vtv")
   estado          String    @default("ACTIVO") // ACTIVO, TALLER, FUERA_SERVICIO
   fechaCreacion   DateTime  @default(now()) @map("fecha_creacion")
   fechaActualizacion DateTime @updatedAt @map("fecha_actualizacion")
@@ -290,6 +291,12 @@ model Empleado {
   inicioRelacionLaboral DateTime         @map("inicio_relacion_laboral")
   tipo                  TipoEmpleado
   contratacion          TipoContratacion?
+  esReferente           Boolean          @default(false) @map("es_referente")
+  puesto                String?
+  foto                  String?
+  notas                 String?          @db.Text
+  fechaVencimientoSeguro DateTime?       @map("fecha_vencimiento_seguro")
+  fechaVencimientoRegistro DateTime?     @map("fecha_vencimiento_registro")
   zonaId                Int?             @map("zona_id")
   usuarioId             Int?             @unique @map("usuario_id")
   

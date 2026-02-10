@@ -40,23 +40,52 @@ async function main() {
   console.log('🛡️  Configurando permisos y roles...');
 
   const permisos = [
+    // Dashboard
     { codigo: 'dashboard:leer', modulo: 'Dashboard', descripcion: 'Ver el panel principal' },
-    { codigo: 'seguridad:leer', modulo: 'Seguridad', descripcion: 'Ver usuarios y roles' },
+    // Tickets
+    { codigo: 'tickets:leer', modulo: 'Tickets', descripcion: 'Ver tickets' },
+    { codigo: 'tickets:escribir', modulo: 'Tickets', descripcion: 'Crear/editar tickets' },
+    // Órdenes de Trabajo
+    { codigo: 'ordenes:leer', modulo: 'Órdenes de Trabajo', descripcion: 'Ver órdenes de trabajo' },
     {
-      codigo: 'seguridad:escribir',
-      modulo: 'Seguridad',
-      descripcion: 'Crear/Editar usuarios y roles',
+      codigo: 'ordenes:escribir',
+      modulo: 'Órdenes de Trabajo',
+      descripcion: 'Gestionar órdenes de trabajo',
     },
-    { codigo: 'comercial:leer', modulo: 'Comercial', descripcion: 'Ver tickets y obras' },
-    { codigo: 'comercial:escribir', modulo: 'Comercial', descripcion: 'Gestionar tickets y obras' },
-    { codigo: 'finanzas:leer', modulo: 'Finanzas', descripcion: 'Ver reportes financieros' },
-    { codigo: 'finanzas:escribir', modulo: 'Finanzas', descripcion: 'Gestionar gastos e ingresos' },
-    { codigo: 'admin:leer', modulo: 'Administración', descripcion: 'Ver maestros' },
-    { codigo: 'admin:escribir', modulo: 'Administración', descripcion: 'Editar maestros' },
+    // Obras
+    { codigo: 'obras:leer', modulo: 'Obras', descripcion: 'Ver obras y presupuestos' },
+    { codigo: 'obras:escribir', modulo: 'Obras', descripcion: 'Gestionar obras y presupuestos' },
+    // Clientes
+    { codigo: 'clientes:leer', modulo: 'Clientes', descripcion: 'Ver clientes' },
+    { codigo: 'clientes:escribir', modulo: 'Clientes', descripcion: 'Gestionar clientes' },
+    // Vehículos
+    { codigo: 'vehiculos:leer', modulo: 'Vehículos', descripcion: 'Ver vehículos' },
+    { codigo: 'vehiculos:escribir', modulo: 'Vehículos', descripcion: 'Gestionar vehículos' },
+    // Zonas
+    { codigo: 'zonas:leer', modulo: 'Zonas', descripcion: 'Ver zonas' },
+    { codigo: 'zonas:escribir', modulo: 'Zonas', descripcion: 'Gestionar zonas' },
+    // Sedes
+    { codigo: 'sedes:leer', modulo: 'Sedes', descripcion: 'Ver sedes/sucursales' },
+    { codigo: 'sedes:escribir', modulo: 'Sedes', descripcion: 'Gestionar sedes/sucursales' },
+    // Materiales
+    { codigo: 'materiales:leer', modulo: 'Materiales', descripcion: 'Ver materiales' },
+    { codigo: 'materiales:escribir', modulo: 'Materiales', descripcion: 'Gestionar materiales' },
+    // Empleados
     { codigo: 'empleados:leer', modulo: 'Empleados', descripcion: 'Ver empleados' },
     { codigo: 'empleados:escribir', modulo: 'Empleados', descripcion: 'Gestionar empleados' },
-    { codigo: 'tickets:leer', modulo: 'Tickets', descripcion: 'Ver tickets' },
-    { codigo: 'tickets:escribir', modulo: 'Tickets', descripcion: 'Gestionar tickets' },
+    // Usuarios
+    { codigo: 'usuarios:leer', modulo: 'Usuarios', descripcion: 'Ver usuarios' },
+    { codigo: 'usuarios:escribir', modulo: 'Usuarios', descripcion: 'Gestionar usuarios' },
+    // Roles
+    { codigo: 'roles:leer', modulo: 'Roles', descripcion: 'Ver roles y permisos' },
+    { codigo: 'roles:escribir', modulo: 'Roles', descripcion: 'Gestionar roles y permisos' },
+    // Finanzas
+    { codigo: 'finanzas:leer', modulo: 'Finanzas', descripcion: 'Ver reportes financieros' },
+    {
+      codigo: 'finanzas:escribir',
+      modulo: 'Finanzas',
+      descripcion: 'Gestionar movimientos financieros',
+    },
   ];
 
   for (const p of permisos) {
@@ -234,14 +263,85 @@ async function main() {
 
   console.log(`✅ Sucursales: ${creadas} creadas, ${existentes} ya existían.`);
 
+  // ----------------------------------------------------
+  // 4. Técnicos desde CSV
+  // ----------------------------------------------------
+  console.log('👷 Cargando técnicos desde CSV...');
+
+  const tecnicosPath = path.join(__dirname, 'tecnicos.csv');
+  const tecnicosCSV = await readCSV(tecnicosPath);
+
+  if (tecnicosCSV.length === 0) {
+    console.warn('⚠️ No se encontró el archivo tecnicos.csv, saltando carga de técnicos.');
+  } else {
+    let tecnicosCreados = 0;
+    let tecnicosExistentes = 0;
+
+    for (const t of tecnicosCSV) {
+      const apellido = t['APELLIDO']?.trim();
+      const nombre = t['NOMBRE']?.trim();
+      if (!apellido || !nombre) continue;
+
+      const zonaNombre = t['ZONA']?.trim().toUpperCase();
+      const zonaId = zonaNombre ? zonasMap.get(zonaNombre) || null : null;
+      const esReferente = t['ES_REFERENTE']?.trim().toUpperCase() === 'SI';
+      const puesto = t['PUESTO']?.trim() || null;
+      const telefono = t['TELEFONO']?.trim() || null;
+      const contratacion =
+        t['CONTRATACION']?.trim() === 'CONTRATO_MARCO' ? ('CONTRATO_MARCO' as const) : null;
+
+      // Buscar si ya existe por apellido + nombre (no tienen email único)
+      const existe = await prisma.empleado.findFirst({
+        where: {
+          apellido,
+          nombre,
+          fechaEliminacion: null,
+        },
+      });
+
+      if (existe) {
+        // Actualizar campos nuevos si cambiaron
+        await prisma.empleado.update({
+          where: { id: existe.id },
+          data: { esReferente, puesto, zonaId, telefono, contratacion },
+        });
+        tecnicosExistentes++;
+        continue;
+      }
+
+      await prisma.empleado.create({
+        data: {
+          nombre,
+          apellido,
+          telefono,
+          tipo: 'TECNICO',
+          contratacion,
+          esReferente,
+          puesto,
+          zonaId,
+          inicioRelacionLaboral: new Date(),
+        },
+      });
+      tecnicosCreados++;
+    }
+
+    console.log(
+      `✅ Técnicos: ${tecnicosCreados} creados, ${tecnicosExistentes} ya existían (actualizados).`
+    );
+  }
+
   // Resumen final
   const totalSucursales = await prisma.sucursal.count({ where: { clienteId: cliente.id } });
   const totalZonas = await prisma.zona.count();
+  const totalTecnicos = await prisma.empleado.count({
+    where: { tipo: 'TECNICO', fechaEliminacion: null },
+  });
 
   console.log('');
   console.log('🎉 Seed completado!');
   console.log(`   - Zonas: ${totalZonas}`);
   console.log(`   - Sucursales Correo Argentino: ${totalSucursales}`);
+  console.log(`   - Técnicos: ${totalTecnicos}`);
   console.log(`   - Usuario: admin@bauman.com.ar / admin123`);
 }
 

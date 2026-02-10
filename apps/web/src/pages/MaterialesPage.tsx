@@ -7,7 +7,8 @@ import { Select } from '../components/ui/core/Select';
 import { CollapsibleFilters } from '../components/layout/CollapsibleFilters';
 import { FloatingActionButton } from '../components/layout/FloatingActionButton';
 import { PullToRefresh } from '../components/ui/PullToRefresh';
-import { Search, LayoutGrid, PlusSquare } from 'lucide-react';
+import { Search, LayoutGrid, PlusSquare, Package } from 'lucide-react';
+import { PageHeader } from '../components/ui/PageHeader';
 import { Pagination } from '../components/ui/Pagination';
 import {
   useMateriales,
@@ -15,6 +16,7 @@ import {
   useUpdateMaterial,
   useDeleteMaterial,
 } from '../hooks/api/useMateriales';
+import { useConfirm } from '../hooks/useConfirm';
 
 export default function MaterialesPage() {
   const [search, setSearch] = useState('');
@@ -44,6 +46,7 @@ export default function MaterialesPage() {
   const createMaterial = useCreateMaterial();
   const updateMaterial = useUpdateMaterial();
   const deleteMaterial = useDeleteMaterial();
+  const { confirm, ConfirmDialog } = useConfirm();
 
   const handleCreate = () => {
     setSelectedMaterial(null);
@@ -56,7 +59,13 @@ export default function MaterialesPage() {
   };
 
   const handleDelete = async (m: Material) => {
-    if (!window.confirm(`¿Está seguro de eliminar el material "${m.nombre}"?`)) return;
+    const ok = await confirm({
+      title: 'Eliminar material',
+      message: `¿Está seguro de eliminar el material "${m.nombre}"?`,
+      confirmLabel: 'Eliminar',
+      variant: 'danger',
+    });
+    if (!ok) return;
 
     try {
       await deleteMaterial.mutateAsync(m.id);
@@ -81,24 +90,23 @@ export default function MaterialesPage() {
 
   return (
     <PullToRefresh onRefresh={handleRefresh} className="min-h-screen">
-      <div className="p-6 space-y-6 animate-in fade-in duration-500">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <h1 className="text-fluid-2xl font-bold text-slate-900 dark:text-white tracking-tight">
-              Maestro de Materiales
-            </h1>
-            <p className="text-fluid-sm text-slate-500 dark:text-slate-400 mt-1">
-              Gestión centralizada del catálogo de insumos, productos y equipamiento.
-            </p>
-          </div>
-          <button
-            onClick={handleCreate}
-            className="px-4 py-2 bg-brand hover:bg-brand-dark text-white text-sm font-bold rounded-lg shadow-lg shadow-brand/20 transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
-          >
-            <PlusSquare className="h-5 w-5" />
-            NUEVO MATERIAL
-          </button>
-        </div>
+      <div className="px-4 pt-3 pb-6 sm:px-6 space-y-5 animate-in fade-in duration-500">
+        <PageHeader
+          icon={<Package className="h-5 w-5" />}
+          breadcrumb={['Inventario', 'Materiales']}
+          title="Materiales"
+          subtitle="Catálogo de insumos y equipamiento"
+          count={materiales.length}
+          action={
+            <button
+              onClick={handleCreate}
+              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-brand hover:bg-brand-dark text-white text-xs font-bold rounded-lg shadow-sm transition-all"
+            >
+              <PlusSquare className="h-4 w-4" />
+              Nuevo
+            </button>
+          }
+        />
 
         {/* Filters - Colapsables en móvil */}
         <CollapsibleFilters activeFiltersCount={[search, categoriaFilter].filter(Boolean).length}>
@@ -149,6 +157,8 @@ export default function MaterialesPage() {
           onSave={handleSave}
           initialData={selectedMaterial}
         />
+
+        {ConfirmDialog}
 
         {/* FAB para móvil */}
         <FloatingActionButton

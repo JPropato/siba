@@ -27,6 +27,7 @@ import { DatePicker } from '../../../components/ui/core/DatePicker';
 import TabPresupuesto from './TabPresupuesto';
 import TabArchivos from './TabArchivos';
 import TabHistorial from './TabHistorial';
+import { useConfirm } from '../../../hooks/useConfirm';
 
 interface ObraDrawerProps {
   isOpen: boolean;
@@ -62,6 +63,7 @@ export default function ObraDrawer({
   const [isLoading, setIsLoading] = useState(false);
   const [obraDetail, setObraDetail] = useState<Obra | null>(null);
   const [showEstadoDropdown, setShowEstadoDropdown] = useState(false);
+  const { confirm, ConfirmDialog } = useConfirm();
 
   // Form state
   const [tipo, setTipo] = useState<TipoObra>('OBRA_MAYOR');
@@ -371,8 +373,14 @@ export default function ObraDrawer({
                         (transicion) => (
                           <button
                             key={transicion.estado}
-                            onClick={() => {
-                              if (confirm(`¿${transicion.label}?`)) {
+                            onClick={async () => {
+                              const ok = await confirm({
+                                title: 'Cambiar estado',
+                                message: `¿${transicion.label}?`,
+                                confirmLabel: transicion.label,
+                                variant: 'warning',
+                              });
+                              if (ok) {
                                 handleCambiarEstado(transicion.estado);
                               } else {
                                 setShowEstadoDropdown(false);
@@ -668,5 +676,10 @@ export default function ObraDrawer({
     </>
   );
 
-  return createPortal(drawerContent, document.body);
+  return (
+    <>
+      {createPortal(drawerContent, document.body)}
+      {ConfirmDialog}
+    </>
+  );
 }

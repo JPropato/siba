@@ -22,6 +22,8 @@ import TicketTabGeneral from './TicketTabGeneral';
 import TicketTabOT from './TicketTabOT';
 import TicketTabArchivos from './TicketTabArchivos';
 import TicketTabHistorial from './TicketTabHistorial';
+import InlineTecnicoAssigner from './InlineTecnicoAssigner';
+import { useConfirm } from '../../hooks/useConfirm';
 
 interface TicketDetailSheetProps {
   isOpen: boolean;
@@ -61,10 +63,12 @@ export default function TicketDetailSheet({
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showEstadoDropdown, setShowEstadoDropdown] = useState(false);
+  const [showTecnicoAssigner, setShowTecnicoAssigner] = useState(false);
   const navigate = useNavigate();
 
   // QueryClient para usar data prefetcheada
   const queryClient = useQueryClient();
+  const { confirm, ConfirmDialog } = useConfirm();
 
   // Load ticket detail - usa cache si está disponible (prefetch en hover)
   useEffect(() => {
@@ -73,6 +77,7 @@ export default function TicketDetailSheet({
     } else {
       setTicket(null);
       setActiveTab('general');
+      setShowTecnicoAssigner(false);
     }
   }, [isOpen, ticketId]);
 
@@ -161,9 +166,16 @@ export default function TicketDetailSheet({
                 <TicketIcon className="h-5 w-5 text-brand" />
               </div>
               <div>
-                <h2 className="text-lg font-bold text-slate-900 dark:text-white">
-                  {ticket ? formatCode(ticket.codigoInterno) : 'Cargando...'}
-                </h2>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+                    {ticket ? formatCode(ticket.codigoInterno) : 'Cargando...'}
+                  </h2>
+                  {ticket?.fechaCreacion && (
+                    <span className="text-xs text-slate-400">
+                      {new Date(ticket.fechaCreacion).toLocaleDateString('es-AR')}
+                    </span>
+                  )}
+                </div>
                 {ticket?.sucursal && (
                   <p className="text-sm text-slate-500">
                     {ticket.sucursal.cliente?.razonSocial} - {ticket.sucursal.nombre}
@@ -202,11 +214,22 @@ export default function TicketDetailSheet({
                       {getTransicionesPermitidas().map((transicion) => (
                         <button
                           key={transicion.estado}
-                          onClick={() => {
-                            if (confirm(`¿${transicion.label}?`)) {
-                              handleCambiarEstado(transicion.estado);
-                            } else {
+                          onClick={async () => {
+                            if (transicion.estado === 'ASIGNADO' && !ticket.tecnicoId) {
                               setShowEstadoDropdown(false);
+                              setShowTecnicoAssigner(true);
+                            } else {
+                              const ok = await confirm({
+                                title: 'Cambiar estado',
+                                message: `¿${transicion.label}?`,
+                                confirmLabel: transicion.label,
+                                variant: 'warning',
+                              });
+                              if (ok) {
+                                handleCambiarEstado(transicion.estado);
+                              } else {
+                                setShowEstadoDropdown(false);
+                              }
                             }
                           }}
                           className={`w-full text-left px-3 py-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2 ${transicion.color}`}
@@ -218,6 +241,23 @@ export default function TicketDetailSheet({
                     </div>
                   </>
                 )}
+              </div>
+            )}
+
+            {/* Inline Technician Assigner */}
+            {showTecnicoAssigner && ticket && (
+              <div className="absolute right-16 top-14 z-30">
+                <InlineTecnicoAssigner
+                  ticketId={ticket.id}
+                  ticketCode={formatCode(ticket.codigoInterno)}
+                  currentTecnicoId={ticket.tecnicoId}
+                  onSuccess={() => {
+                    setShowTecnicoAssigner(false);
+                    loadTicket(ticket.id);
+                    onSuccess();
+                  }}
+                  onCancel={() => setShowTecnicoAssigner(false)}
+                />
               </div>
             )}
 
@@ -300,5 +340,10 @@ export default function TicketDetailSheet({
     </>
   );
 
-  return createPortal(drawerContent, document.body);
+  return (
+    <>
+      {createPortal(drawerContent, document.body)}
+      {ConfirmDialog}
+    </>
+  );
 }

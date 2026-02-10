@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
 import api from '../lib/api';
 import { Plus, Shield, Pencil, Trash2, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 import type { Role, PermissionsGrouped } from '../types/role';
 import RoleDialog from '../components/roles/RoleDialog';
+import { PageHeader } from '../components/ui/PageHeader';
+import { useConfirm } from '../hooks/useConfirm';
 
 export default function RolesPage() {
   const [roles, setRoles] = useState<Role[]>([]);
@@ -10,6 +13,7 @@ export default function RolesPage() {
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
+  const { confirm, ConfirmDialog } = useConfirm();
 
   const fetchRoles = async () => {
     try {
@@ -48,17 +52,23 @@ export default function RolesPage() {
 
   const handleDelete = async (role: Role) => {
     if (role.nombre === 'Super Admin') {
-      alert('No se puede eliminar el rol Super Admin');
+      toast.error('No se puede eliminar el rol Super Admin');
       return;
     }
-    if (!confirm(`¿Eliminar el rol "${role.nombre}"?`)) return;
+    const ok = await confirm({
+      title: 'Eliminar rol',
+      message: `¿Eliminar el rol "${role.nombre}"?`,
+      confirmLabel: 'Eliminar',
+      variant: 'danger',
+    });
+    if (!ok) return;
 
     try {
       await api.delete(`/roles/${role.id}`);
       fetchRoles();
     } catch (error) {
       console.error('Error deleting role:', error);
-      alert('Error al eliminar rol');
+      toast.error('Error al eliminar rol');
     }
   };
 
@@ -82,21 +92,23 @@ export default function RolesPage() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-[var(--foreground)]">Gestión de Roles</h1>
-          <p className="text-sm text-[var(--muted)]">Administra roles y sus permisos asociados</p>
-        </div>
-        <button
-          onClick={handleCreate}
-          className="flex items-center gap-2 px-4 py-2 bg-brand text-white rounded-lg hover:bg-brand-dark transition-colors font-medium shadow-lg shadow-brand/20"
-        >
-          <Plus className="h-5 w-5" />
-          Nuevo Rol
-        </button>
-      </div>
+    <div className="px-4 pt-3 pb-6 sm:px-6 space-y-5 animate-in fade-in duration-500">
+      <PageHeader
+        icon={<Shield className="h-5 w-5" />}
+        breadcrumb={['Configuración', 'Roles']}
+        title="Gestión de Roles"
+        subtitle="Administra roles y sus permisos asociados"
+        count={roles.length}
+        action={
+          <button
+            onClick={handleCreate}
+            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-brand hover:bg-brand-dark text-white text-xs font-bold rounded-lg shadow-sm transition-all"
+          >
+            <Plus className="h-4 w-4" />
+            Nuevo
+          </button>
+        }
+      />
 
       {/* Table */}
       <div className="bg-[var(--surface)] border border-[var(--border)] rounded-xl overflow-hidden">
@@ -195,6 +207,8 @@ export default function RolesPage() {
           </table>
         )}
       </div>
+
+      {ConfirmDialog}
 
       {/* Dialog */}
       {permissions && (

@@ -1,7 +1,8 @@
 import type { Empleado } from '../../types/empleados';
 import { useSortableTable } from '../../hooks/useSortableTable';
 import { useActionSheet } from '../../hooks/useActionSheet';
-import { Loader2, Pencil, Trash2 } from 'lucide-react';
+import { Loader2, Pencil, Trash2, Users, Star } from 'lucide-react';
+import { EmptyState } from '../ui/EmptyState';
 import { motion } from 'framer-motion';
 import { SortableHeader } from '../ui/core/SortableHeader';
 import { MobileActionSheet } from '../ui/MobileActionSheet';
@@ -32,9 +33,11 @@ export default function EmpleadoTable({
 
   if (empleados.length === 0) {
     return (
-      <div className="w-full p-8 text-center border border-dashed border-slate-300 dark:border-slate-700 rounded-lg">
-        <p className="text-slate-500 dark:text-slate-400">No se encontraron empleados.</p>
-      </div>
+      <EmptyState
+        icon={<Users className="h-6 w-6 text-brand" />}
+        title="Sin empleados"
+        description="No se encontraron empleados con los filtros aplicados."
+      />
     );
   }
 
@@ -62,7 +65,7 @@ export default function EmpleadoTable({
                 sortConfig={sortConfig}
                 onSort={requestSort}
               />
-              <th className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">
+              <th className="px-3 py-2 font-semibold text-slate-900 dark:text-slate-100">
                 Contacto
               </th>
               <SortableHeader<Empleado>
@@ -71,10 +74,10 @@ export default function EmpleadoTable({
                 sortConfig={sortConfig}
                 onSort={requestSort}
               />
-              <th className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">
+              <th className="px-3 py-2 font-semibold text-slate-900 dark:text-slate-100">
                 Zona Asignada
               </th>
-              <th className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100 text-right hidden sm:table-cell">
+              <th className="px-3 py-2 font-semibold text-slate-900 dark:text-slate-100 text-right hidden sm:table-cell">
                 Acciones
               </th>
             </tr>
@@ -86,23 +89,31 @@ export default function EmpleadoTable({
                 className="bg-white dark:bg-slate-950"
                 whileHover={{
                   backgroundColor: 'rgba(248, 250, 252, 1)',
-                  scale: 1.005,
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
                 }}
                 transition={{ duration: 0.15, ease: 'easeOut' }}
                 {...actionSheet.getLongPressHandlers(e)}
               >
-                <td className="px-4 py-3">
+                <td className="px-3 py-1.5">
                   <div className="flex flex-col gap-1">
-                    <span className="font-bold text-slate-900 dark:text-white text-sm">
-                      {e.apellido}, {e.nombre}
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-bold text-slate-900 dark:text-white text-sm">
+                        {e.apellido}, {e.nombre}
+                      </span>
+                      {e.esReferente && (
+                        <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500 flex-shrink-0" />
+                      )}
+                    </div>
+                    {e.puesto && (
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400">
+                        {e.puesto}
+                      </span>
+                    )}
                     <span className="text-[10px] text-slate-400">
                       Ingreso: {new Date(e.inicioRelacionLaboral).toLocaleDateString()}
                     </span>
                   </div>
                 </td>
-                <td className="px-4 py-3">
+                <td className="px-3 py-1.5">
                   <div className="flex flex-col text-[11px]">
                     {e.email && (
                       <span className="text-slate-600 dark:text-slate-300">{e.email}</span>
@@ -113,7 +124,7 @@ export default function EmpleadoTable({
                     )}
                   </div>
                 </td>
-                <td className="px-4 py-3">
+                <td className="px-3 py-1.5">
                   <div className="flex flex-col gap-1 items-start">
                     <span
                       className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${getTipoBadge(e.tipo)}`}
@@ -125,7 +136,7 @@ export default function EmpleadoTable({
                     </span>
                   </div>
                 </td>
-                <td className="px-4 py-3">
+                <td className="px-3 py-1.5">
                   {e.zona ? (
                     <span className="px-2 py-0.5 rounded-full bg-brand/10 text-brand text-[10px] font-bold border border-brand/20 uppercase">
                       {e.zona.nombre}
@@ -134,23 +145,23 @@ export default function EmpleadoTable({
                     <span className="text-[10px] text-slate-400 italic">No asignada</span>
                   )}
                 </td>
-                <td className="px-4 py-3 text-right hidden sm:table-cell">
+                <td className="px-2 py-1 text-right hidden sm:table-cell">
                   <div className="flex items-center justify-end gap-2">
                     <button
                       onClick={() => onEdit(e)}
-                      className="min-h-11 min-w-11 flex items-center justify-center text-slate-400 hover:text-brand transition-colors rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 focus-visible:ring-2 focus-visible:ring-brand/50"
+                      className="h-7 w-7 flex items-center justify-center text-slate-400 hover:text-brand transition-colors rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 focus-visible:ring-2 focus-visible:ring-brand/50"
                       title="Editar"
                       aria-label="Editar"
                     >
-                      <Pencil className="h-[18px] w-[18px]" />
+                      <Pencil className="h-4 w-4" />
                     </button>
                     <button
                       onClick={() => onDelete(e)}
-                      className="min-h-11 min-w-11 flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-900/10 focus-visible:ring-2 focus-visible:ring-red-500/50"
+                      className="h-7 w-7 flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-900/10 focus-visible:ring-2 focus-visible:ring-red-500/50"
                       title="Eliminar"
                       aria-label="Eliminar"
                     >
-                      <Trash2 className="h-[18px] w-[18px]" />
+                      <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
                 </td>

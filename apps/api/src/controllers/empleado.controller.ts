@@ -13,6 +13,12 @@ const createEmpleadoSchema = z.object({
   inicioRelacionLaboral: z.string().datetime().or(z.date()),
   tipo: z.nativeEnum(TipoEmpleado),
   contratacion: z.nativeEnum(TipoContratacion).optional().nullable(),
+  esReferente: z.boolean().optional().default(false),
+  puesto: z.string().max(100).optional().nullable(),
+  foto: z.string().max(500).optional().nullable(),
+  notas: z.string().max(2000).optional().nullable(),
+  fechaVencimientoSeguro: z.string().datetime().or(z.date()).optional().nullable(),
+  fechaVencimientoRegistro: z.string().datetime().or(z.date()).optional().nullable(),
   zonaId: z.number().int().optional().nullable(),
   usuarioId: z.number().int().optional().nullable(),
 });
@@ -138,6 +144,12 @@ export const create = async (req: Request, res: Response) => {
       data: {
         ...body,
         inicioRelacionLaboral: new Date(body.inicioRelacionLaboral as string),
+        fechaVencimientoSeguro: body.fechaVencimientoSeguro
+          ? new Date(body.fechaVencimientoSeguro as string)
+          : null,
+        fechaVencimientoRegistro: body.fechaVencimientoRegistro
+          ? new Date(body.fechaVencimientoRegistro as string)
+          : null,
         zonaId: body.zonaId ?? null,
         usuarioId: body.usuarioId ?? null,
       },
@@ -212,6 +224,18 @@ export const update = async (req: Request, res: Response) => {
         inicioRelacionLaboral: body.inicioRelacionLaboral
           ? new Date(body.inicioRelacionLaboral as string)
           : undefined,
+        fechaVencimientoSeguro:
+          body.fechaVencimientoSeguro === undefined
+            ? undefined
+            : body.fechaVencimientoSeguro
+              ? new Date(body.fechaVencimientoSeguro as string)
+              : null,
+        fechaVencimientoRegistro:
+          body.fechaVencimientoRegistro === undefined
+            ? undefined
+            : body.fechaVencimientoRegistro
+              ? new Date(body.fechaVencimientoRegistro as string)
+              : null,
         zonaId: body.zonaId === undefined ? undefined : (body.zonaId ?? null),
         usuarioId: body.usuarioId === undefined ? undefined : (body.usuarioId ?? null),
       },

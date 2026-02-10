@@ -2,42 +2,99 @@ import { Router } from 'express';
 import * as obraController from '../controllers/obra/index.js';
 import * as presupuestoController from '../controllers/presupuesto.controller.js';
 import * as obraExtrasController from '../controllers/obraExtras.controller.js';
+import { authenticateToken, requirePermission } from '../middlewares/auth.middleware.js';
 
 const router = Router();
 
+// Todas las rutas de obras requieren autenticación
+router.use(authenticateToken);
+
 // Obras CRUD
-router.get('/', obraController.getAll);
-router.get('/:id', obraController.getById);
-router.post('/', obraController.create);
-router.put('/:id', obraController.update);
-router.patch('/:id/estado', obraController.cambiarEstado);
-router.delete('/:id', obraController.deleteOne);
+router.get('/', requirePermission('obras:leer'), obraController.getAll);
+router.get('/:id', requirePermission('obras:leer'), obraController.getById);
+router.post('/', requirePermission('obras:escribir'), obraController.create);
+router.put('/:id', requirePermission('obras:escribir'), obraController.update);
+router.patch('/:id/estado', requirePermission('obras:escribir'), obraController.cambiarEstado);
+router.delete('/:id', requirePermission('obras:escribir'), obraController.deleteOne);
 
 // Presupuesto endpoints
-router.get('/:obraId/presupuesto', presupuestoController.getPresupuesto);
-router.get('/:obraId/presupuesto/versiones', presupuestoController.getVersiones);
-router.post('/:obraId/presupuesto/versiones', presupuestoController.createVersion);
-router.post('/:obraId/presupuesto/items', presupuestoController.addItem);
-router.put('/:obraId/presupuesto/items/:itemId', presupuestoController.updateItem);
-router.delete('/:obraId/presupuesto/items/:itemId', presupuestoController.deleteItem);
-router.put('/:obraId/presupuesto/items/reorder', presupuestoController.reorderItems);
-router.post('/:obraId/presupuesto/generar-pdf', presupuestoController.generarPDF);
+router.get(
+  '/:obraId/presupuesto',
+  requirePermission('obras:leer'),
+  presupuestoController.getPresupuesto
+);
+router.get(
+  '/:obraId/presupuesto/versiones',
+  requirePermission('obras:leer'),
+  presupuestoController.getVersiones
+);
+router.post(
+  '/:obraId/presupuesto/versiones',
+  requirePermission('obras:escribir'),
+  presupuestoController.createVersion
+);
+router.post(
+  '/:obraId/presupuesto/items',
+  requirePermission('obras:escribir'),
+  presupuestoController.addItem
+);
+router.put(
+  '/:obraId/presupuesto/items/:itemId',
+  requirePermission('obras:escribir'),
+  presupuestoController.updateItem
+);
+router.delete(
+  '/:obraId/presupuesto/items/:itemId',
+  requirePermission('obras:escribir'),
+  presupuestoController.deleteItem
+);
+router.put(
+  '/:obraId/presupuesto/items/reorder',
+  requirePermission('obras:escribir'),
+  presupuestoController.reorderItems
+);
+router.post(
+  '/:obraId/presupuesto/generar-pdf',
+  requirePermission('obras:leer'),
+  presupuestoController.generarPDF
+);
 
 // Comentarios endpoints
-router.get('/:obraId/comentarios', obraExtrasController.getComentarios);
-router.post('/:obraId/comentarios', obraExtrasController.createComentario);
-router.delete('/:obraId/comentarios/:comentarioId', obraExtrasController.deleteComentario);
+router.get(
+  '/:obraId/comentarios',
+  requirePermission('obras:leer'),
+  obraExtrasController.getComentarios
+);
+router.post(
+  '/:obraId/comentarios',
+  requirePermission('obras:escribir'),
+  obraExtrasController.createComentario
+);
+router.delete(
+  '/:obraId/comentarios/:comentarioId',
+  requirePermission('obras:escribir'),
+  obraExtrasController.deleteComentario
+);
 
 // Historial endpoints
-router.get('/:obraId/historial', obraExtrasController.getHistorial);
+router.get(
+  '/:obraId/historial',
+  requirePermission('obras:leer'),
+  obraExtrasController.getHistorial
+);
 
 // Archivos endpoints
-router.get('/:obraId/archivos', obraExtrasController.getArchivos);
+router.get('/:obraId/archivos', requirePermission('obras:leer'), obraExtrasController.getArchivos);
 router.post(
   '/:obraId/archivos',
+  requirePermission('obras:escribir'),
   obraExtrasController.upload.single('archivo'),
   obraExtrasController.uploadArchivo
 );
-router.delete('/:obraId/archivos/:archivoId', obraExtrasController.deleteArchivo);
+router.delete(
+  '/:obraId/archivos/:archivoId',
+  requirePermission('obras:escribir'),
+  obraExtrasController.deleteArchivo
+);
 
 export default router;

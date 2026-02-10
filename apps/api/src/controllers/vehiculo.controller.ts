@@ -18,6 +18,7 @@ const createVehiculoSchema = z.object({
   tipo: z.string().optional().nullable(),
   zonaId: z.number().int().optional().nullable(),
   kilometros: z.number().int().min(0).optional().nullable(),
+  fechaVencimientoVTV: z.string().datetime().or(z.date()).optional().nullable(),
   estado: z.enum(['ACTIVO', 'TALLER', 'FUERA_SERVICIO']).default('ACTIVO'),
 });
 
@@ -99,6 +100,9 @@ export const create = async (req: Request, res: Response) => {
     const newVehiculo = await prisma.vehiculo.create({
       data: {
         ...body,
+        fechaVencimientoVTV: body.fechaVencimientoVTV
+          ? new Date(body.fechaVencimientoVTV as string)
+          : null,
         zonaId: body.zonaId ?? null,
       },
       include: {
@@ -146,6 +150,12 @@ export const update = async (req: Request, res: Response) => {
       where: { id },
       data: {
         ...body,
+        fechaVencimientoVTV:
+          body.fechaVencimientoVTV === undefined
+            ? undefined
+            : body.fechaVencimientoVTV
+              ? new Date(body.fechaVencimientoVTV as string)
+              : null,
         zonaId: body.zonaId === undefined ? undefined : (body.zonaId ?? null),
       },
       include: {

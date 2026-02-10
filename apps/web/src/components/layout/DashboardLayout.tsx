@@ -42,7 +42,6 @@ export function DashboardLayout({ children, currentPage, onNavigate }: Dashboard
   }, []);
 
   const handleToggleSidebar = () => {
-    // On mobile, open the drawer. On desktop, collapse/expand.
     if (window.innerWidth < 1024) {
       setIsMobileMenuOpen(!isMobileMenuOpen);
     } else {
@@ -58,7 +57,7 @@ export function DashboardLayout({ children, currentPage, onNavigate }: Dashboard
   return (
     <div className="flex h-screen w-full overflow-hidden bg-[var(--background)] text-[var(--foreground)] antialiased transition-colors duration-300">
       <CommandMenu />
-      {/* Sidebar */}
+
       <Sidebar
         isCollapsed={isSidebarCollapsed}
         onToggle={handleToggleSidebar}
@@ -68,23 +67,16 @@ export function DashboardLayout({ children, currentPage, onNavigate }: Dashboard
         onMobileClose={() => setIsMobileMenuOpen(false)}
       />
 
-      {/* Main Content Area */}
       <main className="flex-1 flex flex-col overflow-hidden">
-        {/* Top Header */}
         <TopHeader
           onToggleSidebar={handleToggleSidebar}
-          isSidebarCollapsed={isSidebarCollapsed}
           darkMode={darkMode}
           onToggleDarkMode={handleToggleDarkMode}
         />
 
-        {/* Page Content */}
-        <div className="flex-1 overflow-y-auto p-3 md:p-4 lg:p-6 pb-20 md:pb-4 lg:pb-6 space-y-4">
-          {children}
-        </div>
+        <div className="flex-1 overflow-y-auto pb-20 md:pb-0">{children}</div>
       </main>
 
-      {/* Bottom Navigation - Solo móvil */}
       <BottomNav />
     </div>
   );

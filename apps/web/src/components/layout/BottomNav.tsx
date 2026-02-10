@@ -1,42 +1,90 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, ClipboardList, Users, HardHat, Menu } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { usePermissions } from '../../hooks/usePermissions';
 
 interface NavItem {
   id: string;
   label: string;
   icon: React.ElementType;
   path: string;
+  permission?: string;
 }
 
-const NAV_ITEMS: NavItem[] = [
-  { id: 'dashboard', label: 'Inicio', icon: LayoutDashboard, path: '/dashboard' },
-  { id: 'tickets', label: 'Tickets', icon: ClipboardList, path: '/dashboard/tickets' },
-  { id: 'clients', label: 'Clientes', icon: Users, path: '/dashboard/clients' },
-  { id: 'obras', label: 'Obras', icon: HardHat, path: '/dashboard/obras' },
+interface MoreItem {
+  label: string;
+  path: string;
+  permission: string;
+}
+
+const ALL_NAV_ITEMS: NavItem[] = [
+  {
+    id: 'dashboard',
+    label: 'Inicio',
+    icon: LayoutDashboard,
+    path: '/dashboard',
+    permission: 'dashboard:leer',
+  },
+  {
+    id: 'tickets',
+    label: 'Tickets',
+    icon: ClipboardList,
+    path: '/dashboard/tickets',
+    permission: 'tickets:leer',
+  },
+  {
+    id: 'clients',
+    label: 'Clientes',
+    icon: Users,
+    path: '/dashboard/clients',
+    permission: 'clientes:leer',
+  },
+  {
+    id: 'obras',
+    label: 'Obras',
+    icon: HardHat,
+    path: '/dashboard/obras',
+    permission: 'obras:leer',
+  },
 ];
 
-const MORE_ITEMS = [
-  { label: 'Zonas', path: '/dashboard/zones' },
-  { label: 'Sedes', path: '/dashboard/sedes' },
-  { label: 'Vehículos', path: '/dashboard/vehicles' },
-  { label: 'Materiales', path: '/dashboard/materials' },
-  { label: 'Empleados', path: '/dashboard/empleados' },
-  { label: 'Finanzas', path: '/dashboard/finanzas' },
+const ALL_MORE_ITEMS: MoreItem[] = [
+  { label: 'Zonas', path: '/dashboard/zones', permission: 'zonas:leer' },
+  { label: 'Sedes', path: '/dashboard/sedes', permission: 'sedes:leer' },
+  { label: 'Vehículos', path: '/dashboard/vehicles', permission: 'vehiculos:leer' },
+  { label: 'Materiales', path: '/dashboard/materials', permission: 'materiales:leer' },
+  { label: 'Empleados', path: '/dashboard/empleados', permission: 'empleados:leer' },
+  { label: 'Finanzas', path: '/dashboard/finanzas', permission: 'finanzas:leer' },
 ];
 
 export function BottomNav() {
   const location = useLocation();
   const navigate = useNavigate();
   const [showMore, setShowMore] = useState(false);
+  const { hasPermission, isSuperAdmin } = usePermissions();
+
+  const navItems = useMemo(() => {
+    return ALL_NAV_ITEMS.filter((item) => {
+      if (!item.permission) return true;
+      if (isSuperAdmin()) return true;
+      return hasPermission(item.permission);
+    });
+  }, [hasPermission, isSuperAdmin]);
+
+  const moreItems = useMemo(() => {
+    return ALL_MORE_ITEMS.filter((item) => {
+      if (isSuperAdmin()) return true;
+      return hasPermission(item.permission);
+    });
+  }, [hasPermission, isSuperAdmin]);
 
   const isActive = (path: string) => {
     if (path === '/dashboard') return location.pathname === '/dashboard';
     return location.pathname.startsWith(path);
   };
 
-  const isMoreActive = MORE_ITEMS.some((item) => location.pathname.startsWith(item.path));
+  const isMoreActive = moreItems.some((item) => location.pathname.startsWith(item.path));
 
   return (
     <>
@@ -51,7 +99,7 @@ export function BottomNav() {
             className="absolute bottom-20 left-4 right-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl p-2 pb-[env(safe-area-inset-bottom)]"
             onClick={(e) => e.stopPropagation()}
           >
-            {MORE_ITEMS.map((item) => (
+            {moreItems.map((item) => (
               <button
                 key={item.path}
                 onClick={() => {
@@ -74,7 +122,7 @@ export function BottomNav() {
       {/* Bottom Navigation Bar */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 pb-[env(safe-area-inset-bottom)]">
         <div className="flex items-center justify-around h-16 px-2">
-          {NAV_ITEMS.map((item) => {
+          {navItems.map((item) => {
             const active = isActive(item.path);
             return (
               <motion.button
@@ -98,24 +146,26 @@ export function BottomNav() {
             );
           })}
 
-          {/* More button */}
-          <motion.button
-            onClick={() => setShowMore(!showMore)}
-            className={`flex flex-col items-center justify-center gap-0.5 flex-1 h-full relative ${
-              isMoreActive || showMore ? 'text-brand' : 'text-slate-400'
-            }`}
-            whileTap={{ scale: 0.9 }}
-          >
-            {isMoreActive && !showMore && (
-              <motion.div
-                layoutId="bottomNavIndicator"
-                className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-brand rounded-full"
-                transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-              />
-            )}
-            <Menu className="h-5 w-5" />
-            <span className="text-[10px] font-bold">Más</span>
-          </motion.button>
+          {/* More button - only show if there are items */}
+          {moreItems.length > 0 && (
+            <motion.button
+              onClick={() => setShowMore(!showMore)}
+              className={`flex flex-col items-center justify-center gap-0.5 flex-1 h-full relative ${
+                isMoreActive || showMore ? 'text-brand' : 'text-slate-400'
+              }`}
+              whileTap={{ scale: 0.9 }}
+            >
+              {isMoreActive && !showMore && (
+                <motion.div
+                  layoutId="bottomNavIndicator"
+                  className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-brand rounded-full"
+                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                />
+              )}
+              <Menu className="h-5 w-5" />
+              <span className="text-[10px] font-bold">Más</span>
+            </motion.button>
+          )}
         </div>
       </nav>
     </>

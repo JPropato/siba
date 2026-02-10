@@ -8,13 +8,13 @@ const router = Router();
 router.use(authenticateToken);
 
 // Endpoint de permisos (lectura)
-router.get('/permisos', requirePermission('seguridad:leer'), RoleController.getAllPermisos);
+router.get('/permisos', requirePermission('roles:leer'), RoleController.getAllPermisos);
 
 // CRUD de roles
-router.get('/', requirePermission('seguridad:leer'), RoleController.getAll);
-router.get('/:id', requirePermission('seguridad:leer'), RoleController.getOne);
-router.post('/', requirePermission('seguridad:escribir'), RoleController.create);
-router.put('/:id', requirePermission('seguridad:escribir'), RoleController.update);
-router.delete('/:id', requirePermission('seguridad:escribir'), RoleController.deleteOne);
+router.get('/', requirePermission('roles:leer'), RoleController.getAll);
+router.get('/:id', requirePermission('roles:leer'), RoleController.getOne);
+router.post('/', requirePermission('roles:escribir'), RoleController.create);
+router.put('/:id', requirePermission('roles:escribir'), RoleController.update);
+router.delete('/:id', requirePermission('roles:escribir'), RoleController.deleteOne);
 
 export default router;

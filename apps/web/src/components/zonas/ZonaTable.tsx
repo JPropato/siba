@@ -1,7 +1,8 @@
 import type { Zona } from '../../types/zona';
 import { useSortableTable } from '../../hooks/useSortableTable';
 import { useActionSheet } from '../../hooks/useActionSheet';
-import { Loader2, Pencil, Trash2 } from 'lucide-react';
+import { Loader2, Map, Pencil, Trash2 } from 'lucide-react';
+import { EmptyState } from '../ui/EmptyState';
 import { motion } from 'framer-motion';
 import { SortableHeader } from '../ui/core/SortableHeader';
 import { MobileActionSheet } from '../ui/MobileActionSheet';
@@ -27,9 +28,11 @@ export default function ZonaTable({ zones, onEdit, onDelete, isLoading }: ZonaTa
 
   if (zones.length === 0) {
     return (
-      <div className="w-full p-8 text-center border border-dashed border-slate-300 dark:border-slate-700 rounded-lg">
-        <p className="text-slate-500 dark:text-slate-400">No se encontraron zonas.</p>
-      </div>
+      <EmptyState
+        icon={<Map className="h-6 w-6 text-brand" />}
+        title="Sin zonas"
+        description="No se encontraron zonas con los filtros aplicados."
+      />
     );
   }
 
@@ -52,10 +55,10 @@ export default function ZonaTable({ zones, onEdit, onDelete, isLoading }: ZonaTa
                 sortConfig={sortConfig}
                 onSort={requestSort}
               />
-              <th className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">
+              <th className="px-3 py-2 font-semibold text-slate-900 dark:text-slate-100">
                 Descripción
               </th>
-              <th className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100 text-right hidden sm:table-cell">
+              <th className="px-3 py-2 font-semibold text-slate-900 dark:text-slate-100 text-right hidden sm:table-cell">
                 Acciones
               </th>
             </tr>
@@ -67,46 +70,44 @@ export default function ZonaTable({ zones, onEdit, onDelete, isLoading }: ZonaTa
                 className="bg-white dark:bg-slate-950"
                 whileHover={{
                   backgroundColor: 'rgba(248, 250, 252, 1)',
-                  scale: 1.005,
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
                 }}
                 transition={{ duration: 0.15, ease: 'easeOut' }}
                 {...actionSheet.getLongPressHandlers(zone)}
               >
-                <td className="px-4 py-3">
+                <td className="px-3 py-1.5">
                   <span className="font-mono text-[11px] font-bold text-brand bg-brand/5 px-2 py-0.5 rounded border border-brand/10">
                     #{zone.codigo.toString().padStart(4, '0')}
                   </span>
                 </td>
-                <td className="px-4 py-3">
+                <td className="px-3 py-1.5">
                   <span className="font-bold text-slate-900 dark:text-white uppercase text-xs tracking-tight">
                     {zone.nombre}
                   </span>
                 </td>
-                <td className="px-4 py-3">
+                <td className="px-3 py-1.5">
                   <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1">
                     {zone.descripcion || (
                       <span className="italic opacity-50 text-[10px]">Sin descripción</span>
                     )}
                   </p>
                 </td>
-                <td className="px-4 py-3 text-right hidden sm:table-cell">
+                <td className="px-2 py-1 text-right hidden sm:table-cell">
                   <div className="flex items-center justify-end gap-2">
                     <button
                       onClick={() => onEdit(zone)}
-                      className="min-h-11 min-w-11 flex items-center justify-center text-slate-400 hover:text-brand transition-colors rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 focus-visible:ring-2 focus-visible:ring-brand/50"
+                      className="h-7 w-7 flex items-center justify-center text-slate-400 hover:text-brand transition-colors rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 focus-visible:ring-2 focus-visible:ring-brand/50"
                       title="Editar"
                       aria-label="Editar"
                     >
-                      <Pencil className="h-[18px] w-[18px]" />
+                      <Pencil className="h-4 w-4" />
                     </button>
                     <button
                       onClick={() => onDelete(zone)}
-                      className="min-h-11 min-w-11 flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-900/10 focus-visible:ring-2 focus-visible:ring-red-500/50"
+                      className="h-7 w-7 flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-900/10 focus-visible:ring-2 focus-visible:ring-red-500/50"
                       title="Eliminar"
                       aria-label="Eliminar"
                     >
-                      <Trash2 className="h-[18px] w-[18px]" />
+                      <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
                 </td>

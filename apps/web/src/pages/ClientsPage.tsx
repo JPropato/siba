@@ -1,5 +1,6 @@
 import { useState, useEffect, lazy, Suspense, useCallback } from 'react';
-import { Search, Plus } from 'lucide-react';
+import { Search, Plus, Building2 } from 'lucide-react';
+import { PageHeader } from '../components/ui/PageHeader';
 import { toast } from 'sonner';
 import ClientTable from '../components/clients/ClientTable';
 import {
@@ -15,6 +16,7 @@ import { FloatingActionButton } from '../components/layout/FloatingActionButton'
 import { CollapsibleFilters } from '../components/layout/CollapsibleFilters';
 import { PullToRefresh } from '../components/ui/PullToRefresh';
 import type { Cliente, ClienteFormData } from '../types/client';
+import { useConfirm } from '../hooks/useConfirm';
 
 export default function ClientsPage() {
   const [search, setSearch] = useState('');
@@ -35,6 +37,7 @@ export default function ClientsPage() {
   const createClient = useCreateClient();
   const updateClient = useUpdateClient();
   const deleteClient = useDeleteClient();
+  const { confirm, ConfirmDialog } = useConfirm();
 
   const handleCreate = () => {
     setSelectedClient(null);
@@ -47,7 +50,13 @@ export default function ClientsPage() {
   };
 
   const handleDelete = async (client: Cliente) => {
-    if (!window.confirm(`¿Está seguro de eliminar a "${client.razonSocial}"?`)) return;
+    const ok = await confirm({
+      title: 'Eliminar cliente',
+      message: `¿Está seguro de eliminar a "${client.razonSocial}"?`,
+      confirmLabel: 'Eliminar',
+      variant: 'danger',
+    });
+    if (!ok) return;
 
     try {
       await deleteClient.mutateAsync(client.id);
@@ -72,25 +81,23 @@ export default function ClientsPage() {
 
   return (
     <PullToRefresh onRefresh={handleRefresh} className="min-h-screen">
-      <div className="p-6 space-y-6 animate-in fade-in duration-500">
-        {/* Page Header - Aligned with UsersPage */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <h1 className="text-fluid-2xl font-bold text-slate-900 dark:text-white tracking-tight">
-              Gestión de Clientes
-            </h1>
-            <p className="text-fluid-sm text-slate-500 dark:text-slate-400 mt-1">
-              Administre la base centralizada de clientes y sus configuraciones.
-            </p>
-          </div>
-          <button
-            onClick={handleCreate}
-            className="px-4 py-2 bg-brand hover:bg-brand-dark text-white text-sm font-bold rounded-lg shadow-lg shadow-brand/20 transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
-          >
-            <Plus className="h-5 w-5" />
-            NUEVO CLIENTE
-          </button>
-        </div>
+      <div className="px-4 pt-3 pb-6 sm:px-6 space-y-5 animate-in fade-in duration-500">
+        <PageHeader
+          icon={<Building2 className="h-5 w-5" />}
+          breadcrumb={['Gestión', 'Clientes']}
+          title="Clientes"
+          subtitle="Base centralizada de clientes"
+          count={clients.length}
+          action={
+            <button
+              onClick={handleCreate}
+              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-brand hover:bg-brand-dark text-white text-xs font-bold rounded-lg shadow-sm transition-all"
+            >
+              <Plus className="h-4 w-4" />
+              Nuevo
+            </button>
+          }
+        />
 
         {/* Filters - Colapsables en móvil */}
         <CollapsibleFilters activeFiltersCount={search ? 1 : 0}>
@@ -125,6 +132,8 @@ export default function ClientsPage() {
             />
           </Suspense>
         )}
+
+        {ConfirmDialog}
 
         {/* FAB para móvil */}
         <FloatingActionButton

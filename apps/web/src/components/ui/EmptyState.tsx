@@ -26,18 +26,20 @@ export const EmptyState = memo(function EmptyState({
   secondaryAction,
 }: EmptyStateProps) {
   return (
-    <div className="flex flex-col items-center justify-center min-h-[500px] border-2 border-dashed border-slate-200 dark:border-[var(--border)] rounded-xl bg-[var(--surface)]/50 dark:bg-charcoal/20 backdrop-blur-sm p-12 text-center transition-colors">
-      <div className="size-20 bg-brand/10 rounded-full flex items-center justify-center mb-6 border border-brand/20">
+    <div className="flex flex-col items-center justify-center min-h-[200px] border-2 border-dashed border-slate-200 dark:border-[var(--border)] rounded-xl bg-[var(--surface)]/50 dark:bg-charcoal/20 backdrop-blur-sm p-6 text-center transition-colors">
+      <div className="size-12 bg-brand/10 rounded-full flex items-center justify-center mb-4 border border-brand/20">
         {icon}
       </div>
       <div className="max-w-md">
-        <h3 className="text-2xl font-bold text-[var(--foreground)] mb-3 tracking-tight">{title}</h3>
-        <p className="text-[var(--muted)] text-base mb-8 leading-relaxed">{description}</p>
-        <div className="flex flex-wrap justify-center gap-4">
+        <h3 className="text-base font-bold text-[var(--foreground)] mb-2 tracking-tight">
+          {title}
+        </h3>
+        <p className="text-[var(--muted)] text-sm mb-4 leading-relaxed">{description}</p>
+        <div className="flex flex-wrap justify-center gap-3">
           {secondaryAction && (
             <button
               onClick={secondaryAction.onClick}
-              className="px-6 py-2.5 bg-[var(--surface)] dark:bg-white/5 border border-[var(--border)] text-slate-700 dark:text-slate-300 font-bold rounded-lg hover:bg-slate-50 dark:hover:bg-white/10 transition-all shadow-sm"
+              className="px-4 py-2 bg-[var(--surface)] dark:bg-white/5 border border-[var(--border)] text-slate-700 dark:text-slate-300 font-bold rounded-lg hover:bg-slate-50 dark:hover:bg-white/10 transition-all shadow-sm"
             >
               {secondaryAction.label}
             </button>
@@ -45,7 +47,7 @@ export const EmptyState = memo(function EmptyState({
           {primaryAction && (
             <button
               onClick={primaryAction.onClick}
-              className="px-6 py-2.5 bg-brand text-white font-bold rounded-lg hover:bg-brand-dark hover:shadow-xl hover:shadow-brand/20 transition-all flex items-center gap-2"
+              className="px-4 py-2 bg-brand text-white font-bold rounded-lg hover:bg-brand-dark hover:shadow-xl hover:shadow-brand/20 transition-all flex items-center gap-2"
             >
               {primaryAction.icon}
               {primaryAction.label}

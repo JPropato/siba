@@ -4,6 +4,7 @@ import { useThemeEffect } from './hooks/useThemeColor';
 import { Component, lazy, Suspense, type ReactNode, type ErrorInfo } from 'react';
 import { Skeleton } from './components/ui/Skeleton';
 import ProtectedRoute from './components/auth/ProtectedRoute';
+import { RequirePermission } from './components/auth/RequirePermission';
 import DashboardLayout from './components/layout/DashboardLayout';
 import './App.css';
 
@@ -190,7 +191,9 @@ export default function App() {
               path="/dashboard"
               element={
                 <DashboardWrapper>
-                  <DashboardPage />
+                  <RequirePermission permission="dashboard:leer">
+                    <DashboardPage />
+                  </RequirePermission>
                 </DashboardWrapper>
               }
             />
@@ -198,7 +201,9 @@ export default function App() {
               path="/dashboard/users"
               element={
                 <DashboardWrapper>
-                  <UsersPage />
+                  <RequirePermission permission="usuarios:leer">
+                    <UsersPage />
+                  </RequirePermission>
                 </DashboardWrapper>
               }
             />
@@ -206,7 +211,9 @@ export default function App() {
               path="/dashboard/roles"
               element={
                 <DashboardWrapper>
-                  <RolesPage />
+                  <RequirePermission permission="roles:leer">
+                    <RolesPage />
+                  </RequirePermission>
                 </DashboardWrapper>
               }
             />
@@ -214,7 +221,9 @@ export default function App() {
               path="/dashboard/clients"
               element={
                 <DashboardWrapper>
-                  <ClientsPage />
+                  <RequirePermission permission="clientes:leer">
+                    <ClientsPage />
+                  </RequirePermission>
                 </DashboardWrapper>
               }
             />
@@ -222,7 +231,9 @@ export default function App() {
               path="/dashboard/zones"
               element={
                 <DashboardWrapper>
-                  <ZonasPage />
+                  <RequirePermission permission="zonas:leer">
+                    <ZonasPage />
+                  </RequirePermission>
                 </DashboardWrapper>
               }
             />
@@ -230,7 +241,9 @@ export default function App() {
               path="/dashboard/sedes"
               element={
                 <DashboardWrapper>
-                  <SedesPage />
+                  <RequirePermission permission="sedes:leer">
+                    <SedesPage />
+                  </RequirePermission>
                 </DashboardWrapper>
               }
             />
@@ -238,7 +251,9 @@ export default function App() {
               path="/dashboard/vehicles"
               element={
                 <DashboardWrapper>
-                  <VehiculosPage />
+                  <RequirePermission permission="vehiculos:leer">
+                    <VehiculosPage />
+                  </RequirePermission>
                 </DashboardWrapper>
               }
             />
@@ -246,7 +261,9 @@ export default function App() {
               path="/dashboard/materials"
               element={
                 <DashboardWrapper>
-                  <MaterialesPage />
+                  <RequirePermission permission="materiales:leer">
+                    <MaterialesPage />
+                  </RequirePermission>
                 </DashboardWrapper>
               }
             />
@@ -254,7 +271,9 @@ export default function App() {
               path="/dashboard/empleados"
               element={
                 <DashboardWrapper>
-                  <EmpleadosPage />
+                  <RequirePermission permission="empleados:leer">
+                    <EmpleadosPage />
+                  </RequirePermission>
                 </DashboardWrapper>
               }
             />
@@ -262,7 +281,9 @@ export default function App() {
               path="/dashboard/vacaciones"
               element={
                 <DashboardWrapper>
-                  <VacacionesPage />
+                  <RequirePermission permission="empleados:leer">
+                    <VacacionesPage />
+                  </RequirePermission>
                 </DashboardWrapper>
               }
             />
@@ -270,7 +291,9 @@ export default function App() {
               path="/dashboard/sueldos"
               element={
                 <DashboardWrapper>
-                  <SueldosPage />
+                  <RequirePermission permission="empleados:leer">
+                    <SueldosPage />
+                  </RequirePermission>
                 </DashboardWrapper>
               }
             />
@@ -278,7 +301,9 @@ export default function App() {
               path="/dashboard/ausencias"
               element={
                 <DashboardWrapper>
-                  <AusenciasPage />
+                  <RequirePermission permission="empleados:leer">
+                    <AusenciasPage />
+                  </RequirePermission>
                 </DashboardWrapper>
               }
             />
@@ -286,7 +311,9 @@ export default function App() {
               path="/dashboard/tickets"
               element={
                 <DashboardWrapper>
-                  <TicketsPage />
+                  <RequirePermission permission="tickets:leer">
+                    <TicketsPage />
+                  </RequirePermission>
                 </DashboardWrapper>
               }
             />
@@ -294,7 +321,9 @@ export default function App() {
               path="/dashboard/tickets/:id"
               element={
                 <DashboardWrapper>
-                  <TicketDetailPage />
+                  <RequirePermission permission="tickets:leer">
+                    <TicketDetailPage />
+                  </RequirePermission>
                 </DashboardWrapper>
               }
             />
@@ -302,7 +331,9 @@ export default function App() {
               path="/dashboard/obras"
               element={
                 <DashboardWrapper>
-                  <ObrasPage />
+                  <RequirePermission permission="obras:leer">
+                    <ObrasPage />
+                  </RequirePermission>
                 </DashboardWrapper>
               }
             />
@@ -310,7 +341,9 @@ export default function App() {
               path="/dashboard/finanzas"
               element={
                 <DashboardWrapper>
-                  <FinanzasDashboard />
+                  <RequirePermission permission="finanzas:leer">
+                    <FinanzasDashboard />
+                  </RequirePermission>
                 </DashboardWrapper>
               }
             />
@@ -318,7 +351,9 @@ export default function App() {
               path="/dashboard/finanzas/movimientos"
               element={
                 <DashboardWrapper>
-                  <MovimientosPage />
+                  <RequirePermission permission="finanzas:leer">
+                    <MovimientosPage />
+                  </RequirePermission>
                 </DashboardWrapper>
               }
             />
@@ -326,7 +361,9 @@ export default function App() {
               path="/dashboard/finanzas/cuentas"
               element={
                 <DashboardWrapper>
-                  <CuentasPage />
+                  <RequirePermission permission="finanzas:leer">
+                    <CuentasPage />
+                  </RequirePermission>
                 </DashboardWrapper>
               }
             />
@@ -334,7 +371,9 @@ export default function App() {
               path="/dashboard/finanzas/inversiones"
               element={
                 <DashboardWrapper>
-                  <InversionesPage />
+                  <RequirePermission permission="finanzas:leer">
+                    <InversionesPage />
+                  </RequirePermission>
                 </DashboardWrapper>
               }
             />
