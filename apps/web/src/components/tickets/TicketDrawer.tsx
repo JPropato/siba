@@ -124,16 +124,14 @@ export default function TicketDrawer({ isOpen, onClose, onSuccess, ticket }: Tic
   useEffect(() => {
     if (isOpen) {
       setIsFetching(true);
-      Promise.all([
-        api.get('/clients?limit=100'),
-        api.get('/sedes?limit=500'),
-        api.get('/empleados?tipo=TECNICO&limit=100'),
-      ])
-        .then(([clientesRes, sedesRes, empleadosRes]) => {
-          const clientesList: Cliente[] = clientesRes.data.data || [];
+      api
+        .get('/tickets/reference-data')
+        .then((res) => {
+          const clientesList: Cliente[] = res.data.clientes || [];
+          const sedesList: Sucursal[] = res.data.sedes || [];
           setClientes(clientesList);
-          setSucursales(sedesRes.data.data || []);
-          setTecnicos(empleadosRes.data.data || []);
+          setSucursales(sedesList);
+          setTecnicos(res.data.tecnicos || []);
 
           // Find Correo Argentino client for default
           const correoCliente = clientesList.find((c) =>
@@ -142,9 +140,7 @@ export default function TicketDrawer({ isOpen, onClose, onSuccess, ticket }: Tic
 
           if (ticket) {
             // Get clienteId from sucursal for editing
-            const ticketSucursal = (sedesRes.data.data || []).find(
-              (s: Sucursal) => s.id === ticket.sucursalId
-            );
+            const ticketSucursal = sedesList.find((s: Sucursal) => s.id === ticket.sucursalId);
             reset({
               descripcion: ticket.descripcion,
               rubro: ticket.rubro as RubroTicket,

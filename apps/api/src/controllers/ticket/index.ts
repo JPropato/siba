@@ -12,3 +12,5 @@ export { cambiarEstado } from './ticket-status.controller.js';
 export { addNota } from './ticket-notes.controller.js';
 
 export { getDashboard } from './ticket-dashboard.controller.js';
+
+export { getReferenceData } from './ticket-reference.controller.js';

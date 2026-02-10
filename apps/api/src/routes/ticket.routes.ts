@@ -8,6 +8,7 @@ const router = Router();
 router.use(authenticateToken);
 
 router.get('/', requirePermission('tickets:leer'), ticketController.getAll);
+router.get('/reference-data', requirePermission('tickets:leer'), ticketController.getReferenceData);
 router.get('/dashboard', requirePermission('tickets:leer'), ticketController.getDashboard);
 router.get('/:id', requirePermission('tickets:leer'), ticketController.getById);
 router.get('/:id/historial', requirePermission('tickets:leer'), ticketController.getHistorial);
