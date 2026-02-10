@@ -36,7 +36,7 @@ const empleadoSchema = z.object({
   inicioRelacionLaboral: z.string().min(1, 'La fecha de inicio es requerida'),
   tipo: z.enum(['TECNICO', 'ADMINISTRATIVO', 'GERENTE']),
   contratacion: z.enum(['CONTRATO_MARCO']).optional().or(z.literal('')),
-  esReferente: z.boolean().optional().default(false),
+  esReferente: z.boolean(),
   puesto: z.string().optional().or(z.literal('')),
   foto: z.string().optional().or(z.literal('')),
   notas: z.string().optional().or(z.literal('')),

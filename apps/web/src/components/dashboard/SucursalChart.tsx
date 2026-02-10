@@ -56,11 +56,11 @@ export const SucursalChart = memo(function SucursalChart({ data }: Props) {
                   borderRadius: '8px',
                   fontSize: '12px',
                 }}
-                formatter={(value: number) => [value, 'Tickets']}
-                labelFormatter={(
-                  _label: string,
-                  payload: Array<{ payload?: { fullName?: string } }>
-                ) => payload?.[0]?.payload?.fullName || _label}
+                formatter={(value) => [value ?? 0, 'Tickets']}
+                labelFormatter={(_label, payload) =>
+                  (payload as Array<{ payload?: { fullName?: string } }>)?.[0]?.payload?.fullName ||
+                  String(_label)
+                }
               />
               <Bar
                 dataKey="value"

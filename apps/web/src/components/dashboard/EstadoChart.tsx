@@ -53,7 +53,7 @@ export const EstadoChart = memo(function EstadoChart({ data }: Props) {
                 borderRadius: '8px',
                 fontSize: '12px',
               }}
-              formatter={(value: number) => [value, 'Tickets']}
+              formatter={(value) => [value ?? 0, 'Tickets']}
             />
             <Bar
               dataKey="value"

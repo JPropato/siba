@@ -62,10 +62,10 @@ export const TipoSLAChart = memo(function TipoSLAChart({ data }: Props) {
                 borderRadius: '8px',
                 fontSize: '12px',
               }}
-              formatter={(value: number, name: string) => [
-                `${value} (${total > 0 ? Math.round((value / total) * 100) : 0}%)`,
-                name,
-              ]}
+              formatter={(value, name) => {
+                const v = (value as number) ?? 0;
+                return [`${v} (${total > 0 ? Math.round((v / total) * 100) : 0}%)`, String(name)];
+              }}
             />
             <Legend
               formatter={(value) => (

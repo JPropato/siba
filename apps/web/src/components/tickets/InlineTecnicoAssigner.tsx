@@ -2,7 +2,6 @@ import { useState, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
 import { UserPlus, Loader2, Search, Check } from 'lucide-react';
 import { useTecnicos } from '../../hooks/api/useTecnicos';
-import { useUpdateTicketEstado } from '../../hooks/api/useTickets';
 import { cn } from '../../lib/utils';
 import api from '../../lib/api';
 import { useQueryClient } from '@tanstack/react-query';

@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { usePermissions } from '../../hooks/usePermissions';
 import logoBauman from '../../assets/logo-bauman.png';
-import { ChevronDown, Settings } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import { type NavItem, allNavItems, bottomNavItems, iconMap, menuPermissions } from './nav-data';
 
 interface TopNavProps {
