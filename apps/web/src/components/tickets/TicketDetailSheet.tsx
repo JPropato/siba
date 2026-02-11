@@ -15,9 +15,15 @@ import {
   Check,
   ExternalLink,
 } from 'lucide-react';
+import { Lock } from 'lucide-react';
 import api from '../../lib/api';
 import type { Ticket, EstadoTicket } from '../../types/tickets';
-import { ESTADO_LABELS, ESTADO_COLORS, TRANSICIONES_VALIDAS } from '../../types/tickets';
+import {
+  ESTADO_LABELS,
+  ESTADO_COLORS,
+  esTransicionValida,
+  getRazonTransicionInvalida,
+} from '../../types/tickets';
 import TicketTabGeneral from './TicketTabGeneral';
 import TicketTabOT from './TicketTabOT';
 import TicketTabArchivos from './TicketTabArchivos';
@@ -34,23 +40,22 @@ interface TicketDetailSheetProps {
 
 type TabId = 'general' | 'gastos' | 'ot' | 'archivos' | 'historial';
 
-// Labels y colores para cada transición
-const TRANSICION_CONFIG: Record<EstadoTicket, { label: string; color: string }> = {
-  NUEVO: { label: 'Volver a Nuevo', color: 'text-slate-600' },
-  ASIGNADO: { label: 'Asignar', color: 'text-blue-600' },
-  EN_CURSO: { label: 'Iniciar Trabajo', color: 'text-amber-600' },
-  PENDIENTE_CLIENTE: { label: 'Pendiente Cliente', color: 'text-purple-600' },
-  FINALIZADO: { label: 'Finalizar', color: 'text-green-600' },
-  CANCELADO: { label: 'Cancelar', color: 'text-red-600' },
-};
+const TODOS_LOS_ESTADOS: EstadoTicket[] = [
+  'NUEVO',
+  'ASIGNADO',
+  'EN_CURSO',
+  'PENDIENTE_CLIENTE',
+  'FINALIZADO',
+  'CANCELADO',
+];
 
-// Obtiene las transiciones permitidas usando TRANSICIONES_VALIDAS de shared
-const getTransicionesDisponibles = (estadoActual: EstadoTicket) => {
-  const estadosPermitidos = TRANSICIONES_VALIDAS[estadoActual] || [];
-  return estadosPermitidos.map((estado) => ({
-    estado,
-    ...TRANSICION_CONFIG[estado],
-  }));
+const ESTADO_DOT_COLORS: Record<EstadoTicket, string> = {
+  NUEVO: 'bg-slate-500',
+  ASIGNADO: 'bg-blue-500',
+  EN_CURSO: 'bg-amber-500',
+  PENDIENTE_CLIENTE: 'bg-purple-500',
+  FINALIZADO: 'bg-green-500',
+  CANCELADO: 'bg-red-500',
 };
 
 export default function TicketDetailSheet({
@@ -131,6 +136,37 @@ export default function TicketDetailSheet({
     }
   };
 
+  const handleClickEstado = async (nuevoEstado: EstadoTicket) => {
+    if (!ticket || nuevoEstado === ticket.estado) return;
+
+    // Validar transicion
+    const razon = getRazonTransicionInvalida(ticket.estado, nuevoEstado);
+    if (razon) {
+      toast.error(razon);
+      return;
+    }
+
+    // ASIGNADO requiere tecnico
+    if (nuevoEstado === 'ASIGNADO' && !ticket.tecnicoId) {
+      setShowEstadoDropdown(false);
+      setShowTecnicoAssigner(true);
+      return;
+    }
+
+    // Confirmacion
+    const ok = await confirm({
+      title: 'Cambiar estado',
+      message: `¿Cambiar de ${ESTADO_LABELS[ticket.estado]} a ${ESTADO_LABELS[nuevoEstado]}?`,
+      confirmLabel: `Cambiar a ${ESTADO_LABELS[nuevoEstado]}`,
+      variant: nuevoEstado === 'CANCELADO' ? 'danger' : 'warning',
+    });
+    if (ok) {
+      handleCambiarEstado(nuevoEstado);
+    } else {
+      setShowEstadoDropdown(false);
+    }
+  };
+
   const formatCode = (code: number) => `TKT-${String(code).padStart(5, '0')}`;
 
   const tabs = [
@@ -140,11 +176,6 @@ export default function TicketDetailSheet({
     { id: 'archivos' as const, label: 'Archivos', icon: Paperclip },
     { id: 'historial' as const, label: 'Historial', icon: History },
   ];
-
-  const getTransicionesPermitidas = () => {
-    if (!ticket) return [];
-    return getTransicionesDisponibles(ticket.estado);
-  };
 
   if (!isOpen) return null;
 
@@ -189,18 +220,16 @@ export default function TicketDetailSheet({
               <div className="relative">
                 <button
                   onClick={() => setShowEstadoDropdown(!showEstadoDropdown)}
-                  disabled={isLoading || getTransicionesPermitidas().length === 0}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg font-semibold text-sm transition-all ${ESTADO_COLORS[ticket.estado]} ${getTransicionesPermitidas().length > 0 ? 'hover:opacity-80 cursor-pointer' : ''}`}
+                  disabled={isLoading}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg font-semibold text-sm transition-all hover:opacity-80 cursor-pointer ${ESTADO_COLORS[ticket.estado]}`}
                 >
                   {ESTADO_LABELS[ticket.estado]}
-                  {getTransicionesPermitidas().length > 0 && (
-                    <ChevronDown
-                      className={`h-4 w-4 transition-transform ${showEstadoDropdown ? 'rotate-180' : ''}`}
-                    />
-                  )}
+                  <ChevronDown
+                    className={`h-4 w-4 transition-transform ${showEstadoDropdown ? 'rotate-180' : ''}`}
+                  />
                 </button>
 
-                {/* Dropdown Menu */}
+                {/* Dropdown Menu - Todos los estados */}
                 {showEstadoDropdown && (
                   <>
                     <div
@@ -211,33 +240,35 @@ export default function TicketDetailSheet({
                       <div className="px-3 py-2 text-xs font-medium text-slate-500 uppercase tracking-wider border-b border-slate-200 dark:border-slate-700">
                         Cambiar estado a:
                       </div>
-                      {getTransicionesPermitidas().map((transicion) => (
-                        <button
-                          key={transicion.estado}
-                          onClick={async () => {
-                            if (transicion.estado === 'ASIGNADO' && !ticket.tecnicoId) {
-                              setShowEstadoDropdown(false);
-                              setShowTecnicoAssigner(true);
-                            } else {
-                              const ok = await confirm({
-                                title: 'Cambiar estado',
-                                message: `¿${transicion.label}?`,
-                                confirmLabel: transicion.label,
-                                variant: 'warning',
-                              });
-                              if (ok) {
-                                handleCambiarEstado(transicion.estado);
-                              } else {
-                                setShowEstadoDropdown(false);
-                              }
-                            }
-                          }}
-                          className={`w-full text-left px-3 py-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2 ${transicion.color}`}
-                        >
-                          <Check className="h-4 w-4 opacity-0" />
-                          {transicion.label}
-                        </button>
-                      ))}
+                      {TODOS_LOS_ESTADOS.map((estado) => {
+                        const esCurrent = estado === ticket.estado;
+                        const esValido = esTransicionValida(ticket.estado, estado);
+                        return (
+                          <button
+                            key={estado}
+                            disabled={esCurrent}
+                            onClick={() => handleClickEstado(estado)}
+                            className={`w-full text-left px-3 py-2 text-sm flex items-center gap-2 ${
+                              esCurrent
+                                ? 'bg-slate-50 dark:bg-slate-800 font-semibold text-slate-900 dark:text-white cursor-default'
+                                : esValido
+                                  ? 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
+                                  : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 dark:text-slate-500'
+                            }`}
+                          >
+                            {esCurrent ? (
+                              <Check className="h-4 w-4 text-green-500" />
+                            ) : !esValido ? (
+                              <Lock className="h-3.5 w-3.5" />
+                            ) : (
+                              <span
+                                className={`w-2 h-2 rounded-full ${ESTADO_DOT_COLORS[estado]}`}
+                              />
+                            )}
+                            {ESTADO_LABELS[estado]}
+                          </button>
+                        );
+                      })}
                     </div>
                   </>
                 )}

@@ -74,8 +74,10 @@ export const cambiarEstado = async (req: Request, res: Response) => {
     // PENDIENTE_CLIENTE → NUEVO (rechazo): guardar motivo
     if (estadoActual === 'PENDIENTE_CLIENTE' && estadoNuevo === 'NUEVO') {
       updateData.motivoRechazo = body.motivoRechazo || body.observacion || null;
-      // Al rechazar, se desasigna el técnico
-      updateData.tecnico = { disconnect: true };
+      // Al rechazar, se desasigna el técnico (solo si tiene uno asignado)
+      if (ticket.tecnicoId) {
+        updateData.tecnico = { disconnect: true };
+      }
       updateData.fechaProgramada = null;
     }
 

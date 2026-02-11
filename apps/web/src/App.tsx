@@ -102,7 +102,7 @@ class ErrorBoundary extends Component<
 
     return (
       <div className="contents">
-        <Toaster position="top-right" richColors closeButton />
+        <Toaster position="bottom-right" richColors closeButton duration={4000} />
         {this.props.children}
       </div>
     );

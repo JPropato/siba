@@ -65,3 +65,47 @@ export const TIPO_TICKET_COLORS: Record<TipoTicket, string> = {
   SEP: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
   SN: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400',
 };
+
+// Razones por las que una transición no es válida
+const RAZONES_TRANSICION: Partial<Record<EstadoTicket, Partial<Record<EstadoTicket, string>>>> = {
+  NUEVO: {
+    EN_CURSO: 'Primero debe asignar un técnico al ticket',
+    PENDIENTE_CLIENTE: 'Primero debe asignar un técnico e iniciar el trabajo',
+    FINALIZADO: 'Primero debe asignar, iniciar y completar el trabajo',
+  },
+  ASIGNADO: {
+    PENDIENTE_CLIENTE: 'Primero debe pasar el ticket a En Curso',
+    FINALIZADO: 'Primero debe pasar el ticket a En Curso',
+  },
+  EN_CURSO: {
+    NUEVO: 'Para devolver el ticket, use Pendiente Cliente → Nuevo',
+    ASIGNADO: 'El ticket ya fue asignado y está en curso',
+  },
+  PENDIENTE_CLIENTE: {
+    ASIGNADO: 'Vuelva a Nuevo si necesita reasignar el técnico',
+    CANCELADO: 'Primero debe volver a En Curso o a Nuevo',
+  },
+  FINALIZADO: {
+    NUEVO: 'El ticket ya fue finalizado',
+    ASIGNADO: 'El ticket ya fue finalizado',
+    EN_CURSO: 'El ticket ya fue finalizado',
+    PENDIENTE_CLIENTE: 'El ticket ya fue finalizado',
+    CANCELADO: 'El ticket ya fue finalizado',
+  },
+  CANCELADO: {
+    NUEVO: 'El ticket fue cancelado',
+    ASIGNADO: 'El ticket fue cancelado',
+    EN_CURSO: 'El ticket fue cancelado',
+    PENDIENTE_CLIENTE: 'El ticket fue cancelado',
+    FINALIZADO: 'El ticket fue cancelado',
+  },
+};
+
+/** Devuelve la razón por la que no se puede hacer la transición, o null si es válida */
+export const getRazonTransicionInvalida = (
+  estadoActual: EstadoTicket,
+  estadoNuevo: EstadoTicket
+): string | null => {
+  if (esTransicionValida(estadoActual, estadoNuevo)) return null;
+  return RAZONES_TRANSICION[estadoActual]?.[estadoNuevo] || 'Transición no permitida';
+};

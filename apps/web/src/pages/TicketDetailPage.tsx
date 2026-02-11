@@ -12,6 +12,7 @@ import {
   Paperclip,
   History,
   Check,
+  Lock,
   AlertTriangle,
   Calendar,
   User,
@@ -28,7 +29,8 @@ import {
   TIPO_TICKET_COLORS,
   TIPO_TICKET_SLA,
   RUBRO_LABELS,
-  TRANSICIONES_VALIDAS,
+  esTransicionValida,
+  getRazonTransicionInvalida,
 } from '../types/tickets';
 import { Button } from '../components/ui/core/Button';
 import TicketTabGeneral from '../components/tickets/TicketTabGeneral';
@@ -38,22 +40,22 @@ import TicketTabHistorial from '../components/tickets/TicketTabHistorial';
 
 type TabId = 'general' | 'ot' | 'archivos' | 'historial';
 
-// Labels y colores para cada transición
-const TRANSICION_CONFIG: Record<EstadoTicket, { label: string; color: string }> = {
-  NUEVO: { label: 'Volver a Nuevo', color: 'text-slate-600' },
-  ASIGNADO: { label: 'Asignar', color: 'text-blue-600' },
-  EN_CURSO: { label: 'Iniciar Trabajo', color: 'text-amber-600' },
-  PENDIENTE_CLIENTE: { label: 'Pendiente Cliente', color: 'text-purple-600' },
-  FINALIZADO: { label: 'Finalizar', color: 'text-green-600' },
-  CANCELADO: { label: 'Cancelar', color: 'text-red-600' },
-};
+const TODOS_LOS_ESTADOS: EstadoTicket[] = [
+  'NUEVO',
+  'ASIGNADO',
+  'EN_CURSO',
+  'PENDIENTE_CLIENTE',
+  'FINALIZADO',
+  'CANCELADO',
+];
 
-const getTransicionesDisponibles = (estadoActual: EstadoTicket) => {
-  const estadosPermitidos = TRANSICIONES_VALIDAS[estadoActual] || [];
-  return estadosPermitidos.map((estado) => ({
-    estado,
-    ...TRANSICION_CONFIG[estado],
-  }));
+const ESTADO_DOT_COLORS: Record<EstadoTicket, string> = {
+  NUEVO: 'bg-slate-500',
+  ASIGNADO: 'bg-blue-500',
+  EN_CURSO: 'bg-amber-500',
+  PENDIENTE_CLIENTE: 'bg-purple-500',
+  FINALIZADO: 'bg-green-500',
+  CANCELADO: 'bg-red-500',
 };
 
 function formatRelativeTime(date: string) {
@@ -116,7 +118,33 @@ export default function TicketDetailPage() {
     }
   };
 
-  const transicionesPermitidas = ticket ? getTransicionesDisponibles(ticket.estado) : [];
+  const handleClickEstado = async (nuevoEstado: EstadoTicket) => {
+    if (!ticket || nuevoEstado === ticket.estado) return;
+
+    const razon = getRazonTransicionInvalida(ticket.estado, nuevoEstado);
+    if (razon) {
+      toast.error(razon);
+      return;
+    }
+
+    if (nuevoEstado === 'ASIGNADO' && !ticket.tecnicoId) {
+      toast.error('Debe asignar un técnico antes de cambiar a Asignado');
+      setShowEstadoDropdown(false);
+      return;
+    }
+
+    const ok = await confirm({
+      title: 'Cambiar estado',
+      message: `¿Cambiar de ${ESTADO_LABELS[ticket.estado]} a ${ESTADO_LABELS[nuevoEstado]}?`,
+      confirmLabel: `Cambiar a ${ESTADO_LABELS[nuevoEstado]}`,
+      variant: nuevoEstado === 'CANCELADO' ? 'danger' : 'warning',
+    });
+    if (ok) {
+      handleCambiarEstado(nuevoEstado);
+    } else {
+      setShowEstadoDropdown(false);
+    }
+  };
 
   const tabs: { id: TabId; label: string; icon: typeof FileText }[] = [
     { id: 'general', label: 'General', icon: FileText },
@@ -195,59 +223,62 @@ export default function TicketDetailPage() {
           {/* Action buttons */}
           <div className="flex items-center gap-2 flex-shrink-0">
             {/* Cambiar Estado dropdown */}
-            {transicionesPermitidas.length > 0 && (
-              <div className="relative">
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={() => setShowEstadoDropdown(!showEstadoDropdown)}
-                  isLoading={isChangingEstado}
-                  rightIcon={
-                    <ChevronDown
-                      className={`h-4 w-4 transition-transform ${showEstadoDropdown ? 'rotate-180' : ''}`}
-                    />
-                  }
-                >
-                  Cambiar Estado
-                </Button>
+            <div className="relative">
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => setShowEstadoDropdown(!showEstadoDropdown)}
+                isLoading={isChangingEstado}
+                rightIcon={
+                  <ChevronDown
+                    className={`h-4 w-4 transition-transform ${showEstadoDropdown ? 'rotate-180' : ''}`}
+                  />
+                }
+              >
+                {ESTADO_LABELS[ticket.estado]}
+              </Button>
 
-                {showEstadoDropdown && (
-                  <>
-                    <div
-                      className="fixed inset-0 z-10"
-                      onClick={() => setShowEstadoDropdown(false)}
-                    />
-                    <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-slate-900 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 py-1 z-20">
-                      <div className="px-3 py-2 text-xs font-medium text-slate-500 uppercase tracking-wider border-b border-slate-200 dark:border-slate-700">
-                        Cambiar estado a:
-                      </div>
-                      {transicionesPermitidas.map((transicion) => (
-                        <button
-                          key={transicion.estado}
-                          onClick={async () => {
-                            const ok = await confirm({
-                              title: 'Cambiar estado',
-                              message: `¿${transicion.label}?`,
-                              confirmLabel: transicion.label,
-                              variant: 'warning',
-                            });
-                            if (ok) {
-                              handleCambiarEstado(transicion.estado);
-                            } else {
-                              setShowEstadoDropdown(false);
-                            }
-                          }}
-                          className={`w-full text-left px-3 py-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2 ${transicion.color}`}
-                        >
-                          <Check className="h-4 w-4 opacity-0" />
-                          {transicion.label}
-                        </button>
-                      ))}
+              {showEstadoDropdown && (
+                <>
+                  <div
+                    className="fixed inset-0 z-10"
+                    onClick={() => setShowEstadoDropdown(false)}
+                  />
+                  <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-slate-900 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 py-1 z-20">
+                    <div className="px-3 py-2 text-xs font-medium text-slate-500 uppercase tracking-wider border-b border-slate-200 dark:border-slate-700">
+                      Cambiar estado a:
                     </div>
-                  </>
-                )}
-              </div>
-            )}
+                    {TODOS_LOS_ESTADOS.map((estado) => {
+                      const esCurrent = estado === ticket.estado;
+                      const esValido = esTransicionValida(ticket.estado, estado);
+                      return (
+                        <button
+                          key={estado}
+                          disabled={esCurrent}
+                          onClick={() => handleClickEstado(estado)}
+                          className={`w-full text-left px-3 py-2 text-sm flex items-center gap-2 ${
+                            esCurrent
+                              ? 'bg-slate-50 dark:bg-slate-800 font-semibold text-slate-900 dark:text-white cursor-default'
+                              : esValido
+                                ? 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
+                                : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 dark:text-slate-500'
+                          }`}
+                        >
+                          {esCurrent ? (
+                            <Check className="h-4 w-4 text-green-500" />
+                          ) : !esValido ? (
+                            <Lock className="h-3.5 w-3.5" />
+                          ) : (
+                            <span className={`w-2 h-2 rounded-full ${ESTADO_DOT_COLORS[estado]}`} />
+                          )}
+                          {ESTADO_LABELS[estado]}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </div>
       </div>

@@ -26,40 +26,7 @@ app.use((req, _res, next) => {
 
 app.use(helmet());
 
-// Rate limiting configuration
-const globalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 100, // Máximo 100 requests por IP
-  message: {
-    error: {
-      code: 'RATE_LIMIT_EXCEEDED',
-      message: 'Demasiadas peticiones desde esta IP. Intente de nuevo en 15 minutos.',
-    },
-  },
-  standardHeaders: true, // Retorna RateLimit-* headers
-  legacyHeaders: false,
-});
-
-const loginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 5, // Máximo 5 intentos de login
-  skipSuccessfulRequests: true, // No cuenta logins exitosos
-  message: {
-    error: {
-      code: 'LOGIN_RATE_LIMIT_EXCEEDED',
-      message: 'Demasiados intentos de login fallidos. Intente de nuevo en 15 minutos.',
-    },
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
-// Aplicar rate limiting global
-app.use('/api/', globalLimiter);
-
-// Aplicar rate limiting estricto para login
-app.use('/api/auth/login', loginLimiter);
-
+// CORS debe ir ANTES del rate limiter para que los preflight OPTIONS no se bloqueen
 app.use(
   cors({
     origin: (origin, callback) => {
@@ -105,6 +72,39 @@ app.use(
     optionsSuccessStatus: 200, // Algunos browsers viejos necesitan esto
   })
 );
+
+// Rate limiting (después de CORS para no bloquear preflight OPTIONS)
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 500, // Máximo 500 requests por IP por ventana
+  skip: (req) => req.method === 'OPTIONS', // No contar preflight CORS
+  message: {
+    error: {
+      code: 'RATE_LIMIT_EXCEEDED',
+      message: 'Demasiadas peticiones desde esta IP. Intente de nuevo en 15 minutos.',
+    },
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 5, // Máximo 5 intentos de login
+  skipSuccessfulRequests: true,
+  message: {
+    error: {
+      code: 'LOGIN_RATE_LIMIT_EXCEEDED',
+      message: 'Demasiados intentos de login fallidos. Intente de nuevo en 15 minutos.',
+    },
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+app.use('/api/', globalLimiter);
+app.use('/api/auth/login', loginLimiter);
+
 app.use(express.json());
 app.use(cookieParser());
 

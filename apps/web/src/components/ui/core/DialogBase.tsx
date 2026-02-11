@@ -48,7 +48,7 @@ export const DialogBase = (props: DialogBaseProps) => {
   const widthClass = maxWidthClasses[maxWidth] || 'max-w-lg';
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-6 overflow-y-auto">
+    <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-0 sm:p-6 overflow-y-auto">
       {/* Backdrop - Solo visible en desktop */}
       <div
         className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300 hidden sm:block"
