@@ -53,13 +53,13 @@ export const Select = ({
   const listRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const closingTimer = useRef<ReturnType<typeof setTimeout>>(null);
-  const [dropdownPos, setDropdownPos] = useState({
-    top: 0,
-    bottom: 0,
-    left: 0,
-    width: 0,
-    openUp: false,
-  });
+  const [dropdownPos, setDropdownPos] = useState<{
+    top: number;
+    bottom: number;
+    left: number;
+    width: number;
+    openUp: boolean;
+  } | null>(null);
 
   // Cierre suave con animación de salida
   const closeDropdown = useCallback(() => {
@@ -67,7 +67,8 @@ export const Select = ({
     closingTimer.current = setTimeout(() => {
       setIsOpen(false);
       setIsClosing(false);
-    }, 120);
+      setDropdownPos(null);
+    }, 100);
   }, []);
 
   // Limpiar timer al desmontar
@@ -254,6 +255,7 @@ export const Select = ({
 
       {(isOpen || isClosing) &&
         !disabled &&
+        dropdownPos &&
         createPortal(
           <div
             ref={dropdownRef}
@@ -265,7 +267,7 @@ export const Select = ({
             }}
             className={cn(
               'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl z-[9999] overflow-hidden flex flex-col max-h-72',
-              isClosing ? 'animate-out fade-out duration-120' : 'animate-in fade-in duration-150'
+              isClosing ? 'animate-out fade-out duration-100' : 'animate-in fade-in duration-150'
             )}
           >
             {/* Search Input */}

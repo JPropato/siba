@@ -43,13 +43,13 @@ export function Combobox({
   const listRef = React.useRef<HTMLDivElement>(null);
   const closingTimer = React.useRef<ReturnType<typeof setTimeout>>(null);
   const [highlightedIndex, setHighlightedIndex] = React.useState(0);
-  const [dropdownPos, setDropdownPos] = React.useState({
-    top: 0,
-    bottom: 0,
-    left: 0,
-    width: 0,
-    openUp: false,
-  });
+  const [dropdownPos, setDropdownPos] = React.useState<{
+    top: number;
+    bottom: number;
+    left: number;
+    width: number;
+    openUp: boolean;
+  } | null>(null);
 
   // Cierre suave con animación de salida
   const closeDropdown = React.useCallback(() => {
@@ -58,7 +58,8 @@ export function Combobox({
       setOpen(false);
       setIsClosing(false);
       setSearch('');
-    }, 120);
+      setDropdownPos(null);
+    }, 100);
   }, []);
 
   React.useEffect(() => {
@@ -242,6 +243,7 @@ export function Combobox({
 
       {/* Dropdown (portal) */}
       {(open || isClosing) &&
+        dropdownPos &&
         createPortal(
           <div
             ref={listRef}
@@ -253,7 +255,7 @@ export function Combobox({
             }}
             className={cn(
               'z-[9999] max-h-60 overflow-auto rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-lg',
-              isClosing ? 'animate-out fade-out duration-120' : 'animate-in fade-in duration-150'
+              isClosing ? 'animate-out fade-out duration-100' : 'animate-in fade-in duration-150'
             )}
           >
             {filteredOptions.length === 0 ? (
