@@ -39,6 +39,11 @@ router.post(
   presupuestoController.addItem
 );
 router.put(
+  '/:obraId/presupuesto/items/reorder',
+  requirePermission('obras:escribir'),
+  presupuestoController.reorderItems
+);
+router.put(
   '/:obraId/presupuesto/items/:itemId',
   requirePermission('obras:escribir'),
   presupuestoController.updateItem
@@ -48,14 +53,9 @@ router.delete(
   requirePermission('obras:escribir'),
   presupuestoController.deleteItem
 );
-router.put(
-  '/:obraId/presupuesto/items/reorder',
-  requirePermission('obras:escribir'),
-  presupuestoController.reorderItems
-);
 router.post(
   '/:obraId/presupuesto/generar-pdf',
-  requirePermission('obras:leer'),
+  requirePermission('obras:escribir'),
   presupuestoController.generarPDF
 );
 
