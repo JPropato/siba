@@ -9,6 +9,7 @@ import {
   ArrowDownRight,
   XCircle,
   CheckCircle,
+  Paperclip,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { SortableHeader } from '../../../components/ui/core/SortableHeader';
@@ -145,6 +146,18 @@ export default function MovimientosTable({
                           <span className="text-[9px] bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded font-mono text-slate-500">
                             #{mov.comprobante}
                           </span>
+                        )}
+                        {mov.comprobanteUrl && (
+                          <a
+                            href={mov.comprobanteUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-brand hover:text-brand/80 transition-colors"
+                            title="Ver comprobante adjunto"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <Paperclip className="h-3 w-3" />
+                          </a>
                         )}
                       </div>
                     </div>

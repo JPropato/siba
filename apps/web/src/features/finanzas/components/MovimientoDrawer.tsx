@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Save } from 'lucide-react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -32,6 +32,9 @@ import {
   Ticket,
   Wrench,
   User,
+  Paperclip,
+  X,
+  Loader2,
 } from 'lucide-react';
 import api from '../../../lib/api';
 
@@ -126,6 +129,7 @@ const movimientoSchema = z.object({
     ])
     .optional(),
   comprobante: z.string().optional().or(z.literal('')),
+  comprobanteUrl: z.string().optional().nullable(),
   descripcion: z.string().min(3, 'Ingrese una descripción'),
   clienteId: z.string().optional().or(z.literal('')),
   obraId: z.string().optional().or(z.literal('')),
@@ -139,6 +143,8 @@ export default function MovimientoDrawer({ isOpen, onClose, onSuccess }: Movimie
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [obras, setObras] = useState<ObraOption[]>([]);
   const [tickets, setTickets] = useState<TicketOption[]>([]);
+  const [isUploadingFile, setIsUploadingFile] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const {
     register,
@@ -159,6 +165,7 @@ export default function MovimientoDrawer({ isOpen, onClose, onSuccess }: Movimie
       categoriaIngreso: 'COBRO_FACTURA',
       categoriaEgreso: 'MATERIALES',
       comprobante: '',
+      comprobanteUrl: null,
       descripcion: '',
       clienteId: '',
       obraId: '',
@@ -262,6 +269,7 @@ export default function MovimientoDrawer({ isOpen, onClose, onSuccess }: Movimie
         categoriaIngreso: values.tipo === 'INGRESO' ? values.categoriaIngreso : null,
         categoriaEgreso: values.tipo === 'EGRESO' ? values.categoriaEgreso : null,
         comprobante: values.comprobante || null,
+        comprobanteUrl: values.comprobanteUrl || null,
         descripcion: values.descripcion,
         clienteId: values.clienteId ? Number(values.clienteId) : null,
         obraId: values.obraId ? Number(values.obraId) : null,
@@ -446,6 +454,81 @@ export default function MovimientoDrawer({ isOpen, onClose, onSuccess }: Movimie
           placeholder="Nro de factura, recibo, etc."
           leftIcon={<FileText className="h-4 w-4" />}
           {...register('comprobante')}
+        />
+
+        {/* Adjuntar archivo comprobante */}
+        <Controller
+          name="comprobanteUrl"
+          control={control}
+          render={({ field }) => (
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                Adjuntar Comprobante
+              </label>
+              {field.value ? (
+                <div className="flex items-center gap-2 p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg">
+                  <Paperclip className="h-4 w-4 text-brand shrink-0" />
+                  <a
+                    href={field.value}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-brand hover:underline truncate flex-1"
+                  >
+                    Archivo adjunto
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => field.onChange(null)}
+                    className="h-7 w-7 flex items-center justify-center text-slate-400 hover:text-red-500 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors shrink-0"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  disabled={isUploadingFile}
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex items-center gap-2 w-full p-2.5 border border-dashed border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-500 hover:text-brand hover:border-brand transition-colors disabled:opacity-50"
+                >
+                  {isUploadingFile ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Paperclip className="h-4 w-4" />
+                  )}
+                  {isUploadingFile ? 'Subiendo...' : 'Adjuntar factura, recibo o comprobante'}
+                </button>
+              )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="application/pdf,image/jpeg,image/png,image/webp"
+                className="hidden"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  if (file.size > 10 * 1024 * 1024) {
+                    toast.error('El archivo no puede superar 10MB');
+                    return;
+                  }
+                  setIsUploadingFile(true);
+                  try {
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    const res = await api.post('/upload', formData, {
+                      headers: { 'Content-Type': 'multipart/form-data' },
+                    });
+                    field.onChange(res.data.data.url);
+                  } catch {
+                    toast.error('Error al subir el archivo');
+                  } finally {
+                    setIsUploadingFile(false);
+                    if (fileInputRef.current) fileInputRef.current.value = '';
+                  }
+                }}
+              />
+            </div>
+          )}
         />
 
         {/* Descripción */}
