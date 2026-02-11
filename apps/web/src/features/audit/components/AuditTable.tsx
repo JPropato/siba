@@ -70,6 +70,19 @@ const ACCION_CONFIG: Record<string, { icon: React.ReactNode; color: string; bgCo
   },
 };
 
+const ACCION_LABELS: Record<string, string> = {
+  CREAR: 'Crear',
+  ACTUALIZAR: 'Actualizar',
+  ELIMINAR: 'Eliminar',
+  CAMBIO_ESTADO: 'Cambio Estado',
+  TRANSFERENCIA: 'Transferencia',
+  ANULAR: 'Anular',
+  CONFIRMAR: 'Confirmar',
+  GENERAR_PDF: 'Generar PDF',
+  LOGIN: 'Login',
+  LOGOUT: 'Logout',
+};
+
 const MODULO_LABELS: Record<string, string> = {
   auth: 'Auth',
   tickets: 'Tickets',
@@ -176,7 +189,7 @@ export default function AuditTable({ eventos }: AuditTableProps) {
                       className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${accionConfig.color} ${accionConfig.bgColor}`}
                     >
                       {accionConfig.icon}
-                      {ev.accion.replace('_', ' ')}
+                      {ACCION_LABELS[ev.accion] || ev.accion}
                     </span>
                   </td>
                   <td className="px-3 py-2 hidden sm:table-cell">
