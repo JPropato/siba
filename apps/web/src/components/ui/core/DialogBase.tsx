@@ -59,8 +59,8 @@ export const DialogBase = (props: DialogBaseProps) => {
       <div
         className={cn(
           'relative w-full bg-white dark:bg-slate-900 shadow-2xl border-t sm:border border-slate-200 dark:border-slate-800 flex flex-col',
-          // Mobile: full-screen con slide-up animation
-          'h-[100dvh] sm:h-auto rounded-t-2xl sm:rounded-2xl animate-in slide-in-from-bottom sm:zoom-in-95 fade-in duration-300',
+          // Fade-in limpio sin transforms (evita romper stacking context de portals)
+          'h-[100dvh] sm:h-auto rounded-t-2xl sm:rounded-2xl animate-in fade-in duration-200',
           // Desktop: modal con max-height
           'sm:max-h-[90vh]',
           widthClass
