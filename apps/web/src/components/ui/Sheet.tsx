@@ -72,7 +72,7 @@ export const SheetContent = ({
           'fixed inset-y-0 z-50 flex flex-col',
           'bg-white dark:bg-slate-900',
           'shadow-2xl border-slate-200 dark:border-slate-800',
-          'animate-in duration-300',
+          'animate-in fade-in duration-300',
           side === 'right'
             ? 'right-0 border-l slide-in-from-right'
             : 'left-0 border-r slide-in-from-left',

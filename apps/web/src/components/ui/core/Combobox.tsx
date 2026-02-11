@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { createPortal } from 'react-dom';
 import { Check, ChevronDown, X } from 'lucide-react';
 import { cn } from '../../../lib/utils';
 
@@ -35,11 +36,37 @@ export function Combobox({
   'aria-labelledby': ariaLabelledBy,
 }: ComboboxProps) {
   const [open, setOpen] = React.useState(false);
+  const [isClosing, setIsClosing] = React.useState(false);
   const [search, setSearch] = React.useState('');
   const containerRef = React.useRef<HTMLDivElement>(null);
   const inputRef = React.useRef<HTMLInputElement>(null);
   const listRef = React.useRef<HTMLDivElement>(null);
+  const closingTimer = React.useRef<ReturnType<typeof setTimeout>>(null);
   const [highlightedIndex, setHighlightedIndex] = React.useState(0);
+  const [dropdownPos, setDropdownPos] = React.useState<{
+    top: number;
+    bottom: number;
+    left: number;
+    width: number;
+    openUp: boolean;
+  } | null>(null);
+
+  // Cierre suave con animación de salida
+  const closeDropdown = React.useCallback(() => {
+    setIsClosing(true);
+    closingTimer.current = setTimeout(() => {
+      setOpen(false);
+      setIsClosing(false);
+      setSearch('');
+      setDropdownPos(null);
+    }, 100);
+  }, []);
+
+  React.useEffect(() => {
+    return () => {
+      if (closingTimer.current) clearTimeout(closingTimer.current);
+    };
+  }, []);
 
   const selectedOption = options.find((opt) => opt.value === value);
 
@@ -58,26 +85,54 @@ export function Combobox({
   // Cerrar con click afuera
   React.useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setOpen(false);
-        setSearch('');
+      const target = e.target as Node;
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(target) &&
+        (!listRef.current || !listRef.current.contains(target))
+      ) {
+        closeDropdown();
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  }, [closeDropdown]);
+
+  // Calcular posición del dropdown (portal)
+  React.useLayoutEffect(() => {
+    if (!open || !containerRef.current) return;
+    const update = () => {
+      const rect = containerRef.current!.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const maxH = 240;
+      const openUp = spaceBelow < maxH && rect.top > spaceBelow;
+      setDropdownPos({
+        top: rect.bottom + 4,
+        bottom: window.innerHeight - rect.top + 4,
+        left: rect.left,
+        width: rect.width,
+        openUp,
+      });
+    };
+    update();
+    window.addEventListener('scroll', update, true);
+    window.addEventListener('resize', update);
+    return () => {
+      window.removeEventListener('scroll', update, true);
+      window.removeEventListener('resize', update);
+    };
+  }, [open]);
 
   // Cerrar con Escape
   React.useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && open) {
-        setOpen(false);
-        setSearch('');
+        closeDropdown();
       }
     };
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
-  }, [open]);
+  }, [open, closeDropdown]);
 
   // Focus input cuando se abre
   React.useEffect(() => {
@@ -96,8 +151,7 @@ export function Combobox({
 
   const handleSelect = (optionValue: string) => {
     onChange(optionValue);
-    setOpen(false);
-    setSearch('');
+    closeDropdown();
   };
 
   const handleClear = (e: React.MouseEvent) => {
@@ -123,8 +177,7 @@ export function Combobox({
         }
         break;
       case 'Tab':
-        setOpen(false);
-        setSearch('');
+        closeDropdown();
         break;
     }
   };
@@ -188,42 +241,54 @@ export function Combobox({
         </div>
       </div>
 
-      {/* Dropdown */}
-      {open && (
-        <div
-          ref={listRef}
-          className="absolute z-50 mt-1 w-full max-h-60 overflow-auto rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-lg animate-in fade-in-0 slide-in-from-top-2 duration-150"
-        >
-          {filteredOptions.length === 0 ? (
-            <div className="px-3 py-6 text-center text-sm text-slate-400">{emptyText}</div>
-          ) : (
-            <div className="p-1">
-              {filteredOptions.map((option, index) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  onClick={() => handleSelect(option.value)}
-                  onMouseEnter={() => setHighlightedIndex(index)}
-                  data-highlighted={index === highlightedIndex}
-                  className={cn(
-                    'flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-sm text-left transition-colors',
-                    index === highlightedIndex && 'bg-slate-100 dark:bg-slate-800',
-                    value === option.value && 'text-brand font-medium'
-                  )}
-                >
-                  <Check
+      {/* Dropdown (portal) */}
+      {(open || isClosing) &&
+        dropdownPos &&
+        createPortal(
+          <div
+            ref={listRef}
+            style={{
+              position: 'fixed',
+              left: dropdownPos.left,
+              width: dropdownPos.width || undefined,
+              ...(dropdownPos.openUp ? { bottom: dropdownPos.bottom } : { top: dropdownPos.top }),
+            }}
+            className={cn(
+              'z-[9999] max-h-60 overflow-auto rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-lg',
+              isClosing ? 'animate-out fade-out duration-100' : 'animate-in fade-in duration-150'
+            )}
+          >
+            {filteredOptions.length === 0 ? (
+              <div className="px-3 py-6 text-center text-sm text-slate-400">{emptyText}</div>
+            ) : (
+              <div className="p-1">
+                {filteredOptions.map((option, index) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => handleSelect(option.value)}
+                    onMouseEnter={() => setHighlightedIndex(index)}
+                    data-highlighted={index === highlightedIndex}
                     className={cn(
-                      'h-4 w-4 shrink-0',
-                      value === option.value ? 'opacity-100 text-brand' : 'opacity-0'
+                      'flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-sm text-left transition-colors',
+                      index === highlightedIndex && 'bg-slate-100 dark:bg-slate-800',
+                      value === option.value && 'text-brand font-medium'
                     )}
-                  />
-                  <span className="truncate">{option.label}</span>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+                  >
+                    <Check
+                      className={cn(
+                        'h-4 w-4 shrink-0',
+                        value === option.value ? 'opacity-100 text-brand' : 'opacity-0'
+                      )}
+                    />
+                    <span className="truncate">{option.label}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>,
+          document.body
+        )}
     </div>
   );
 }

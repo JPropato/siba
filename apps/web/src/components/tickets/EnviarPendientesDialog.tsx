@@ -267,7 +267,7 @@ export default function EnviarPendientesDialog({ isOpen, onClose }: Props) {
         ) : undefined
       }
     >
-      <div className="space-y-5">
+      <div className="space-y-5 min-h-[350px]">
         {/* Zona selector */}
         <Select
           label="Zona"
