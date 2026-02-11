@@ -10,6 +10,7 @@ import api from '../lib/api';
 const TicketDrawer = lazy(() => import('../components/tickets/TicketDrawer'));
 const TicketDetailSheet = lazy(() => import('../components/tickets/TicketDetailSheet'));
 const KanbanBoard = lazy(() => import('../components/tickets/KanbanBoard'));
+const EnviarPendientesDialog = lazy(() => import('../components/tickets/EnviarPendientesDialog'));
 
 import { PageHeader } from '../components/ui/PageHeader';
 import { CollapsibleFilters } from '../components/layout/CollapsibleFilters';
@@ -27,6 +28,7 @@ import {
   Ticket as TicketIcon,
   Building2,
   User,
+  Send,
 } from 'lucide-react';
 import { FloatingActionButton } from '../components/layout/FloatingActionButton';
 import { Pagination } from '../components/ui/Pagination';
@@ -60,6 +62,7 @@ export default function TicketsPage() {
   const [viewMode, setViewMode] = useState<'table' | 'kanban'>('table');
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [detailTicketIdSheet, setDetailTicketIdSheet] = useState<number | null>(null);
+  const [isPendientesOpen, setIsPendientesOpen] = useState(false);
 
   // Reference data for filter dropdowns
   const [clientes, setClientes] = useState<RefCliente[]>([]);
@@ -191,6 +194,13 @@ export default function TicketsPage() {
                   { value: 'kanban', icon: Columns, label: 'Vista Kanban' },
                 ]}
               />
+              <button
+                onClick={() => setIsPendientesOpen(true)}
+                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-lg transition-all"
+              >
+                <Send className="h-4 w-4" />
+                Enviar Pendientes
+              </button>
               <button
                 onClick={handleCreate}
                 className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-brand hover:bg-brand-dark text-white text-xs font-bold rounded-lg shadow-sm transition-all"
@@ -353,6 +363,15 @@ export default function TicketsPage() {
               }}
               ticketId={detailTicketIdSheet}
               onSuccess={() => refetch()}
+            />
+          </Suspense>
+        )}
+
+        {isPendientesOpen && (
+          <Suspense fallback={null}>
+            <EnviarPendientesDialog
+              isOpen={isPendientesOpen}
+              onClose={() => setIsPendientesOpen(false)}
             />
           </Suspense>
         )}
