@@ -24,6 +24,7 @@ const createMovimientoSchema = z.object({
   moneda: z.string().default('ARS'),
   descripcion: z.string().min(3).max(500),
   comprobante: z.string().max(100).optional().nullable(),
+  comprobanteUrl: z.string().max(500).optional().nullable(),
   fechaMovimiento: z.string().datetime(),
   cuentaId: z.number().int().positive(),
   clienteId: z.number().int().positive().optional().nullable(),

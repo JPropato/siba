@@ -81,6 +81,7 @@ export interface Movimiento {
   moneda: string;
   descripcion: string;
   comprobante?: string | null;
+  comprobanteUrl?: string | null;
   fechaMovimiento: string;
   fechaRegistro: string;
   cuentaId: number;

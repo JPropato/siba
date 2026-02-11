@@ -715,6 +715,7 @@ model Movimiento {
   // Contexto
   descripcion       String
   comprobante       String?           // Nro factura, recibo, etc.
+  comprobanteUrl    String?           @map("comprobante_url") // URL del archivo adjunto (factura PDF, etc.)
   
   // Fechas
   fechaMovimiento   DateTime          @map("fecha_movimiento")
