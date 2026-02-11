@@ -36,6 +36,10 @@ import {
   Paperclip,
   X,
   Loader2,
+  CreditCard,
+  Tag,
+  Link2,
+  AlignLeft,
 } from 'lucide-react';
 import api from '../../../lib/api';
 
@@ -188,42 +192,55 @@ const TIPO_CONFIG: Record<
   TipoOperacion,
   {
     label: string;
+    shortLabel: string;
     activeClass: string;
     bgColor: string;
     textColor: string;
     icon: React.ReactNode;
     buttonClass: string;
     buttonLabel: string;
+    description: string;
+    accentBorder: string;
   }
 > = {
   INGRESO: {
-    label: 'INGRESO',
+    label: 'Ingreso',
+    shortLabel: 'Ingreso',
     activeClass:
-      'border-green-500 bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400',
-    bgColor: 'bg-green-100',
-    textColor: 'text-green-600',
+      'border-green-500 bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400 ring-2 ring-green-500/20',
+    bgColor: 'bg-green-100 dark:bg-green-900/30',
+    textColor: 'text-green-600 dark:text-green-400',
     icon: <ArrowUpCircle className="h-5 w-5" />,
     buttonClass: 'bg-green-600 hover:bg-green-700',
     buttonLabel: 'Registrar Ingreso',
+    description: 'Dinero que entra a la cuenta',
+    accentBorder: 'border-l-green-500',
   },
   EGRESO: {
-    label: 'EGRESO',
-    activeClass: 'border-red-500 bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400',
-    bgColor: 'bg-red-100',
-    textColor: 'text-red-600',
+    label: 'Egreso',
+    shortLabel: 'Egreso',
+    activeClass:
+      'border-red-500 bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400 ring-2 ring-red-500/20',
+    bgColor: 'bg-red-100 dark:bg-red-900/30',
+    textColor: 'text-red-600 dark:text-red-400',
     icon: <ArrowDownCircle className="h-5 w-5" />,
     buttonClass: 'bg-red-600 hover:bg-red-700',
     buttonLabel: 'Registrar Egreso',
+    description: 'Dinero que sale de la cuenta',
+    accentBorder: 'border-l-red-500',
   },
   TRANSFERENCIA: {
-    label: 'TRANSFERENCIA',
+    label: 'Transferencia',
+    shortLabel: 'Transf.',
     activeClass:
-      'border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-400',
-    bgColor: 'bg-indigo-100',
-    textColor: 'text-indigo-600',
+      'border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-400 ring-2 ring-indigo-500/20',
+    bgColor: 'bg-indigo-100 dark:bg-indigo-900/30',
+    textColor: 'text-indigo-600 dark:text-indigo-400',
     icon: <ArrowLeftRight className="h-5 w-5" />,
     buttonClass: 'bg-indigo-600 hover:bg-indigo-700',
     buttonLabel: 'Registrar Transferencia',
+    description: 'Mover dinero entre cuentas',
+    accentBorder: 'border-l-indigo-500',
   },
 };
 
@@ -244,6 +261,26 @@ const DEFAULT_VALUES: MovimientoFormValues = {
   obraId: '',
   ticketId: '',
 };
+
+function SectionHeader({
+  icon,
+  title,
+  subtitle,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  subtitle?: string;
+}) {
+  return (
+    <div className="flex items-center gap-2 pb-2">
+      <div className="text-slate-400">{icon}</div>
+      <div>
+        <h3 className="text-sm font-semibold text-slate-900 dark:text-white">{title}</h3>
+        {subtitle && <p className="text-[11px] text-slate-400">{subtitle}</p>}
+      </div>
+    </div>
+  );
+}
 
 export default function MovimientoDrawer({ isOpen, onClose, onSuccess }: MovimientoDrawerProps) {
   const [cuentas, setCuentas] = useState<CuentaFinanciera[]>([]);
@@ -269,10 +306,15 @@ export default function MovimientoDrawer({ isOpen, onClose, onSuccess }: Movimie
   const tipo = watch('tipo') as TipoOperacion;
   const cuentaIdValue = watch('cuentaId');
   const cuentaOrigenIdValue = watch('cuentaOrigenId');
+  const cuentaDestinoIdValue = watch('cuentaDestinoId');
   const clienteId = watch('clienteId');
 
   const isTransferencia = tipo === 'TRANSFERENCIA';
   const config = TIPO_CONFIG[tipo];
+
+  const cuentaSeleccionada = cuentas.find((c) => c.id.toString() === cuentaIdValue);
+  const cuentaOrigen = cuentas.find((c) => c.id.toString() === cuentaOrigenIdValue);
+  const cuentaDestino = cuentas.find((c) => c.id.toString() === cuentaDestinoIdValue);
 
   useEffect(() => {
     if (isOpen) {
@@ -292,7 +334,6 @@ export default function MovimientoDrawer({ isOpen, onClose, onSuccess }: Movimie
     fetchCuentas();
   }, []);
 
-  // Auto-set medioPago when account is selected (for INGRESO/EGRESO)
   useEffect(() => {
     if (cuentaIdValue && !isTransferencia) {
       const cuenta = cuentas.find((c) => c.id.toString() === cuentaIdValue);
@@ -302,7 +343,6 @@ export default function MovimientoDrawer({ isOpen, onClose, onSuccess }: Movimie
     }
   }, [cuentaIdValue, cuentas, setValue, isTransferencia]);
 
-  // Auto-set medioPago to TRANSFERENCIA when in transfer mode
   useEffect(() => {
     if (isTransferencia) {
       setValue('medioPago', 'TRANSFERENCIA');
@@ -350,10 +390,6 @@ export default function MovimientoDrawer({ isOpen, onClose, onSuccess }: Movimie
     fetchTickets();
   }, []);
 
-  const cuentaOrigen = cuentas.find((c) => c.id.toString() === cuentaOrigenIdValue);
-  const cuentaDestinoIdValue = watch('cuentaDestinoId');
-  const cuentaDestino = cuentas.find((c) => c.id.toString() === cuentaDestinoIdValue);
-
   const onSubmit = async (values: MovimientoFormValues) => {
     try {
       if (values.tipo === 'TRANSFERENCIA') {
@@ -397,21 +433,18 @@ export default function MovimientoDrawer({ isOpen, onClose, onSuccess }: Movimie
     }
   };
 
-  const drawerDescription = isTransferencia
-    ? 'Transferir entre cuentas'
-    : tipo === 'INGRESO'
-      ? 'Registrar ingreso'
-      : 'Registrar egreso';
-
   return (
     <DialogBase
       isOpen={isOpen}
       onClose={onClose}
       type="drawer"
+      maxWidth="xl"
       title="Nuevo Movimiento"
-      description={drawerDescription}
+      description={config.description}
       icon={
-        <div className={`p-2 rounded-xl ${config.bgColor} ${config.textColor}`}>{config.icon}</div>
+        <div className={`p-2.5 rounded-xl ${config.bgColor} ${config.textColor}`}>
+          {config.icon}
+        </div>
       }
       footer={
         <>
@@ -430,362 +463,427 @@ export default function MovimientoDrawer({ isOpen, onClose, onSuccess }: Movimie
         </>
       }
     >
-      <form id="movimiento-form" onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-        {/* Tipo Toggle - 3 opciones */}
+      <form id="movimiento-form" onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        {/* ═══ TIPO DE OPERACION ═══ */}
         <div>
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-            Tipo de Movimiento *
+          <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2.5">
+            Tipo de Operacion
           </label>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-3 gap-2.5">
             {(['INGRESO', 'EGRESO', 'TRANSFERENCIA'] as TipoOperacion[]).map((t) => {
               const c = TIPO_CONFIG[t];
+              const isActive = tipo === t;
               return (
                 <label
                   key={t}
-                  className={`flex items-center justify-center gap-1.5 p-2.5 rounded-lg border text-xs font-bold cursor-pointer transition-all ${
-                    tipo === t
+                  className={`flex flex-col items-center gap-1 p-3 rounded-xl border-2 cursor-pointer transition-all ${
+                    isActive
                       ? c.activeClass
-                      : 'border-slate-200 dark:border-slate-700 text-slate-500 hover:border-slate-300'
+                      : 'border-slate-200 dark:border-slate-700 text-slate-400 hover:border-slate-300 dark:hover:border-slate-600'
                   }`}
                 >
                   <input type="radio" value={t} {...register('tipo')} className="sr-only" />
-                  {c.icon}
-                  <span className="hidden sm:inline">{c.label}</span>
-                  <span className="sm:hidden">{t === 'TRANSFERENCIA' ? 'TRANSF.' : c.label}</span>
+                  <span className={isActive ? '' : 'opacity-50'}>{c.icon}</span>
+                  <span className="text-xs font-bold hidden sm:block">{c.label}</span>
+                  <span className="text-xs font-bold sm:hidden">{c.shortLabel}</span>
                 </label>
               );
             })}
           </div>
         </div>
 
-        {/* === Cuenta(s) === */}
-        {isTransferencia ? (
-          <>
-            {/* Cuenta Origen */}
+        {/* ═══ SECCION: CUENTAS ═══ */}
+        <div
+          className={`rounded-xl border border-slate-200 dark:border-slate-800 border-l-4 ${config.accentBorder} p-4 space-y-4`}
+        >
+          <SectionHeader
+            icon={<Building2 className="h-4 w-4" />}
+            title={isTransferencia ? 'Cuentas' : 'Cuenta'}
+            subtitle={
+              isTransferencia
+                ? 'Selecciona las cuentas origen y destino'
+                : 'Selecciona la cuenta para este movimiento'
+            }
+          />
+
+          {isTransferencia ? (
+            <div className="space-y-3">
+              {/* Cuenta Origen */}
+              <div className="space-y-1.5">
+                <Controller
+                  name="cuentaOrigenId"
+                  control={control}
+                  render={({ field }) => (
+                    <Select
+                      label="Cuenta Origen *"
+                      options={cuentas.map((c) => ({
+                        value: c.id.toString(),
+                        label: c.nombre,
+                        description: `${c.banco?.nombreCorto || c.tipo} · ${formatCurrency(c.saldoActual)}`,
+                        icon: <Building2 className="h-4 w-4" />,
+                      }))}
+                      value={field.value}
+                      onChange={field.onChange}
+                      error={errors.cuentaOrigenId?.message}
+                      placeholder="Seleccionar cuenta origen..."
+                    />
+                  )}
+                />
+                {cuentaOrigen && (
+                  <p className="text-xs text-slate-500 pl-1">
+                    Saldo:{' '}
+                    <span className="font-semibold tabular-nums">
+                      {formatCurrency(cuentaOrigen.saldoActual)}
+                    </span>
+                  </p>
+                )}
+              </div>
+
+              {/* Flecha visual */}
+              <div className="flex justify-center py-1">
+                <div className="p-2 rounded-full bg-indigo-50 dark:bg-indigo-900/20">
+                  <ArrowLeftRight className="h-5 w-5 text-indigo-500 rotate-90" />
+                </div>
+              </div>
+
+              {/* Cuenta Destino */}
+              <div className="space-y-1.5">
+                <Controller
+                  name="cuentaDestinoId"
+                  control={control}
+                  render={({ field }) => (
+                    <Select
+                      label="Cuenta Destino *"
+                      options={cuentas
+                        .filter((c) => c.id.toString() !== cuentaOrigenIdValue)
+                        .map((c) => ({
+                          value: c.id.toString(),
+                          label: c.nombre,
+                          description: `${c.banco?.nombreCorto || c.tipo} · ${formatCurrency(c.saldoActual)}`,
+                          icon: <Building2 className="h-4 w-4" />,
+                        }))}
+                      value={field.value}
+                      onChange={field.onChange}
+                      error={errors.cuentaDestinoId?.message}
+                      placeholder="Seleccionar cuenta destino..."
+                    />
+                  )}
+                />
+                {cuentaDestino && (
+                  <p className="text-xs text-slate-500 pl-1">
+                    Saldo:{' '}
+                    <span className="font-semibold tabular-nums">
+                      {formatCurrency(cuentaDestino.saldoActual)}
+                    </span>
+                  </p>
+                )}
+              </div>
+            </div>
+          ) : (
             <div className="space-y-1.5">
               <Controller
-                name="cuentaOrigenId"
+                name="cuentaId"
                 control={control}
                 render={({ field }) => (
                   <Select
-                    label="Cuenta Origen *"
+                    label="Cuenta *"
                     options={cuentas.map((c) => ({
                       value: c.id.toString(),
                       label: c.nombre,
-                      description: c.banco?.nombreCorto || c.tipo,
+                      description: `${c.banco?.nombreCorto || c.tipo} · ${formatCurrency(c.saldoActual)}`,
                       icon: <Building2 className="h-4 w-4" />,
                     }))}
                     value={field.value}
                     onChange={field.onChange}
-                    error={errors.cuentaOrigenId?.message}
-                    placeholder="Seleccionar cuenta origen..."
+                    error={errors.cuentaId?.message}
+                    placeholder="Seleccionar cuenta..."
                   />
                 )}
               />
-              {cuentaOrigen && (
+              {cuentaSeleccionada && (
                 <p className="text-xs text-slate-500 pl-1">
                   Saldo actual:{' '}
-                  <span className="font-semibold">{formatCurrency(cuentaOrigen.saldoActual)}</span>
+                  <span className="font-semibold tabular-nums">
+                    {formatCurrency(cuentaSeleccionada.saldoActual)}
+                  </span>
                 </p>
               )}
             </div>
+          )}
+        </div>
 
-            {/* Flecha visual */}
-            <div className="flex justify-center">
-              <div className="p-2 rounded-full bg-indigo-50 dark:bg-indigo-900/20">
-                <ArrowLeftRight className="h-5 w-5 text-indigo-500 rotate-90" />
-              </div>
-            </div>
-
-            {/* Cuenta Destino */}
+        {/* ═══ SECCION: MONTO Y FECHA ═══ */}
+        <div className="rounded-xl border border-slate-200 dark:border-slate-800 p-4 space-y-4">
+          <SectionHeader
+            icon={<DollarSign className="h-4 w-4" />}
+            title="Monto y Fecha"
+            subtitle="Datos principales del movimiento"
+          />
+          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
+              <label
+                htmlFor="monto-input"
+                className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1"
+              >
+                Monto *
+              </label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-medium">
+                  $
+                </span>
+                <input
+                  id="monto-input"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  placeholder="0.00"
+                  {...register('monto')}
+                  className="w-full h-11 pl-7 pr-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-base font-semibold outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 tabular-nums text-slate-900 dark:text-white transition-all"
+                />
+              </div>
+              {errors.monto && (
+                <p role="alert" className="text-[11px] font-medium text-red-500">
+                  {errors.monto.message}
+                </p>
+              )}
+            </div>
+            <Controller
+              name="fechaMovimiento"
+              control={control}
+              render={({ field }) => (
+                <DatePicker
+                  label="Fecha *"
+                  value={field.value}
+                  onChange={field.onChange}
+                  error={errors.fechaMovimiento?.message}
+                />
+              )}
+            />
+          </div>
+        </div>
+
+        {/* ═══ SECCION: CLASIFICACION (solo INGRESO/EGRESO) ═══ */}
+        {!isTransferencia && (
+          <div className="rounded-xl border border-slate-200 dark:border-slate-800 p-4 space-y-4">
+            <SectionHeader
+              icon={<Tag className="h-4 w-4" />}
+              title="Clasificacion"
+              subtitle={
+                tipo === 'INGRESO'
+                  ? 'Medio de pago y categoria del ingreso'
+                  : 'Medio de pago y categoria del egreso'
+              }
+            />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Controller
-                name="cuentaDestinoId"
+                name="medioPago"
                 control={control}
                 render={({ field }) => (
                   <Select
-                    label="Cuenta Destino *"
-                    options={cuentas
-                      .filter((c) => c.id.toString() !== cuentaOrigenIdValue)
-                      .map((c) => ({
-                        value: c.id.toString(),
-                        label: c.nombre,
-                        description: c.banco?.nombreCorto || c.tipo,
-                        icon: <Building2 className="h-4 w-4" />,
-                      }))}
+                    label="Medio de Pago *"
+                    options={MEDIOS_PAGO.map((mp) => ({
+                      value: mp,
+                      label: MEDIO_PAGO_LABELS[mp],
+                      icon: <CreditCard className="h-4 w-4" />,
+                    }))}
                     value={field.value}
                     onChange={field.onChange}
-                    error={errors.cuentaDestinoId?.message}
-                    placeholder="Seleccionar cuenta destino..."
                   />
                 )}
               />
-              {cuentaDestino && (
-                <p className="text-xs text-slate-500 pl-1">
-                  Saldo actual:{' '}
-                  <span className="font-semibold">{formatCurrency(cuentaDestino.saldoActual)}</span>
-                </p>
-              )}
-            </div>
-          </>
-        ) : (
-          /* Cuenta única para INGRESO/EGRESO */
-          <Controller
-            name="cuentaId"
-            control={control}
-            render={({ field }) => (
-              <Select
-                label="Cuenta *"
-                options={cuentas.map((c) => ({
-                  value: c.id.toString(),
-                  label: c.nombre,
-                  description: c.banco?.nombreCorto || c.tipo,
-                  icon: <Building2 className="h-4 w-4" />,
-                }))}
-                value={field.value}
-                onChange={field.onChange}
-                error={errors.cuentaId?.message}
-                placeholder="Seleccionar cuenta..."
+              <Controller
+                name={tipo === 'INGRESO' ? 'categoriaIngreso' : 'categoriaEgreso'}
+                control={control}
+                render={({ field }) => (
+                  <Select
+                    label="Categoria *"
+                    options={
+                      tipo === 'INGRESO'
+                        ? CATEGORIAS_INGRESO.map((cat) => ({
+                            value: cat,
+                            label: CATEGORIA_INGRESO_LABELS[cat],
+                          }))
+                        : CATEGORIAS_EGRESO.map((cat) => ({
+                            value: cat,
+                            label: CATEGORIA_EGRESO_LABELS[cat],
+                          }))
+                    }
+                    value={field.value}
+                    onChange={field.onChange}
+                  />
+                )}
               />
-            )}
-          />
+            </div>
+          </div>
         )}
 
-        {/* Monto y Fecha */}
-        <div className="grid grid-cols-2 gap-4">
+        {/* ═══ SECCION: DETALLE ═══ */}
+        <div className="rounded-xl border border-slate-200 dark:border-slate-800 p-4 space-y-4">
+          <SectionHeader
+            icon={<AlignLeft className="h-4 w-4" />}
+            title="Detalle"
+            subtitle="Descripcion y comprobante del movimiento"
+          />
+
           <div className="space-y-1.5">
             <label
-              htmlFor="monto-input"
-              className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1"
+              htmlFor="descripcion-input"
+              className="text-xs font-bold text-slate-500 uppercase tracking-wider"
             >
-              <DollarSign className="h-4 w-4" /> Monto *
+              Descripcion *
             </label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">
-                $
-              </span>
-              <input
-                id="monto-input"
-                type="number"
-                step="0.01"
-                min="0"
-                placeholder="0.00"
-                {...register('monto')}
-                className="w-full h-10 pl-7 pr-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none focus:border-brand tabular-nums text-slate-900 dark:text-white"
-              />
-            </div>
-            {errors.monto && (
+            <textarea
+              id="descripcion-input"
+              rows={3}
+              placeholder={
+                isTransferencia
+                  ? 'Motivo de la transferencia entre cuentas...'
+                  : tipo === 'INGRESO'
+                    ? 'Ej: Cobro factura A-0001-00012345 de Cliente X...'
+                    : 'Ej: Compra de materiales para obra OBR-001...'
+              }
+              {...register('descripcion')}
+              className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 resize-none text-slate-900 dark:text-white transition-all"
+            />
+            {errors.descripcion && (
               <p role="alert" className="text-[11px] font-medium text-red-500">
-                {errors.monto.message}
+                {errors.descripcion.message}
               </p>
             )}
           </div>
-          <Controller
-            name="fechaMovimiento"
-            control={control}
-            render={({ field }) => (
-              <DatePicker
-                label="Fecha *"
-                value={field.value}
-                onChange={field.onChange}
-                error={errors.fechaMovimiento?.message}
-              />
-            )}
-          />
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Input
+              label="Nro. Comprobante"
+              placeholder="Factura, recibo, etc."
+              leftIcon={<FileText className="h-4 w-4" />}
+              {...register('comprobante')}
+            />
+
+            {/* Adjuntar archivo */}
+            <Controller
+              name="comprobanteUrl"
+              control={control}
+              render={({ field }) => (
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                    Adjuntar Archivo
+                  </label>
+                  {field.value ? (
+                    <div className="flex items-center gap-2 p-2.5 h-10 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg">
+                      <Paperclip className="h-4 w-4 text-brand shrink-0" />
+                      <a
+                        href={field.value}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-brand hover:underline truncate flex-1"
+                      >
+                        Archivo adjunto
+                      </a>
+                      <button
+                        type="button"
+                        onClick={() => field.onChange(null)}
+                        className="h-6 w-6 flex items-center justify-center text-slate-400 hover:text-red-500 rounded hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors shrink-0"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={isUploadingFile}
+                      onClick={() => fileInputRef.current?.click()}
+                      className="flex items-center gap-2 w-full h-10 px-3 border border-dashed border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-500 hover:text-brand hover:border-brand transition-colors disabled:opacity-50"
+                    >
+                      {isUploadingFile ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Paperclip className="h-4 w-4" />
+                      )}
+                      {isUploadingFile ? 'Subiendo...' : 'Adjuntar PDF o imagen'}
+                    </button>
+                  )}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="application/pdf,image/jpeg,image/png,image/webp"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      if (file.size > 10 * 1024 * 1024) {
+                        toast.error('El archivo no puede superar 10MB');
+                        return;
+                      }
+                      setIsUploadingFile(true);
+                      try {
+                        const formData = new FormData();
+                        formData.append('file', file);
+                        const res = await api.post('/upload', formData, {
+                          headers: { 'Content-Type': 'multipart/form-data' },
+                        });
+                        field.onChange(res.data.data.url);
+                      } catch {
+                        toast.error('Error al subir el archivo');
+                      } finally {
+                        setIsUploadingFile(false);
+                        if (fileInputRef.current) fileInputRef.current.value = '';
+                      }
+                    }}
+                  />
+                </div>
+              )}
+            />
+          </div>
         </div>
 
-        {/* Medio de Pago - solo para INGRESO/EGRESO */}
+        {/* ═══ SECCION: VINCULACIONES (solo INGRESO/EGRESO) ═══ */}
         {!isTransferencia && (
-          <Controller
-            name="medioPago"
-            control={control}
-            render={({ field }) => (
-              <Select
-                label="Medio de Pago *"
-                options={MEDIOS_PAGO.map((mp) => ({ value: mp, label: MEDIO_PAGO_LABELS[mp] }))}
-                value={field.value}
-                onChange={field.onChange}
+          <div className="rounded-xl border border-slate-200 dark:border-slate-800 p-4 space-y-4">
+            <SectionHeader
+              icon={<Link2 className="h-4 w-4" />}
+              title="Vinculaciones"
+              subtitle="Opcional: vincular a un cliente, obra o ticket"
+            />
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Controller
+                name="clienteId"
+                control={control}
+                render={({ field }) => (
+                  <Select
+                    label="Cliente"
+                    options={clientes.map((c) => ({
+                      value: c.id.toString(),
+                      label: c.razonSocial,
+                      icon: <User className="h-4 w-4" />,
+                    }))}
+                    value={field.value}
+                    onChange={field.onChange}
+                    placeholder="Sin vincular"
+                  />
+                )}
               />
-            )}
-          />
-        )}
 
-        {/* Categoría - solo para INGRESO/EGRESO */}
-        {!isTransferencia && (
-          <Controller
-            name={tipo === 'INGRESO' ? 'categoriaIngreso' : 'categoriaEgreso'}
-            control={control}
-            render={({ field }) => (
-              <Select
-                label="Categoría *"
-                options={
-                  tipo === 'INGRESO'
-                    ? CATEGORIAS_INGRESO.map((cat) => ({
-                        value: cat,
-                        label: CATEGORIA_INGRESO_LABELS[cat],
-                      }))
-                    : CATEGORIAS_EGRESO.map((cat) => ({
-                        value: cat,
-                        label: CATEGORIA_EGRESO_LABELS[cat],
-                      }))
-                }
-                value={field.value}
-                onChange={field.onChange}
-              />
-            )}
-          />
-        )}
-
-        {/* Comprobante */}
-        <Input
-          label="Comprobante"
-          placeholder="Nro de factura, recibo, etc."
-          leftIcon={<FileText className="h-4 w-4" />}
-          {...register('comprobante')}
-        />
-
-        {/* Adjuntar archivo comprobante */}
-        <Controller
-          name="comprobanteUrl"
-          control={control}
-          render={({ field }) => (
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                Adjuntar Comprobante
-              </label>
-              {field.value ? (
-                <div className="flex items-center gap-2 p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg">
-                  <Paperclip className="h-4 w-4 text-brand shrink-0" />
-                  <a
-                    href={field.value}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm text-brand hover:underline truncate flex-1"
-                  >
-                    Archivo adjunto
-                  </a>
-                  <button
-                    type="button"
-                    onClick={() => field.onChange(null)}
-                    className="h-7 w-7 flex items-center justify-center text-slate-400 hover:text-red-500 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors shrink-0"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  disabled={isUploadingFile}
-                  onClick={() => fileInputRef.current?.click()}
-                  className="flex items-center gap-2 w-full p-2.5 border border-dashed border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-500 hover:text-brand hover:border-brand transition-colors disabled:opacity-50"
-                >
-                  {isUploadingFile ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Paperclip className="h-4 w-4" />
-                  )}
-                  {isUploadingFile ? 'Subiendo...' : 'Adjuntar factura, recibo o comprobante'}
-                </button>
-              )}
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="application/pdf,image/jpeg,image/png,image/webp"
-                className="hidden"
-                onChange={async (e) => {
-                  const file = e.target.files?.[0];
-                  if (!file) return;
-                  if (file.size > 10 * 1024 * 1024) {
-                    toast.error('El archivo no puede superar 10MB');
-                    return;
-                  }
-                  setIsUploadingFile(true);
-                  try {
-                    const formData = new FormData();
-                    formData.append('file', file);
-                    const res = await api.post('/upload', formData, {
-                      headers: { 'Content-Type': 'multipart/form-data' },
-                    });
-                    field.onChange(res.data.data.url);
-                  } catch {
-                    toast.error('Error al subir el archivo');
-                  } finally {
-                    setIsUploadingFile(false);
-                    if (fileInputRef.current) fileInputRef.current.value = '';
-                  }
-                }}
+              <Controller
+                name="obraId"
+                control={control}
+                render={({ field }) => (
+                  <Select
+                    label="Obra"
+                    options={obras.map((o) => ({
+                      value: o.id.toString(),
+                      label: `${o.codigo} - ${o.titulo}`,
+                      icon: <Wrench className="h-4 w-4" />,
+                    }))}
+                    value={field.value}
+                    onChange={field.onChange}
+                    disabled={!clienteId}
+                    placeholder={clienteId ? 'Sin vincular' : 'Seleccione cliente primero'}
+                  />
+                )}
               />
             </div>
-          )}
-        />
-
-        {/* Descripción */}
-        <div className="space-y-1.5">
-          <label
-            htmlFor="descripcion-input"
-            className="text-xs font-bold text-slate-500 uppercase tracking-wider"
-          >
-            Descripción *
-          </label>
-          <textarea
-            id="descripcion-input"
-            rows={2}
-            placeholder={
-              isTransferencia ? 'Motivo de la transferencia...' : 'Detalle del movimiento...'
-            }
-            {...register('descripcion')}
-            className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none focus:border-brand resize-none text-slate-900 dark:text-white"
-          />
-          {errors.descripcion && (
-            <p role="alert" className="text-[11px] font-medium text-red-500">
-              {errors.descripcion.message}
-            </p>
-          )}
-        </div>
-
-        {/* Vinculaciones - solo para INGRESO/EGRESO */}
-        {!isTransferencia && (
-          <div className="border-t border-slate-200 dark:border-slate-700 pt-4 space-y-4">
-            <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-              Vincular a (opcional)
-            </h3>
-
-            <Controller
-              name="clienteId"
-              control={control}
-              render={({ field }) => (
-                <Select
-                  label="Cliente"
-                  options={clientes.map((c) => ({
-                    value: c.id.toString(),
-                    label: c.razonSocial,
-                    icon: <User className="h-4 w-4" />,
-                  }))}
-                  value={field.value}
-                  onChange={field.onChange}
-                  placeholder="Buscar cliente..."
-                />
-              )}
-            />
-
-            <Controller
-              name="obraId"
-              control={control}
-              render={({ field }) => (
-                <Select
-                  label="Obra"
-                  options={obras.map((o) => ({
-                    value: o.id.toString(),
-                    label: `${o.codigo} - ${o.titulo}`,
-                    icon: <Wrench className="h-4 w-4" />,
-                  }))}
-                  value={field.value}
-                  onChange={field.onChange}
-                  disabled={!clienteId}
-                  placeholder={clienteId ? 'Sin vincular' : 'Seleccione cliente primero'}
-                />
-              )}
-            />
 
             <Controller
               name="ticketId"
@@ -795,7 +893,7 @@ export default function MovimientoDrawer({ isOpen, onClose, onSuccess }: Movimie
                   label="Ticket"
                   options={tickets.map((t) => ({
                     value: t.id.toString(),
-                    label: `TKT-${String(t.codigoInterno).padStart(5, '0')} - ${t.descripcion.substring(0, 40)}...`,
+                    label: `TKT-${String(t.codigoInterno).padStart(5, '0')} - ${t.descripcion.substring(0, 50)}`,
                     icon: <Ticket className="h-4 w-4" />,
                   }))}
                   value={field.value}
