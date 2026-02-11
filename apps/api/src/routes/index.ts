@@ -13,6 +13,7 @@ import uploadRoutes from './upload.routes.js';
 import otRoutes from './ot.routes.js';
 import obraRoutes from './obra.routes.js';
 import finanzasRoutes from './finanzas.routes.js';
+import auditRoutes from './audit.routes.js';
 
 const router = Router();
 
@@ -31,5 +32,6 @@ router.use('/upload', uploadRoutes);
 router.use('/ordenes-trabajo', otRoutes);
 router.use('/obras', obraRoutes);
 router.use('/finanzas', finanzasRoutes);
+router.use('/audit', auditRoutes);
 
 export default router;

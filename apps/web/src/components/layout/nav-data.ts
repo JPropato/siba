@@ -6,6 +6,7 @@ import {
   Package,
   Users,
   ShieldCheck,
+  Shield,
   Settings,
   ChevronDown,
   X,
@@ -99,6 +100,7 @@ export const navSections: NavSection[] = [
     items: [
       { id: 'usuarios', label: 'Usuarios', icon: ShieldCheck, permission: 'usuarios:leer' },
       { id: 'roles', label: 'Roles', icon: ShieldCheck, permission: 'roles:leer' },
+      { id: 'audit', label: 'Auditoría', icon: Shield, permission: 'audit:leer' },
     ],
   },
 ];
@@ -142,7 +144,7 @@ export const menuPermissions: Record<string, string | string[] | null> = {
   administracion: ['clientes:leer', 'vehiculos:leer', 'zonas:leer', 'sedes:leer'],
   catalogo: 'materiales:leer',
   rrhh: 'empleados:leer',
-  seguridad: ['usuarios:leer', 'roles:leer'],
+  seguridad: ['usuarios:leer', 'roles:leer', 'audit:leer'],
   configuracion: null,
 };
 
@@ -197,6 +199,7 @@ export const allNavItems: NavItem[] = [
     subItems: [
       { id: 'usuarios', label: 'Usuarios', permission: 'usuarios:leer' },
       { id: 'roles', label: 'Roles', permission: 'roles:leer' },
+      { id: 'audit', label: 'Auditoría', permission: 'audit:leer' },
     ],
   },
 ];
