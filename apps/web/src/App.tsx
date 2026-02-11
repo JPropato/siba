@@ -38,6 +38,7 @@ const CuentasPage = lazy(() =>
 const InversionesPage = lazy(() =>
   import('./features/finanzas').then((m) => ({ default: m.InversionesPage }))
 );
+const AuditPage = lazy(() => import('./features/audit/pages/AuditPage'));
 
 // --- Page Loading Fallback ---
 function PageLoadingFallback() {
@@ -132,6 +133,7 @@ function DashboardWrapper({ children }: { children: React.ReactNode }) {
     if (id === 'finanzas-movimientos') navigate('/dashboard/finanzas/movimientos');
     if (id === 'finanzas-cuentas') navigate('/dashboard/finanzas/cuentas');
     if (id === 'finanzas-inversiones') navigate('/dashboard/finanzas/inversiones');
+    if (id === 'audit') navigate('/dashboard/audit');
   };
 
   const getPageInfo = (path: string) => {
@@ -168,6 +170,8 @@ function DashboardWrapper({ children }: { children: React.ReactNode }) {
       return { id: 'finanzas-inversiones', label: 'Inversiones', parentLabel: 'Finanzas' };
     if (path.includes('finanzas'))
       return { id: 'finanzas-dashboard', label: 'Dashboard', parentLabel: 'Finanzas' };
+    if (path.includes('audit'))
+      return { id: 'audit', label: 'Auditoría', parentLabel: 'Administración' };
     return { id: 'dashboard', label: 'Dashboard' };
   };
 
@@ -373,6 +377,16 @@ export default function App() {
                 <DashboardWrapper>
                   <RequirePermission permission="finanzas:leer">
                     <InversionesPage />
+                  </RequirePermission>
+                </DashboardWrapper>
+              }
+            />
+            <Route
+              path="/dashboard/audit"
+              element={
+                <DashboardWrapper>
+                  <RequirePermission permission="audit:leer">
+                    <AuditPage />
                   </RequirePermission>
                 </DashboardWrapper>
               }

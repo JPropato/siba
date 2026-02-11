@@ -86,6 +86,8 @@ async function seedSeguridad() {
       modulo: 'Finanzas',
       descripcion: 'Gestionar movimientos financieros',
     },
+    // Auditoría
+    { codigo: 'audit:leer', modulo: 'Auditoría', descripcion: 'Ver registro de actividad' },
   ];
 
   for (const p of permisos) {

@@ -8,6 +8,7 @@ import path from 'path';
 import cookieParser from 'cookie-parser';
 import routes from './routes/index.js';
 import { errorHandler, notFoundHandler } from './middlewares/error.middleware.js';
+import { auditMiddleware } from './middlewares/audit.middleware.js';
 
 const app = express();
 // Confiar en el proxy (Dokploy/Traefik) para detectar HTTPS correctamente
@@ -125,6 +126,9 @@ app.get('/api/health', async (_req, res) => {
 app.get('/', (_req, res) => {
   res.send('API Running');
 });
+
+// Audit middleware (must be before routes to intercept responses)
+app.use('/api', auditMiddleware);
 
 // Rutas API
 app.use('/api', routes);

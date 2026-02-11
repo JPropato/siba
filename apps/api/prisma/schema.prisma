@@ -78,6 +78,9 @@ model Usuario {
   movimientosRegistrados  Movimiento[]
   importacionesMasivas    ImportacionMasiva[]
 
+  // Audit trail
+  eventosAuditoria        EventoAuditoria[]
+
   @@map("usuarios")
 }
 
@@ -776,4 +779,39 @@ model ImportacionMasiva {
   usuario         Usuario   @relation(fields: [usuarioId], references: [id])
   
   @@map("importaciones_masivas")
+}
+
+// ============ AUDIT TRAIL ============
+
+model EventoAuditoria {
+  id            Int      @id @default(autoincrement())
+
+  usuarioId     Int      @map("usuario_id")
+  accion        String   // CREAR, ACTUALIZAR, ELIMINAR, CAMBIO_ESTADO, LOGIN, LOGOUT, TRANSFERENCIA
+  modulo        String   // tickets, obras, finanzas, clientes, empleados, sedes, vehiculos, materiales, usuarios, roles, auth
+
+  entidadId     Int?     @map("entidad_id")     // ID del registro afectado
+  entidadTipo   String?  @map("entidad_tipo")   // Nombre del modelo: Ticket, Obra, Movimiento, etc.
+  descripcion   String                          // Resumen legible: "Creó ticket TKT-00001"
+
+  detalle       String?  @db.Text               // JSON con cambios específicos (old/new values)
+  ip            String?                          // IP del cliente
+
+  // Contexto opcional para filtrado cruzado
+  obraId        Int?     @map("obra_id")
+  ticketId      Int?     @map("ticket_id")
+  clienteId     Int?     @map("cliente_id")
+
+  fechaEvento   DateTime @default(now()) @map("fecha_evento")
+
+  usuario       Usuario  @relation(fields: [usuarioId], references: [id])
+
+  @@index([usuarioId])
+  @@index([modulo])
+  @@index([fechaEvento])
+  @@index([entidadTipo, entidadId])
+  @@index([obraId])
+  @@index([ticketId])
+  @@index([clienteId])
+  @@map("eventos_auditoria")
 }
