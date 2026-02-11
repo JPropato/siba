@@ -135,7 +135,7 @@ async function main() {
           email,
           telefono: t['TELEFONO'] || null,
           tipo: 'TECNICO',
-          contratacion: 'CONTRATO_MARCO',
+          tipoContrato: 'RELACION_DEPENDENCIA',
           zonaId:
             zona?.id || (await prisma.zona.findFirst({ where: { nombre: 'GENERAL' } }))?.id || 1,
           inicioRelacionLaboral: new Date(),

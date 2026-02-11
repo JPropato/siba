@@ -21,6 +21,8 @@ export default function EmpleadosPage() {
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [page, setPage] = useState(1);
+  const [estado, setEstado] = useState('');
+  const [tipo, setTipo] = useState('');
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -32,14 +34,24 @@ export default function EmpleadosPage() {
     return () => clearTimeout(timer);
   }, [search]);
 
+  // Reset page on filter change
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, estado, tipo]);
+
   // TanStack Query hooks
-  const { data, isLoading, refetch } = useEmpleados(debouncedSearch, page);
+  const { data, isLoading, refetch } = useEmpleados(
+    { search: debouncedSearch, estado, tipo },
+    page
+  );
   const empleados = data?.data ?? [];
   const totalPages = data?.totalPages ?? 1;
   const createEmpleado = useCreateEmpleado();
   const updateEmpleado = useUpdateEmpleado();
   const deleteEmpleado = useDeleteEmpleado();
   const { confirm, ConfirmDialog } = useConfirm();
+
+  const activeFiltersCount = [search, estado, tipo].filter(Boolean).length;
 
   const handleCreate = () => {
     setSelectedEmpleado(null);
@@ -81,6 +93,9 @@ export default function EmpleadosPage() {
     await refetch();
   }, [refetch]);
 
+  const selectClasses =
+    'h-10 px-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 transition-all text-slate-900 dark:text-white';
+
   return (
     <PullToRefresh onRefresh={handleRefresh} className="min-h-screen">
       <div className="px-4 pt-3 pb-6 sm:px-6 space-y-5 animate-in fade-in duration-500">
@@ -102,16 +117,39 @@ export default function EmpleadosPage() {
         />
 
         {/* Filters - Colapsables en móvil */}
-        <CollapsibleFilters activeFiltersCount={search ? 1 : 0}>
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Buscar por nombre, apellido o email..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full h-10 pl-10 pr-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 transition-all text-slate-900 dark:text-white"
-            />
+        <CollapsibleFilters activeFiltersCount={activeFiltersCount}>
+          <div className="flex flex-wrap gap-3 items-end">
+            <div className="relative flex-1 min-w-[200px] max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Buscar por nombre, CUIL, legajo..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full h-10 pl-10 pr-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 transition-all text-slate-900 dark:text-white"
+              />
+            </div>
+            <select
+              value={estado}
+              onChange={(e) => setEstado(e.target.value)}
+              className={selectClasses}
+            >
+              <option value="">Todos los estados</option>
+              <option value="ACTIVO">Activo</option>
+              <option value="BAJA">Baja</option>
+              <option value="RENUNCIA">Renuncia</option>
+              <option value="LICENCIA">Licencia</option>
+            </select>
+            <select
+              value={tipo}
+              onChange={(e) => setTipo(e.target.value)}
+              className={selectClasses}
+            >
+              <option value="">Todos los tipos</option>
+              <option value="TECNICO">Técnico</option>
+              <option value="ADMINISTRATIVO">Administrativo</option>
+              <option value="GERENTE">Gerente</option>
+            </select>
           </div>
         </CollapsibleFilters>
 

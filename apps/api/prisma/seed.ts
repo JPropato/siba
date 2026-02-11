@@ -73,6 +73,7 @@ async function seedSeguridad() {
     // Empleados
     { codigo: 'empleados:leer', modulo: 'Empleados', descripcion: 'Ver empleados' },
     { codigo: 'empleados:escribir', modulo: 'Empleados', descripcion: 'Gestionar empleados' },
+    { codigo: 'empleados:salarios', modulo: 'Empleados', descripcion: 'Ver informacion salarial' },
     // Usuarios
     { codigo: 'usuarios:leer', modulo: 'Usuarios', descripcion: 'Ver usuarios' },
     { codigo: 'usuarios:escribir', modulo: 'Usuarios', descripcion: 'Gestionar usuarios' },
@@ -282,8 +283,8 @@ async function seedMaestros() {
       const esReferente = t['ES_REFERENTE']?.trim().toUpperCase() === 'SI';
       const puesto = t['PUESTO']?.trim() || null;
       const telefono = t['TELEFONO']?.trim() || null;
-      const contratacion =
-        t['CONTRATACION']?.trim() === 'CONTRATO_MARCO' ? ('CONTRATO_MARCO' as const) : null;
+      const tipoContrato =
+        t['CONTRATACION']?.trim() === 'CONTRATO_MARCO' ? ('RELACION_DEPENDENCIA' as const) : null;
 
       const existe = await prisma.empleado.findFirst({
         where: {
@@ -296,7 +297,7 @@ async function seedMaestros() {
       if (existe) {
         await prisma.empleado.update({
           where: { id: existe.id },
-          data: { esReferente, puesto, zonaId, telefono, contratacion },
+          data: { esReferente, puesto, zonaId, telefono, tipoContrato },
         });
         tecnicosExistentes++;
         continue;
@@ -308,7 +309,7 @@ async function seedMaestros() {
           apellido,
           telefono,
           tipo: 'TECNICO',
-          contratacion,
+          tipoContrato,
           esReferente,
           puesto,
           zonaId,

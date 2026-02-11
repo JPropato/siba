@@ -87,6 +87,7 @@ function guessEntityType(path: string): string {
   if (path.includes('/zones')) return 'Zona';
   if (path.includes('/vehiculos')) return 'Vehiculo';
   if (path.includes('/materials')) return 'Material';
+  if (path.includes('/seguros-ap')) return 'SeguroAP';
   if (path.includes('/empleados')) return 'Empleado';
   if (path.includes('/users')) return 'Usuario';
   if (path.includes('/roles')) return 'Rol';

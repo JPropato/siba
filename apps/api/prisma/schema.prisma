@@ -17,8 +17,48 @@ enum TipoEmpleado {
   GERENTE
 }
 
-enum TipoContratacion {
-  CONTRATO_MARCO
+
+enum EstadoEmpleado {
+  ACTIVO
+  RENUNCIA
+  BAJA
+  LICENCIA
+}
+
+enum TipoContrato {
+  RELACION_DEPENDENCIA
+  MONOTRIBUTO
+  PASANTIA
+}
+
+enum CategoriaLaboral {
+  OFICIAL
+  MEDIO_OFICIAL
+  AYUDANTE
+  ADMINISTRATIVO
+  ENCARGADO
+}
+
+enum EstadoCivil {
+  SOLTERO
+  CASADO
+  DIVORCIADO
+  VIUDO
+  UNION_CONVIVENCIAL
+}
+
+enum EstadoPreocupacional {
+  PENDIENTE
+  APTO
+  NO_APTO
+  VENCIDO
+}
+
+enum EstadoSeguroAP {
+  PEDIDO_ALTA
+  ACTIVO
+  PEDIDO_BAJA
+  BAJA
 }
 
 enum RubroTicket {
@@ -285,27 +325,62 @@ model HistorialPrecio {
 }
 
 model Empleado {
-  id                    Int              @id @default(autoincrement())
-  nombre                String
-  apellido              String
-  email                 String?          @unique
-  direccion             String?
-  telefono              String?
-  inicioRelacionLaboral DateTime         @map("inicio_relacion_laboral")
-  tipo                  TipoEmpleado
-  contratacion          TipoContratacion?
-  esReferente           Boolean          @default(false) @map("es_referente")
-  puesto                String?
-  foto                  String?
-  notas                 String?          @db.Text
-  fechaVencimientoSeguro DateTime?       @map("fecha_vencimiento_seguro")
-  fechaVencimientoRegistro DateTime?     @map("fecha_vencimiento_registro")
-  zonaId                Int?             @map("zona_id")
-  usuarioId             Int?             @unique @map("usuario_id")
-  
-  fechaCreacion         DateTime         @default(now()) @map("fecha_creacion")
-  fechaActualizacion    DateTime         @updatedAt @map("fecha_actualizacion")
-  fechaEliminacion      DateTime?        @map("fecha_eliminacion")
+  id                       Int              @id @default(autoincrement())
+  nombre                   String
+  apellido                 String
+  email                    String?          @unique
+  direccion                String?
+  telefono                 String?
+  inicioRelacionLaboral    DateTime         @map("inicio_relacion_laboral")
+  tipo                     TipoEmpleado
+  esReferente              Boolean          @default(false) @map("es_referente")
+  puesto                   String?
+  foto                     String?
+  notas                    String?          @db.Text
+  fechaVencimientoSeguro   DateTime?        @map("fecha_vencimiento_seguro")
+  fechaVencimientoRegistro DateTime?        @map("fecha_vencimiento_registro")
+  zonaId                   Int?             @map("zona_id")
+  usuarioId                Int?             @unique @map("usuario_id")
+
+  // Datos Personales
+  cuil                     String?          @unique
+  dni                      String?          @unique
+  fechaNacimiento          DateTime?        @map("fecha_nacimiento")
+  estadoCivil              EstadoCivil?     @map("estado_civil")
+  cantidadHijos            Int?             @default(0) @map("cantidad_hijos")
+  telefonoSecundario       String?          @map("telefono_secundario")
+  dniBeneficiario          String?          @map("dni_beneficiario")
+
+  // Datos Laborales
+  legajo                   String?          @unique
+  estado                   EstadoEmpleado   @default(ACTIVO)
+  tipoContrato             TipoContrato?    @map("tipo_contrato")
+  categoriaLaboral         CategoriaLaboral? @map("categoria_laboral")
+  convenioSeccion          String?          @map("convenio_seccion")
+  lugarTrabajo             String?          @map("lugar_trabajo")
+  horario                  String?
+  ieric                    Boolean          @default(false)
+  obraSocial               String?          @map("obra_social")
+  fechaBaja                DateTime?        @map("fecha_baja")
+  motivoBaja               String?          @map("motivo_baja")
+
+  // Datos Bancarios
+  banco                    String?
+  cbu                      String?
+  estadoBanco              String?          @map("estado_banco")
+
+  // Datos Salariales (acceso restringido por permiso)
+  sueldoBruto              Decimal?         @map("sueldo_bruto") @db.Decimal(12, 2)
+  sueldoNeto               Decimal?         @map("sueldo_neto") @db.Decimal(12, 2)
+  fechaActualizacionSueldo DateTime?        @map("fecha_actualizacion_sueldo")
+
+  // Documentacion
+  preocupacionalEstado     EstadoPreocupacional? @map("preocupacional_estado")
+  preocupacionalFecha      DateTime?        @map("preocupacional_fecha")
+
+  fechaCreacion            DateTime         @default(now()) @map("fecha_creacion")
+  fechaActualizacion       DateTime         @updatedAt @map("fecha_actualizacion")
+  fechaEliminacion         DateTime?        @map("fecha_eliminacion")
 
   zona    Zona?    @relation(fields: [zonaId], references: [id])
   usuario Usuario? @relation(fields: [usuarioId], references: [id])
@@ -314,10 +389,34 @@ model Empleado {
   ticketsAsignado Ticket[]       @relation("TicketTecnico")
   ordenesTrabajo  OrdenTrabajo[] @relation("OrdenTrabajoTecnico")
   movimientos     Movimiento[]
+  segurosAP       SeguroAP[]
 
   @@index([zonaId])
   @@index([tipo])
+  @@index([estado])
+  @@index([legajo])
   @@map("empleados")
+}
+
+model SeguroAP {
+  id                  Int              @id @default(autoincrement())
+  empleadoId          Int              @map("empleado_id")
+  estado              EstadoSeguroAP   @default(PEDIDO_ALTA)
+  fechaSolicitudAlta  DateTime         @default(now()) @map("fecha_solicitud_alta")
+  fechaAltaEfectiva   DateTime?        @map("fecha_alta_efectiva")
+  fechaSolicitudBaja  DateTime?        @map("fecha_solicitud_baja")
+  fechaBajaEfectiva   DateTime?        @map("fecha_baja_efectiva")
+  destino             String?
+  observaciones       String?          @db.Text
+
+  fechaCreacion       DateTime         @default(now()) @map("fecha_creacion")
+  fechaActualizacion  DateTime         @updatedAt @map("fecha_actualizacion")
+
+  empleado            Empleado         @relation(fields: [empleadoId], references: [id])
+
+  @@index([empleadoId])
+  @@index([estado])
+  @@map("seguros_ap")
 }
 
 // ============ TICKETS ============

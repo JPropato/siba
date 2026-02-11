@@ -1,7 +1,13 @@
 import type { Empleado } from '../../types/empleados';
+import {
+  ESTADO_EMPLEADO_CONFIG,
+  TIPO_EMPLEADO_CONFIG,
+  CATEGORIA_LABORAL_CONFIG,
+  TIPO_CONTRATO_CONFIG,
+} from '../../types/empleados';
 import { useSortableTable } from '../../hooks/useSortableTable';
 import { useActionSheet } from '../../hooks/useActionSheet';
-import { Loader2, Pencil, Trash2, Users, Star } from 'lucide-react';
+import { Loader2, Pencil, Trash2, Users, Star, ShieldCheck } from 'lucide-react';
 import { EmptyState } from '../ui/EmptyState';
 import { motion } from 'framer-motion';
 import { SortableHeader } from '../ui/core/SortableHeader';
@@ -13,6 +19,15 @@ interface EmpleadoTableProps {
   onDelete: (empleado: Empleado) => void;
   isLoading: boolean;
 }
+
+const ESTADO_BADGE_CLASSES: Record<string, string> = {
+  green:
+    'bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800',
+  amber:
+    'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800',
+  red: 'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800',
+  blue: 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800',
+};
 
 export default function EmpleadoTable({
   empleados,
@@ -53,6 +68,17 @@ export default function EmpleadoTable({
     }
   };
 
+  function getAPIndicator(e: Empleado) {
+    const seguro = e.segurosAP?.[0];
+    if (!seguro) {
+      return <span className="h-2 w-2 rounded-full bg-red-400" title="Sin cobertura" />;
+    }
+    if (seguro.estado === 'ACTIVO') {
+      return <span className="h-2 w-2 rounded-full bg-green-400" title="Cobertura activa" />;
+    }
+    return <span className="h-2 w-2 rounded-full bg-amber-400" title="Pendiente" />;
+  }
+
   return (
     <div className="w-full overflow-hidden rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm">
       <div className="overflow-x-auto">
@@ -69,13 +95,19 @@ export default function EmpleadoTable({
                 Contacto
               </th>
               <SortableHeader<Empleado>
-                label="Tipo"
+                label="Laboral"
                 sortKey="tipo"
                 sortConfig={sortConfig}
                 onSort={requestSort}
               />
-              <th className="px-3 py-2 font-semibold text-slate-900 dark:text-slate-100">
-                Zona Asignada
+              <th className="px-3 py-2 font-semibold text-slate-900 dark:text-slate-100 hidden sm:table-cell">
+                Estado
+              </th>
+              <th className="px-3 py-2 font-semibold text-slate-900 dark:text-slate-100 hidden md:table-cell">
+                Zona
+              </th>
+              <th className="px-3 py-2 font-semibold text-slate-900 dark:text-slate-100 hidden md:table-cell text-center">
+                <ShieldCheck className="h-4 w-4 inline" title="Seguro AP" />
               </th>
               <th className="px-3 py-2 font-semibold text-slate-900 dark:text-slate-100 text-right hidden sm:table-cell">
                 Acciones
@@ -106,7 +138,7 @@ export default function EmpleadoTable({
                         <Users className="h-4 w-4 text-slate-400" />
                       )}
                     </div>
-                    <div className="flex flex-col gap-1">
+                    <div className="flex flex-col gap-0.5">
                       <div className="flex items-center gap-1.5">
                         <span className="font-bold text-slate-900 dark:text-white text-sm">
                           {e.apellido}, {e.nombre}
@@ -115,6 +147,11 @@ export default function EmpleadoTable({
                           <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500 flex-shrink-0" />
                         )}
                       </div>
+                      {e.legajo && (
+                        <span className="text-[10px] text-slate-400 font-mono">
+                          Legajo {e.legajo}
+                        </span>
+                      )}
                       {e.puesto && (
                         <span className="text-[10px] text-slate-500 dark:text-slate-400">
                           {e.puesto}
@@ -142,14 +179,30 @@ export default function EmpleadoTable({
                     <span
                       className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${getTipoBadge(e.tipo)}`}
                     >
-                      {e.tipo}
+                      {TIPO_EMPLEADO_CONFIG[e.tipo]?.label || e.tipo}
                     </span>
-                    <span className="text-[10px] text-slate-400">
-                      {e.contratacion?.replace('_', ' ') || 'N/A'}
-                    </span>
+                    {e.categoriaLaboral && (
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400">
+                        {CATEGORIA_LABORAL_CONFIG[e.categoriaLaboral]?.label}
+                      </span>
+                    )}
+                    {e.tipoContrato && (
+                      <span className="text-[10px] text-slate-400">
+                        {TIPO_CONTRATO_CONFIG[e.tipoContrato]?.label}
+                      </span>
+                    )}
                   </div>
                 </td>
-                <td className="px-3 py-1.5">
+                <td className="px-3 py-1.5 hidden sm:table-cell">
+                  {e.estado && (
+                    <span
+                      className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${ESTADO_BADGE_CLASSES[ESTADO_EMPLEADO_CONFIG[e.estado]?.color] || ESTADO_BADGE_CLASSES.green}`}
+                    >
+                      {ESTADO_EMPLEADO_CONFIG[e.estado]?.label || e.estado}
+                    </span>
+                  )}
+                </td>
+                <td className="px-3 py-1.5 hidden md:table-cell">
                   {e.zona ? (
                     <span className="px-2 py-0.5 rounded-full bg-brand/10 text-brand text-[10px] font-bold border border-brand/20 uppercase">
                       {e.zona.nombre}
@@ -157,6 +210,9 @@ export default function EmpleadoTable({
                   ) : (
                     <span className="text-[10px] text-slate-400 italic">No asignada</span>
                   )}
+                </td>
+                <td className="px-3 py-1.5 hidden md:table-cell text-center">
+                  {getAPIndicator(e)}
                 </td>
                 <td className="px-2 py-1 text-right hidden sm:table-cell">
                   <div className="flex items-center justify-end gap-2">

@@ -92,7 +92,10 @@ export const navSections: NavSection[] = [
   {
     id: 'rrhh',
     label: 'Recursos Humanos',
-    items: [{ id: 'empleados', label: 'Empleados', icon: Users, permission: 'empleados:leer' }],
+    items: [
+      { id: 'empleados', label: 'Empleados', icon: Users, permission: 'empleados:leer' },
+      { id: 'seguros-ap', label: 'Seguros AP', icon: ShieldCheck, permission: 'empleados:leer' },
+    ],
   },
   {
     id: 'seguridad',
@@ -190,7 +193,10 @@ export const allNavItems: NavItem[] = [
     id: 'rrhh',
     label: 'Recursos Humanos',
     icon: 'groups',
-    subItems: [{ id: 'empleados', label: 'Empleados', permission: 'empleados:leer' }],
+    subItems: [
+      { id: 'empleados', label: 'Empleados', permission: 'empleados:leer' },
+      { id: 'seguros-ap', label: 'Seguros AP', permission: 'empleados:leer' },
+    ],
   },
   {
     id: 'seguridad',

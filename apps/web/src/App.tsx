@@ -38,6 +38,7 @@ const CuentasPage = lazy(() =>
 const InversionesPage = lazy(() =>
   import('./features/finanzas').then((m) => ({ default: m.InversionesPage }))
 );
+const SegurosAPPage = lazy(() => import('./pages/SegurosAPPage'));
 const AuditPage = lazy(() => import('./features/audit/pages/AuditPage'));
 
 // --- Page Loading Fallback ---
@@ -124,6 +125,7 @@ function DashboardWrapper({ children }: { children: React.ReactNode }) {
     if (id === 'vehiculos') navigate('/dashboard/vehicles');
     if (id === 'materiales') navigate('/dashboard/materials');
     if (id === 'empleados') navigate('/dashboard/empleados');
+    if (id === 'seguros-ap') navigate('/dashboard/seguros-ap');
     if (id === 'vacaciones') navigate('/dashboard/vacaciones');
     if (id === 'sueldos') navigate('/dashboard/sueldos');
     if (id === 'ausencias') navigate('/dashboard/ausencias');
@@ -149,6 +151,8 @@ function DashboardWrapper({ children }: { children: React.ReactNode }) {
       return { id: 'vehiculos', label: 'Vehículos', parentLabel: 'Administración' };
     if (path.includes('materials'))
       return { id: 'materiales', label: 'Materiales', parentLabel: 'Catálogo' };
+    if (path.includes('seguros-ap'))
+      return { id: 'seguros-ap', label: 'Seguros AP', parentLabel: 'Recursos Humanos' };
     if (path.includes('empleados'))
       return { id: 'empleados', label: 'Empleados', parentLabel: 'Recursos Humanos' };
     if (path.includes('vacaciones'))
@@ -277,6 +281,16 @@ export default function App() {
                 <DashboardWrapper>
                   <RequirePermission permission="empleados:leer">
                     <EmpleadosPage />
+                  </RequirePermission>
+                </DashboardWrapper>
+              }
+            />
+            <Route
+              path="/dashboard/seguros-ap"
+              element={
+                <DashboardWrapper>
+                  <RequirePermission permission="empleados:leer">
+                    <SegurosAPPage />
                   </RequirePermission>
                 </DashboardWrapper>
               }

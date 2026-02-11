@@ -293,7 +293,7 @@ export const Select = ({
               ref={listRef}
               role="listbox"
               aria-label={label || 'Opciones'}
-              className="flex-1 overflow-y-auto custom-scrollbar p-1"
+              className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-1"
             >
               {filteredOptions.length === 0 ? (
                 <div className="p-4 text-center text-sm text-slate-400 italic">
