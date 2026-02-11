@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import { Save, Info, Clock } from 'lucide-react';
+import { Save, Info, Clock, CalendarDays } from 'lucide-react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -54,6 +54,7 @@ const baseSchema = z.object({
   clienteId: z.string().min(1, 'Debe seleccionar un cliente'),
   sucursalId: z.string().min(1, 'Debe seleccionar una sucursal'),
   tecnicoId: z.string().optional().or(z.literal('')),
+  fechaCreacion: z.string().optional().or(z.literal('')),
   fechaProgramada: z.string().optional().or(z.literal('')),
   codigoCliente: z.string().optional().or(z.literal('')),
 });
@@ -88,10 +89,11 @@ export default function TicketDrawer({ isOpen, onClose, onSuccess, ticket }: Tic
     defaultValues: {
       descripcion: '',
       rubro: 'VARIOS',
-      tipoTicket: 'SN', // Default SN (Solicitud Normal)
+      tipoTicket: 'SN',
       clienteId: '',
       sucursalId: '',
       tecnicoId: '',
+      fechaCreacion: '',
       fechaProgramada: '',
       codigoCliente: '',
     },
@@ -148,6 +150,9 @@ export default function TicketDrawer({ isOpen, onClose, onSuccess, ticket }: Tic
               clienteId: ticketSucursal?.clienteId?.toString() || '',
               sucursalId: ticket.sucursalId.toString(),
               tecnicoId: ticket.tecnicoId?.toString() || '',
+              fechaCreacion: ticket.fechaCreacion
+                ? new Date(ticket.fechaCreacion).toISOString().split('T')[0]
+                : '',
               fechaProgramada: ticket.fechaProgramada
                 ? new Date(ticket.fechaProgramada).toISOString().split('T')[0]
                 : '',
@@ -162,6 +167,7 @@ export default function TicketDrawer({ isOpen, onClose, onSuccess, ticket }: Tic
               clienteId: correoCliente?.id?.toString() || '',
               sucursalId: '',
               tecnicoId: '',
+              fechaCreacion: '',
               fechaProgramada: '',
               codigoCliente: '',
             });
@@ -182,6 +188,9 @@ export default function TicketDrawer({ isOpen, onClose, onSuccess, ticket }: Tic
         tipoTicket: values.tipoTicket,
         sucursalId: Number(values.sucursalId),
         tecnicoId: values.tecnicoId ? Number(values.tecnicoId) : null,
+        fechaCreacion: values.fechaCreacion
+          ? new Date(values.fechaCreacion + 'T12:00:00').toISOString()
+          : null,
         fechaProgramada: values.fechaProgramada || null,
         codigoCliente: values.codigoCliente || null,
       };
@@ -414,28 +423,46 @@ export default function TicketDrawer({ isOpen, onClose, onSuccess, ticket }: Tic
               </span>
             </div>
 
-            {/* Técnico y Fecha Programada */}
+            {/* Técnico */}
+            <Controller
+              control={control}
+              name="tecnicoId"
+              render={({ field }) => (
+                <Select
+                  label="Técnico Asignado"
+                  options={[
+                    { value: '', label: 'Sin asignar' },
+                    ...tecnicos.map((t) => ({
+                      value: t.id.toString(),
+                      label: `${t.nombre} ${t.apellido}`,
+                    })),
+                  ]}
+                  value={field.value}
+                  onChange={field.onChange}
+                  placeholder="Sin asignar"
+                  disabled={isFetching}
+                />
+              )}
+            />
+
+            {/* Fechas */}
             <div className="grid grid-cols-2 gap-4">
-              <Controller
-                control={control}
-                name="tecnicoId"
-                render={({ field }) => (
-                  <Select
-                    label="Técnico Asignado"
-                    options={[
-                      { value: '', label: 'Sin asignar' },
-                      ...tecnicos.map((t) => ({
-                        value: t.id.toString(),
-                        label: `${t.nombre} ${t.apellido}`,
-                      })),
-                    ]}
-                    value={field.value}
-                    onChange={field.onChange}
-                    placeholder="Sin asignar"
-                    disabled={isFetching}
-                  />
-                )}
-              />
+              <div className="space-y-1.5">
+                <label
+                  htmlFor="fechaCreacion"
+                  className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5"
+                >
+                  <CalendarDays className="h-3.5 w-3.5" />
+                  Fecha del Ticket
+                </label>
+                <input
+                  id="fechaCreacion"
+                  type="date"
+                  {...register('fechaCreacion')}
+                  className="w-full h-10 px-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none focus:border-brand transition-all text-slate-900 dark:text-white"
+                />
+                <p className="text-[10px] text-slate-400">Dejar vacío para usar la fecha actual</p>
+              </div>
               <div className="space-y-1.5">
                 <label
                   htmlFor="fechaProgramada"

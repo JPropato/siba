@@ -16,6 +16,7 @@ const createTicketSchema = z.object({
   tipoTicket: z.enum(['SEA', 'SEP', 'SN']).default('SN'),
   sucursalId: z.number().int(),
   tecnicoId: z.number().int().optional().nullable(),
+  fechaCreacion: z.string().datetime().optional().nullable(),
   fechaProgramada: z.string().datetime().optional().nullable(),
   horaEjecucion: z.string().datetime().optional().nullable(),
   ticketRelacionadoId: z.number().int().optional().nullable(),
@@ -33,6 +34,8 @@ export const getAll = async (req: Request, res: Response) => {
     const estado = req.query.estado as EstadoTicket;
     const rubro = req.query.rubro as RubroTicket;
     const tipoTicket = req.query.tipoTicket as TipoTicket;
+    const tecnicoId = req.query.tecnicoId ? Number(req.query.tecnicoId) : undefined;
+    const clienteId = req.query.clienteId ? Number(req.query.clienteId) : undefined;
     const sortBy = req.query.sortBy as string;
     const sortDir = (req.query.sortDir as string) === 'asc' ? 'asc' : 'desc';
 
@@ -67,6 +70,8 @@ export const getAll = async (req: Request, res: Response) => {
     if (estado) whereClause.estado = estado;
     if (rubro) whereClause.rubro = rubro;
     if (tipoTicket) whereClause.tipoTicket = tipoTicket;
+    if (tecnicoId) whereClause.tecnicoId = tecnicoId;
+    if (clienteId) whereClause.sucursal = { clienteId };
 
     const [total, tickets] = await prisma.$transaction([
       prisma.ticket.count({ where: whereClause }),
@@ -189,6 +194,7 @@ export const create = async (req: Request, res: Response) => {
         tipoTicket: body.tipoTicket as TipoTicket,
         estado: 'NUEVO',
         sucursalId: body.sucursalId,
+        fechaCreacion: body.fechaCreacion ? new Date(body.fechaCreacion) : new Date(),
         fechaProgramada: body.fechaProgramada ? new Date(body.fechaProgramada) : null,
         horaEjecucion: body.horaEjecucion ? new Date(body.horaEjecucion) : null,
         creadoPorId: userId,
@@ -229,8 +235,8 @@ export const update = async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Ticket no encontrado' });
     }
 
-    // Solo se puede editar en estados NUEVO o ASIGNADO
-    if (!['NUEVO', 'ASIGNADO'].includes(ticket.estado)) {
+    // Solo se puede editar en estados NUEVO, ASIGNADO o EN_CURSO
+    if (!['NUEVO', 'ASIGNADO', 'EN_CURSO'].includes(ticket.estado)) {
       return res.status(400).json({
         error: `No se puede editar un ticket en estado ${ESTADO_LABELS[ticket.estado as EstadoTicket]}`,
       });
@@ -317,6 +323,17 @@ export const update = async (req: Request, res: Response) => {
         nuevo: body.codigoCliente || null,
       });
     }
+    if (body.fechaCreacion !== undefined) {
+      const oldDate = ticket.fechaCreacion
+        ? new Date(ticket.fechaCreacion).toISOString().split('T')[0]
+        : null;
+      const newDate = body.fechaCreacion
+        ? new Date(body.fechaCreacion).toISOString().split('T')[0]
+        : null;
+      if (oldDate !== newDate) {
+        changes.push({ campo: 'fechaCreacion', anterior: oldDate, nuevo: newDate });
+      }
+    }
     if (body.fechaProgramada !== undefined) {
       const oldDate = ticket.fechaProgramada
         ? new Date(ticket.fechaProgramada).toISOString().split('T')[0]
@@ -349,6 +366,12 @@ export const update = async (req: Request, res: Response) => {
         rubro: body.rubro as RubroTicket,
         tipoTicket: body.tipoTicket as TipoTicket,
         sucursalId: body.sucursalId,
+        fechaCreacion:
+          body.fechaCreacion !== undefined
+            ? body.fechaCreacion
+              ? new Date(body.fechaCreacion)
+              : undefined
+            : undefined,
         fechaProgramada:
           body.fechaProgramada !== undefined
             ? body.fechaProgramada

@@ -5,6 +5,7 @@ import { useLiveAnnounce } from '../hooks/useLiveAnnounce';
 import { LiveRegion } from '../components/ui/LiveRegion';
 import { useConfirm } from '../hooks/useConfirm';
 import { ESTADO_LABELS, TIPO_TICKET_LABELS, RUBRO_LABELS } from '../types/tickets';
+import api from '../lib/api';
 
 const TicketDrawer = lazy(() => import('../components/tickets/TicketDrawer'));
 const TicketDetailSheet = lazy(() => import('../components/tickets/TicketDetailSheet'));
@@ -24,11 +25,23 @@ import {
   Columns,
   Loader2,
   Ticket as TicketIcon,
+  Building2,
+  User,
 } from 'lucide-react';
 import { FloatingActionButton } from '../components/layout/FloatingActionButton';
 import { Pagination } from '../components/ui/Pagination';
 import { ViewToggle } from '../components/ui/ViewToggle';
 import { PullToRefresh } from '../components/ui/PullToRefresh';
+
+interface RefCliente {
+  id: number;
+  razonSocial: string;
+}
+interface RefTecnico {
+  id: number;
+  nombre: string;
+  apellido: string;
+}
 
 export default function TicketsPage() {
   const [search, setSearch] = useState('');
@@ -36,6 +49,8 @@ export default function TicketsPage() {
   const [estadoFilter, setEstadoFilter] = useState<EstadoTicket | ''>('');
   const [rubroFilter, setRubroFilter] = useState<RubroTicket | ''>('');
   const [tipoTicketFilter, setTipoTicketFilter] = useState<TipoTicket | ''>('');
+  const [tecnicoFilter, setTecnicoFilter] = useState('');
+  const [clienteFilter, setClienteFilter] = useState('');
   const [page, setPage] = useState(1);
   const [sortBy, setSortBy] = useState<string>('fechaCreacion');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
@@ -45,6 +60,20 @@ export default function TicketsPage() {
   const [viewMode, setViewMode] = useState<'table' | 'kanban'>('table');
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [detailTicketIdSheet, setDetailTicketIdSheet] = useState<number | null>(null);
+
+  // Reference data for filter dropdowns
+  const [clientes, setClientes] = useState<RefCliente[]>([]);
+  const [tecnicos, setTecnicos] = useState<RefTecnico[]>([]);
+
+  useEffect(() => {
+    api
+      .get('/tickets/reference-data')
+      .then((res) => {
+        setClientes(res.data.clientes || []);
+        setTecnicos(res.data.tecnicos || []);
+      })
+      .catch(console.error);
+  }, []);
 
   // Debounce search
   useEffect(() => {
@@ -68,6 +97,8 @@ export default function TicketsPage() {
     estado: estadoFilter,
     rubro: rubroFilter,
     tipoTicket: tipoTicketFilter,
+    tecnicoId: tecnicoFilter,
+    clienteId: clienteFilter,
     page,
     limit: 10,
     sortBy,
@@ -136,7 +167,8 @@ export default function TicketsPage() {
   }, [refetch, announce]);
 
   const activeFiltersCount =
-    [estadoFilter, rubroFilter, tipoTicketFilter].filter(Boolean).length + (search ? 1 : 0);
+    [estadoFilter, rubroFilter, tipoTicketFilter, tecnicoFilter, clienteFilter].filter(Boolean)
+      .length + (search ? 1 : 0);
 
   return (
     <PullToRefresh onRefresh={handleRefresh} className="min-h-screen">
@@ -171,65 +203,103 @@ export default function TicketsPage() {
         />
 
         <CollapsibleFilters activeFiltersCount={activeFiltersCount}>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
-            <div className="lg:col-span-2 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Buscar por descripción, código..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full h-10 pl-10 pr-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 transition-all"
+          <div className="space-y-3">
+            {/* Row 1: Search + Estado + Tipo */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 items-end">
+              <div className="lg:col-span-2 relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Buscar por descripción, código..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full h-10 pl-10 pr-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 transition-all"
+                />
+              </div>
+              <Select
+                label="Estado"
+                value={estadoFilter}
+                onChange={(val) => {
+                  setEstadoFilter(val as EstadoTicket | '');
+                  setPage(1);
+                }}
+                options={[
+                  { value: '', label: 'Todos los estados' },
+                  ...Object.entries(ESTADO_LABELS).map(([k, v]) => ({
+                    value: k,
+                    label: v as string,
+                  })),
+                ]}
+                icon={<AlertCircle className="h-4 w-4" />}
+              />
+              <Select
+                label="Tipo (SLA)"
+                value={tipoTicketFilter}
+                onChange={(val) => {
+                  setTipoTicketFilter(val as TipoTicket | '');
+                  setPage(1);
+                }}
+                options={[
+                  { value: '', label: 'Todos los tipos' },
+                  ...Object.entries(TIPO_TICKET_LABELS).map(([k, v]) => ({
+                    value: k,
+                    label: v as string,
+                  })),
+                ]}
+                icon={<Clock className="h-4 w-4" />}
               />
             </div>
-            <Select
-              label="Estado"
-              value={estadoFilter}
-              onChange={(val) => {
-                setEstadoFilter(val as EstadoTicket | '');
-                setPage(1);
-              }}
-              options={[
-                { value: '', label: 'Todos los estados' },
-                ...Object.entries(ESTADO_LABELS).map(([k, v]) => ({
-                  value: k,
-                  label: v as string,
-                })),
-              ]}
-              icon={<AlertCircle className="h-4 w-4" />}
-            />
-            <Select
-              label="Rubro"
-              value={rubroFilter}
-              onChange={(val) => {
-                setRubroFilter(val as RubroTicket | '');
-                setPage(1);
-              }}
-              options={[
-                { value: '', label: 'Todos los rubros' },
-                ...Object.entries(RUBRO_LABELS).map(([k, v]) => ({
-                  value: k,
-                  label: v as string,
-                })),
-              ]}
-              icon={<LayoutGrid className="h-4 w-4" />}
-            />
-            <Select
-              label="Tipo (SLA)"
-              value={tipoTicketFilter}
-              onChange={(val) => {
-                setTipoTicketFilter(val as TipoTicket | '');
-                setPage(1);
-              }}
-              options={[
-                { value: '', label: 'Todos los tipos' },
-                ...Object.entries(TIPO_TICKET_LABELS).map(([k, v]) => ({
-                  value: k,
-                  label: v as string,
-                })),
-              ]}
-              icon={<Clock className="h-4 w-4" />}
-            />
+            {/* Row 2: Cliente + Técnico + Rubro */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 items-end">
+              <Select
+                label="Cliente"
+                value={clienteFilter}
+                onChange={(val) => {
+                  setClienteFilter(val);
+                  setPage(1);
+                }}
+                options={[
+                  { value: '', label: 'Todos los clientes' },
+                  ...clientes.map((c) => ({
+                    value: c.id.toString(),
+                    label: c.razonSocial,
+                  })),
+                ]}
+                icon={<Building2 className="h-4 w-4" />}
+              />
+              <Select
+                label="Técnico"
+                value={tecnicoFilter}
+                onChange={(val) => {
+                  setTecnicoFilter(val);
+                  setPage(1);
+                }}
+                options={[
+                  { value: '', label: 'Todos los técnicos' },
+                  ...tecnicos.map((t) => ({
+                    value: t.id.toString(),
+                    label: `${t.nombre} ${t.apellido}`,
+                  })),
+                ]}
+                icon={<User className="h-4 w-4" />}
+              />
+              <Select
+                label="Rubro"
+                value={rubroFilter}
+                onChange={(val) => {
+                  setRubroFilter(val as RubroTicket | '');
+                  setPage(1);
+                }}
+                options={[
+                  { value: '', label: 'Todos los rubros' },
+                  ...Object.entries(RUBRO_LABELS).map(([k, v]) => ({
+                    value: k,
+                    label: v as string,
+                  })),
+                ]}
+                icon={<LayoutGrid className="h-4 w-4" />}
+              />
+            </div>
           </div>
         </CollapsibleFilters>
 

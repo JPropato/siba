@@ -28,6 +28,7 @@ const editSchema = z.object({
   tipoTicket: z.string().min(1),
   tecnicoId: z.union([z.number(), z.string()]).optional().nullable(),
   codigoCliente: z.string().optional(),
+  fechaCreacion: z.string().optional(),
   fechaProgramada: z.string().optional(),
 });
 
@@ -68,6 +69,9 @@ export default function TicketTabGeneral({ ticket, onUpdate, onSuccess }: Ticket
       tipoTicket: ticket.tipoTicket,
       tecnicoId: ticket.tecnicoId || '',
       codigoCliente: ticket.codigoCliente || '',
+      fechaCreacion: ticket.fechaCreacion
+        ? new Date(ticket.fechaCreacion).toISOString().split('T')[0]
+        : '',
       fechaProgramada: ticket.fechaProgramada
         ? new Date(ticket.fechaProgramada).toISOString().split('T')[0]
         : '',
@@ -81,6 +85,9 @@ export default function TicketTabGeneral({ ticket, onUpdate, onSuccess }: Ticket
       tipoTicket: ticket.tipoTicket,
       tecnicoId: ticket.tecnicoId || '',
       codigoCliente: ticket.codigoCliente || '',
+      fechaCreacion: ticket.fechaCreacion
+        ? new Date(ticket.fechaCreacion).toISOString().split('T')[0]
+        : '',
       fechaProgramada: ticket.fechaProgramada
         ? new Date(ticket.fechaProgramada).toISOString().split('T')[0]
         : '',
@@ -101,6 +108,9 @@ export default function TicketTabGeneral({ ticket, onUpdate, onSuccess }: Ticket
         tipoTicket: values.tipoTicket,
         tecnicoId: values.tecnicoId ? Number(values.tecnicoId) : null,
         codigoCliente: values.codigoCliente || null,
+        fechaCreacion: values.fechaCreacion
+          ? new Date(values.fechaCreacion + 'T12:00:00').toISOString()
+          : undefined,
         fechaProgramada: values.fechaProgramada
           ? new Date(values.fechaProgramada).toISOString()
           : null,
@@ -215,20 +225,36 @@ export default function TicketTabGeneral({ ticket, onUpdate, onSuccess }: Ticket
           )}
         />
 
-        {/* Código Cliente y Fecha */}
+        {/* Código Cliente */}
+        <div className="space-y-1.5">
+          <label
+            htmlFor="codigoCliente-general"
+            className="text-xs font-bold text-slate-500 uppercase tracking-wider"
+          >
+            N° Ticket Externo
+          </label>
+          <input
+            id="codigoCliente-general"
+            type="text"
+            {...register('codigoCliente')}
+            className="w-full h-10 px-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm outline-none focus:border-brand"
+          />
+        </div>
+
+        {/* Fechas */}
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <label
-              htmlFor="codigoCliente-general"
+              htmlFor="fechaCreacion-general"
               className="text-xs font-bold text-slate-500 uppercase tracking-wider"
             >
-              N° Ticket Externo
+              Fecha del Ticket
             </label>
             <input
-              id="codigoCliente-general"
-              type="text"
-              {...register('codigoCliente')}
-              className="w-full h-10 px-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm outline-none focus:border-brand"
+              id="fechaCreacion-general"
+              type="date"
+              {...register('fechaCreacion')}
+              className="w-full h-10 px-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm outline-none focus:border-brand text-slate-900 dark:text-white"
             />
           </div>
           <div className="space-y-1.5">
@@ -242,7 +268,7 @@ export default function TicketTabGeneral({ ticket, onUpdate, onSuccess }: Ticket
               id="fechaProgramada-general"
               type="date"
               {...register('fechaProgramada')}
-              className="w-full h-10 px-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm outline-none focus:border-brand"
+              className="w-full h-10 px-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm outline-none focus:border-brand text-slate-900 dark:text-white"
             />
           </div>
         </div>
@@ -263,14 +289,6 @@ export default function TicketTabGeneral({ ticket, onUpdate, onSuccess }: Ticket
             </label>
             <p className="text-sm text-slate-600 dark:text-slate-400">
               {ticket.sucursal?.nombre || '-'}
-            </p>
-          </div>
-          <div className="space-y-1">
-            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-              Fecha Creación
-            </label>
-            <p className="text-sm text-slate-600 dark:text-slate-400">
-              {formatDate(ticket.fechaCreacion)}
             </p>
           </div>
         </div>

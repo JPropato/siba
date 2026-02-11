@@ -9,6 +9,8 @@ export interface TicketsParams {
   estado?: string;
   rubro?: string;
   tipoTicket?: string;
+  tecnicoId?: string;
+  clienteId?: string;
   page?: number;
   limit?: number;
   sortBy?: string;
@@ -35,6 +37,8 @@ export function useTickets(params: TicketsParams) {
           estado: params.estado || undefined,
           rubro: params.rubro || undefined,
           tipoTicket: params.tipoTicket || undefined,
+          tecnicoId: params.tecnicoId || undefined,
+          clienteId: params.clienteId || undefined,
           page: params.page || 1,
           limit: params.limit || 10,
           sortBy: params.sortBy || undefined,
