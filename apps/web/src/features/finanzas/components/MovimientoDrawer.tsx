@@ -26,6 +26,7 @@ import { DatePicker } from '../../../components/ui/core/DatePicker';
 import {
   ArrowUpCircle,
   ArrowDownCircle,
+  ArrowLeftRight,
   DollarSign,
   FileText,
   Building2,
@@ -37,6 +38,8 @@ import {
   Loader2,
 } from 'lucide-react';
 import api from '../../../lib/api';
+
+type TipoOperacion = 'INGRESO' | 'EGRESO' | 'TRANSFERENCIA';
 
 interface MovimientoDrawerProps {
   isOpen: boolean;
@@ -88,55 +91,159 @@ const CATEGORIAS_EGRESO: CategoriaEgreso[] = [
   'OTRO_EGRESO',
 ];
 
-const movimientoSchema = z.object({
-  tipo: z.enum(['INGRESO', 'EGRESO']),
-  cuentaId: z.string().min(1, 'Seleccione una cuenta'),
-  monto: z
-    .string()
-    .min(1, 'Ingrese un monto')
-    .refine((v) => Number(v) > 0, 'El monto debe ser mayor a 0'),
-  fechaMovimiento: z.string().min(1, 'Seleccione una fecha'),
-  medioPago: z.enum([
-    'EFECTIVO',
-    'TRANSFERENCIA',
-    'CHEQUE',
-    'TARJETA_DEBITO',
-    'TARJETA_CREDITO',
-    'MERCADOPAGO',
-  ]),
-  categoriaIngreso: z
-    .enum([
-      'COBRO_FACTURA',
-      'ANTICIPO_CLIENTE',
-      'REINTEGRO',
-      'RENDIMIENTO_INVERSION',
-      'RESCATE_INVERSION',
-      'OTRO_INGRESO',
-    ])
-    .optional(),
-  categoriaEgreso: z
-    .enum([
-      'MATERIALES',
-      'MANO_DE_OBRA',
-      'COMBUSTIBLE',
-      'HERRAMIENTAS',
-      'VIATICOS',
-      'SUBCONTRATISTA',
-      'IMPUESTOS',
-      'SERVICIOS',
-      'TRASPASO_INVERSION',
-      'OTRO_EGRESO',
-    ])
-    .optional(),
-  comprobante: z.string().optional().or(z.literal('')),
-  comprobanteUrl: z.string().optional().nullable(),
-  descripcion: z.string().min(3, 'Ingrese una descripción'),
-  clienteId: z.string().optional().or(z.literal('')),
-  obraId: z.string().optional().or(z.literal('')),
-  ticketId: z.string().optional().or(z.literal('')),
-});
+const movimientoSchema = z
+  .object({
+    tipo: z.enum(['INGRESO', 'EGRESO', 'TRANSFERENCIA']),
+    cuentaId: z.string().optional().or(z.literal('')),
+    cuentaOrigenId: z.string().optional().or(z.literal('')),
+    cuentaDestinoId: z.string().optional().or(z.literal('')),
+    monto: z
+      .string()
+      .min(1, 'Ingrese un monto')
+      .refine((v) => Number(v) > 0, 'El monto debe ser mayor a 0'),
+    fechaMovimiento: z.string().min(1, 'Seleccione una fecha'),
+    medioPago: z.enum([
+      'EFECTIVO',
+      'TRANSFERENCIA',
+      'CHEQUE',
+      'TARJETA_DEBITO',
+      'TARJETA_CREDITO',
+      'MERCADOPAGO',
+    ]),
+    categoriaIngreso: z
+      .enum([
+        'COBRO_FACTURA',
+        'ANTICIPO_CLIENTE',
+        'REINTEGRO',
+        'RENDIMIENTO_INVERSION',
+        'RESCATE_INVERSION',
+        'OTRO_INGRESO',
+      ])
+      .optional(),
+    categoriaEgreso: z
+      .enum([
+        'MATERIALES',
+        'MANO_DE_OBRA',
+        'COMBUSTIBLE',
+        'HERRAMIENTAS',
+        'VIATICOS',
+        'SUBCONTRATISTA',
+        'IMPUESTOS',
+        'SERVICIOS',
+        'TRASPASO_INVERSION',
+        'OTRO_EGRESO',
+      ])
+      .optional(),
+    comprobante: z.string().optional().or(z.literal('')),
+    comprobanteUrl: z.string().optional().nullable(),
+    descripcion: z.string().min(3, 'Ingrese una descripción'),
+    clienteId: z.string().optional().or(z.literal('')),
+    obraId: z.string().optional().or(z.literal('')),
+    ticketId: z.string().optional().or(z.literal('')),
+  })
+  .superRefine((data, ctx) => {
+    if (data.tipo === 'TRANSFERENCIA') {
+      if (!data.cuentaOrigenId) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['cuentaOrigenId'],
+          message: 'Seleccione la cuenta origen',
+        });
+      }
+      if (!data.cuentaDestinoId) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['cuentaDestinoId'],
+          message: 'Seleccione la cuenta destino',
+        });
+      }
+      if (
+        data.cuentaOrigenId &&
+        data.cuentaDestinoId &&
+        data.cuentaOrigenId === data.cuentaDestinoId
+      ) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['cuentaDestinoId'],
+          message: 'Las cuentas origen y destino deben ser diferentes',
+        });
+      }
+    } else {
+      if (!data.cuentaId) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['cuentaId'],
+          message: 'Seleccione una cuenta',
+        });
+      }
+    }
+  });
 
 type MovimientoFormValues = z.infer<typeof movimientoSchema>;
+
+const formatCurrency = (value: number) =>
+  new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(value);
+
+const TIPO_CONFIG: Record<
+  TipoOperacion,
+  {
+    label: string;
+    activeClass: string;
+    bgColor: string;
+    textColor: string;
+    icon: React.ReactNode;
+    buttonClass: string;
+    buttonLabel: string;
+  }
+> = {
+  INGRESO: {
+    label: 'INGRESO',
+    activeClass:
+      'border-green-500 bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400',
+    bgColor: 'bg-green-100',
+    textColor: 'text-green-600',
+    icon: <ArrowUpCircle className="h-5 w-5" />,
+    buttonClass: 'bg-green-600 hover:bg-green-700',
+    buttonLabel: 'Registrar Ingreso',
+  },
+  EGRESO: {
+    label: 'EGRESO',
+    activeClass: 'border-red-500 bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400',
+    bgColor: 'bg-red-100',
+    textColor: 'text-red-600',
+    icon: <ArrowDownCircle className="h-5 w-5" />,
+    buttonClass: 'bg-red-600 hover:bg-red-700',
+    buttonLabel: 'Registrar Egreso',
+  },
+  TRANSFERENCIA: {
+    label: 'TRANSFERENCIA',
+    activeClass:
+      'border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-400',
+    bgColor: 'bg-indigo-100',
+    textColor: 'text-indigo-600',
+    icon: <ArrowLeftRight className="h-5 w-5" />,
+    buttonClass: 'bg-indigo-600 hover:bg-indigo-700',
+    buttonLabel: 'Registrar Transferencia',
+  },
+};
+
+const DEFAULT_VALUES: MovimientoFormValues = {
+  tipo: 'INGRESO',
+  cuentaId: '',
+  cuentaOrigenId: '',
+  cuentaDestinoId: '',
+  monto: '',
+  fechaMovimiento: new Date().toISOString().split('T')[0],
+  medioPago: 'TRANSFERENCIA',
+  categoriaIngreso: 'COBRO_FACTURA',
+  categoriaEgreso: 'MATERIALES',
+  comprobante: '',
+  comprobanteUrl: null,
+  descripcion: '',
+  clienteId: '',
+  obraId: '',
+  ticketId: '',
+};
 
 export default function MovimientoDrawer({ isOpen, onClose, onSuccess }: MovimientoDrawerProps) {
   const [cuentas, setCuentas] = useState<CuentaFinanciera[]>([]);
@@ -156,43 +263,20 @@ export default function MovimientoDrawer({ isOpen, onClose, onSuccess }: Movimie
     formState: { errors, isSubmitting },
   } = useForm<MovimientoFormValues>({
     resolver: zodResolver(movimientoSchema),
-    defaultValues: {
-      tipo: 'INGRESO',
-      cuentaId: '',
-      monto: '',
-      fechaMovimiento: new Date().toISOString().split('T')[0],
-      medioPago: 'TRANSFERENCIA',
-      categoriaIngreso: 'COBRO_FACTURA',
-      categoriaEgreso: 'MATERIALES',
-      comprobante: '',
-      comprobanteUrl: null,
-      descripcion: '',
-      clienteId: '',
-      obraId: '',
-      ticketId: '',
-    },
+    defaultValues: DEFAULT_VALUES,
   });
 
-  const tipo = watch('tipo');
+  const tipo = watch('tipo') as TipoOperacion;
   const cuentaIdValue = watch('cuentaId');
+  const cuentaOrigenIdValue = watch('cuentaOrigenId');
   const clienteId = watch('clienteId');
+
+  const isTransferencia = tipo === 'TRANSFERENCIA';
+  const config = TIPO_CONFIG[tipo];
 
   useEffect(() => {
     if (isOpen) {
-      reset({
-        tipo: 'INGRESO',
-        cuentaId: '',
-        monto: '',
-        fechaMovimiento: new Date().toISOString().split('T')[0],
-        medioPago: 'TRANSFERENCIA',
-        categoriaIngreso: 'COBRO_FACTURA',
-        categoriaEgreso: 'MATERIALES',
-        comprobante: '',
-        descripcion: '',
-        clienteId: '',
-        obraId: '',
-        ticketId: '',
-      });
+      reset(DEFAULT_VALUES);
     }
   }, [isOpen, reset]);
 
@@ -208,14 +292,22 @@ export default function MovimientoDrawer({ isOpen, onClose, onSuccess }: Movimie
     fetchCuentas();
   }, []);
 
+  // Auto-set medioPago when account is selected (for INGRESO/EGRESO)
   useEffect(() => {
-    if (cuentaIdValue) {
+    if (cuentaIdValue && !isTransferencia) {
       const cuenta = cuentas.find((c) => c.id.toString() === cuentaIdValue);
       if (cuenta) {
         setValue('medioPago', MEDIO_PAGO_POR_DEFECTO[cuenta.tipo]);
       }
     }
-  }, [cuentaIdValue, cuentas, setValue]);
+  }, [cuentaIdValue, cuentas, setValue, isTransferencia]);
+
+  // Auto-set medioPago to TRANSFERENCIA when in transfer mode
+  useEffect(() => {
+    if (isTransferencia) {
+      setValue('medioPago', 'TRANSFERENCIA');
+    }
+  }, [isTransferencia, setValue]);
 
   useEffect(() => {
     const fetchClientes = async () => {
@@ -258,34 +350,58 @@ export default function MovimientoDrawer({ isOpen, onClose, onSuccess }: Movimie
     fetchTickets();
   }, []);
 
+  const cuentaOrigen = cuentas.find((c) => c.id.toString() === cuentaOrigenIdValue);
+  const cuentaDestinoIdValue = watch('cuentaDestinoId');
+  const cuentaDestino = cuentas.find((c) => c.id.toString() === cuentaDestinoIdValue);
+
   const onSubmit = async (values: MovimientoFormValues) => {
     try {
-      const data = {
-        tipo: values.tipo as TipoMovimiento,
-        cuentaId: Number(values.cuentaId),
-        monto: Number(values.monto),
-        fechaMovimiento: new Date(values.fechaMovimiento).toISOString(),
-        medioPago: values.medioPago as MedioPago,
-        categoriaIngreso: values.tipo === 'INGRESO' ? values.categoriaIngreso : null,
-        categoriaEgreso: values.tipo === 'EGRESO' ? values.categoriaEgreso : null,
-        comprobante: values.comprobante || null,
-        comprobanteUrl: values.comprobanteUrl || null,
-        descripcion: values.descripcion,
-        clienteId: values.clienteId ? Number(values.clienteId) : null,
-        obraId: values.obraId ? Number(values.obraId) : null,
-        ticketId: values.ticketId ? Number(values.ticketId) : null,
-      };
-      await finanzasApi.createMovimiento(data);
-      toast.success(`${values.tipo === 'INGRESO' ? 'Ingreso' : 'Egreso'} registrado correctamente`);
+      if (values.tipo === 'TRANSFERENCIA') {
+        await finanzasApi.createTransferencia({
+          cuentaOrigenId: Number(values.cuentaOrigenId),
+          cuentaDestinoId: Number(values.cuentaDestinoId),
+          monto: Number(values.monto),
+          fechaMovimiento: new Date(values.fechaMovimiento).toISOString(),
+          comprobante: values.comprobante || null,
+          descripcion: values.descripcion,
+        });
+        toast.success('Transferencia registrada correctamente');
+      } else {
+        const data = {
+          tipo: values.tipo as TipoMovimiento,
+          cuentaId: Number(values.cuentaId),
+          monto: Number(values.monto),
+          fechaMovimiento: new Date(values.fechaMovimiento).toISOString(),
+          medioPago: values.medioPago as MedioPago,
+          categoriaIngreso: values.tipo === 'INGRESO' ? values.categoriaIngreso : null,
+          categoriaEgreso: values.tipo === 'EGRESO' ? values.categoriaEgreso : null,
+          comprobante: values.comprobante || null,
+          comprobanteUrl: values.comprobanteUrl || null,
+          descripcion: values.descripcion,
+          clienteId: values.clienteId ? Number(values.clienteId) : null,
+          obraId: values.obraId ? Number(values.obraId) : null,
+          ticketId: values.ticketId ? Number(values.ticketId) : null,
+        };
+        await finanzasApi.createMovimiento(data);
+        toast.success(
+          `${values.tipo === 'INGRESO' ? 'Ingreso' : 'Egreso'} registrado correctamente`
+        );
+      }
       onSuccess();
       onClose();
     } catch (error) {
       console.error('Error creating movimiento:', error);
-      toast.error('Error al crear el movimiento');
+      toast.error(
+        isTransferencia ? 'Error al crear la transferencia' : 'Error al crear el movimiento'
+      );
     }
   };
 
-  // onSubmit...
+  const drawerDescription = isTransferencia
+    ? 'Transferir entre cuentas'
+    : tipo === 'INGRESO'
+      ? 'Registrar ingreso'
+      : 'Registrar egreso';
 
   return (
     <DialogBase
@@ -293,17 +409,9 @@ export default function MovimientoDrawer({ isOpen, onClose, onSuccess }: Movimie
       onClose={onClose}
       type="drawer"
       title="Nuevo Movimiento"
-      description={tipo === 'INGRESO' ? 'Registrar ingreso' : 'Registrar egreso'}
+      description={drawerDescription}
       icon={
-        <div
-          className={`p-2 rounded-xl ${tipo === 'INGRESO' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}
-        >
-          {tipo === 'INGRESO' ? (
-            <ArrowUpCircle className="h-5 w-5" />
-          ) : (
-            <ArrowDownCircle className="h-5 w-5" />
-          )}
-        </div>
+        <div className={`p-2 rounded-xl ${config.bgColor} ${config.textColor}`}>{config.icon}</div>
       }
       footer={
         <>
@@ -314,58 +422,134 @@ export default function MovimientoDrawer({ isOpen, onClose, onSuccess }: Movimie
             type="submit"
             form="movimiento-form"
             isLoading={isSubmitting}
-            className={
-              tipo === 'INGRESO' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'
-            }
+            className={config.buttonClass}
             leftIcon={<Save className="h-[18px] w-[18px]" />}
           >
-            Registrar {tipo === 'INGRESO' ? 'Ingreso' : 'Egreso'}
+            {config.buttonLabel}
           </Button>
         </>
       }
     >
       <form id="movimiento-form" onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-        {/* Tipo Toggle */}
+        {/* Tipo Toggle - 3 opciones */}
         <div>
           <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
             Tipo de Movimiento *
           </label>
-          <div className="grid grid-cols-2 gap-3">
-            <label
-              className={`flex items-center justify-center gap-2 p-3 rounded-lg border text-sm font-bold cursor-pointer transition-all ${tipo === 'INGRESO' ? 'border-green-500 bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400' : 'border-slate-200 dark:border-slate-700 text-slate-500 hover:border-slate-300'}`}
-            >
-              <input type="radio" value="INGRESO" {...register('tipo')} className="sr-only" />
-              <ArrowUpCircle className="h-5 w-5" /> INGRESO
-            </label>
-            <label
-              className={`flex items-center justify-center gap-2 p-3 rounded-lg border text-sm font-bold cursor-pointer transition-all ${tipo === 'EGRESO' ? 'border-red-500 bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400' : 'border-slate-200 dark:border-slate-700 text-slate-500 hover:border-slate-300'}`}
-            >
-              <input type="radio" value="EGRESO" {...register('tipo')} className="sr-only" />
-              <ArrowDownCircle className="h-5 w-5" /> EGRESO
-            </label>
+          <div className="grid grid-cols-3 gap-2">
+            {(['INGRESO', 'EGRESO', 'TRANSFERENCIA'] as TipoOperacion[]).map((t) => {
+              const c = TIPO_CONFIG[t];
+              return (
+                <label
+                  key={t}
+                  className={`flex items-center justify-center gap-1.5 p-2.5 rounded-lg border text-xs font-bold cursor-pointer transition-all ${
+                    tipo === t
+                      ? c.activeClass
+                      : 'border-slate-200 dark:border-slate-700 text-slate-500 hover:border-slate-300'
+                  }`}
+                >
+                  <input type="radio" value={t} {...register('tipo')} className="sr-only" />
+                  {c.icon}
+                  <span className="hidden sm:inline">{c.label}</span>
+                  <span className="sm:hidden">{t === 'TRANSFERENCIA' ? 'TRANSF.' : c.label}</span>
+                </label>
+              );
+            })}
           </div>
         </div>
 
-        {/* Cuenta */}
-        <Controller
-          name="cuentaId"
-          control={control}
-          render={({ field }) => (
-            <Select
-              label="Cuenta *"
-              options={cuentas.map((c) => ({
-                value: c.id.toString(),
-                label: c.nombre,
-                description: c.banco?.nombreCorto || c.tipo,
-                icon: <Building2 className="h-4 w-4" />,
-              }))}
-              value={field.value}
-              onChange={field.onChange}
-              error={errors.cuentaId?.message}
-              placeholder="Seleccionar cuenta..."
-            />
-          )}
-        />
+        {/* === Cuenta(s) === */}
+        {isTransferencia ? (
+          <>
+            {/* Cuenta Origen */}
+            <div className="space-y-1.5">
+              <Controller
+                name="cuentaOrigenId"
+                control={control}
+                render={({ field }) => (
+                  <Select
+                    label="Cuenta Origen *"
+                    options={cuentas.map((c) => ({
+                      value: c.id.toString(),
+                      label: c.nombre,
+                      description: c.banco?.nombreCorto || c.tipo,
+                      icon: <Building2 className="h-4 w-4" />,
+                    }))}
+                    value={field.value}
+                    onChange={field.onChange}
+                    error={errors.cuentaOrigenId?.message}
+                    placeholder="Seleccionar cuenta origen..."
+                  />
+                )}
+              />
+              {cuentaOrigen && (
+                <p className="text-xs text-slate-500 pl-1">
+                  Saldo actual:{' '}
+                  <span className="font-semibold">{formatCurrency(cuentaOrigen.saldoActual)}</span>
+                </p>
+              )}
+            </div>
+
+            {/* Flecha visual */}
+            <div className="flex justify-center">
+              <div className="p-2 rounded-full bg-indigo-50 dark:bg-indigo-900/20">
+                <ArrowLeftRight className="h-5 w-5 text-indigo-500 rotate-90" />
+              </div>
+            </div>
+
+            {/* Cuenta Destino */}
+            <div className="space-y-1.5">
+              <Controller
+                name="cuentaDestinoId"
+                control={control}
+                render={({ field }) => (
+                  <Select
+                    label="Cuenta Destino *"
+                    options={cuentas
+                      .filter((c) => c.id.toString() !== cuentaOrigenIdValue)
+                      .map((c) => ({
+                        value: c.id.toString(),
+                        label: c.nombre,
+                        description: c.banco?.nombreCorto || c.tipo,
+                        icon: <Building2 className="h-4 w-4" />,
+                      }))}
+                    value={field.value}
+                    onChange={field.onChange}
+                    error={errors.cuentaDestinoId?.message}
+                    placeholder="Seleccionar cuenta destino..."
+                  />
+                )}
+              />
+              {cuentaDestino && (
+                <p className="text-xs text-slate-500 pl-1">
+                  Saldo actual:{' '}
+                  <span className="font-semibold">{formatCurrency(cuentaDestino.saldoActual)}</span>
+                </p>
+              )}
+            </div>
+          </>
+        ) : (
+          /* Cuenta única para INGRESO/EGRESO */
+          <Controller
+            name="cuentaId"
+            control={control}
+            render={({ field }) => (
+              <Select
+                label="Cuenta *"
+                options={cuentas.map((c) => ({
+                  value: c.id.toString(),
+                  label: c.nombre,
+                  description: c.banco?.nombreCorto || c.tipo,
+                  icon: <Building2 className="h-4 w-4" />,
+                }))}
+                value={field.value}
+                onChange={field.onChange}
+                error={errors.cuentaId?.message}
+                placeholder="Seleccionar cuenta..."
+              />
+            )}
+          />
+        )}
 
         {/* Monto y Fecha */}
         <div className="grid grid-cols-2 gap-4">
@@ -410,43 +594,47 @@ export default function MovimientoDrawer({ isOpen, onClose, onSuccess }: Movimie
           />
         </div>
 
-        {/* Medio de Pago */}
-        <Controller
-          name="medioPago"
-          control={control}
-          render={({ field }) => (
-            <Select
-              label="Medio de Pago *"
-              options={MEDIOS_PAGO.map((mp) => ({ value: mp, label: MEDIO_PAGO_LABELS[mp] }))}
-              value={field.value}
-              onChange={field.onChange}
-            />
-          )}
-        />
+        {/* Medio de Pago - solo para INGRESO/EGRESO */}
+        {!isTransferencia && (
+          <Controller
+            name="medioPago"
+            control={control}
+            render={({ field }) => (
+              <Select
+                label="Medio de Pago *"
+                options={MEDIOS_PAGO.map((mp) => ({ value: mp, label: MEDIO_PAGO_LABELS[mp] }))}
+                value={field.value}
+                onChange={field.onChange}
+              />
+            )}
+          />
+        )}
 
-        {/* Categoría */}
-        <Controller
-          name={tipo === 'INGRESO' ? 'categoriaIngreso' : 'categoriaEgreso'}
-          control={control}
-          render={({ field }) => (
-            <Select
-              label="Categoría *"
-              options={
-                tipo === 'INGRESO'
-                  ? CATEGORIAS_INGRESO.map((cat) => ({
-                      value: cat,
-                      label: CATEGORIA_INGRESO_LABELS[cat],
-                    }))
-                  : CATEGORIAS_EGRESO.map((cat) => ({
-                      value: cat,
-                      label: CATEGORIA_EGRESO_LABELS[cat],
-                    }))
-              }
-              value={field.value}
-              onChange={field.onChange}
-            />
-          )}
-        />
+        {/* Categoría - solo para INGRESO/EGRESO */}
+        {!isTransferencia && (
+          <Controller
+            name={tipo === 'INGRESO' ? 'categoriaIngreso' : 'categoriaEgreso'}
+            control={control}
+            render={({ field }) => (
+              <Select
+                label="Categoría *"
+                options={
+                  tipo === 'INGRESO'
+                    ? CATEGORIAS_INGRESO.map((cat) => ({
+                        value: cat,
+                        label: CATEGORIA_INGRESO_LABELS[cat],
+                      }))
+                    : CATEGORIAS_EGRESO.map((cat) => ({
+                        value: cat,
+                        label: CATEGORIA_EGRESO_LABELS[cat],
+                      }))
+                }
+                value={field.value}
+                onChange={field.onChange}
+              />
+            )}
+          />
+        )}
 
         {/* Comprobante */}
         <Input
@@ -542,7 +730,9 @@ export default function MovimientoDrawer({ isOpen, onClose, onSuccess }: Movimie
           <textarea
             id="descripcion-input"
             rows={2}
-            placeholder="Detalle del movimiento..."
+            placeholder={
+              isTransferencia ? 'Motivo de la transferencia...' : 'Detalle del movimiento...'
+            }
             {...register('descripcion')}
             className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm outline-none focus:border-brand resize-none text-slate-900 dark:text-white"
           />
@@ -553,67 +743,69 @@ export default function MovimientoDrawer({ isOpen, onClose, onSuccess }: Movimie
           )}
         </div>
 
-        {/* Vinculaciones */}
-        <div className="border-t border-slate-200 dark:border-slate-700 pt-4 space-y-4">
-          <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-            Vincular a (opcional)
-          </h3>
+        {/* Vinculaciones - solo para INGRESO/EGRESO */}
+        {!isTransferencia && (
+          <div className="border-t border-slate-200 dark:border-slate-700 pt-4 space-y-4">
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+              Vincular a (opcional)
+            </h3>
 
-          <Controller
-            name="clienteId"
-            control={control}
-            render={({ field }) => (
-              <Select
-                label="Cliente"
-                options={clientes.map((c) => ({
-                  value: c.id.toString(),
-                  label: c.razonSocial,
-                  icon: <User className="h-4 w-4" />,
-                }))}
-                value={field.value}
-                onChange={field.onChange}
-                placeholder="Buscar cliente..."
-              />
-            )}
-          />
+            <Controller
+              name="clienteId"
+              control={control}
+              render={({ field }) => (
+                <Select
+                  label="Cliente"
+                  options={clientes.map((c) => ({
+                    value: c.id.toString(),
+                    label: c.razonSocial,
+                    icon: <User className="h-4 w-4" />,
+                  }))}
+                  value={field.value}
+                  onChange={field.onChange}
+                  placeholder="Buscar cliente..."
+                />
+              )}
+            />
 
-          <Controller
-            name="obraId"
-            control={control}
-            render={({ field }) => (
-              <Select
-                label="Obra"
-                options={obras.map((o) => ({
-                  value: o.id.toString(),
-                  label: `${o.codigo} - ${o.titulo}`,
-                  icon: <Wrench className="h-4 w-4" />,
-                }))}
-                value={field.value}
-                onChange={field.onChange}
-                disabled={!clienteId}
-                placeholder={clienteId ? 'Sin vincular' : 'Seleccione cliente primero'}
-              />
-            )}
-          />
+            <Controller
+              name="obraId"
+              control={control}
+              render={({ field }) => (
+                <Select
+                  label="Obra"
+                  options={obras.map((o) => ({
+                    value: o.id.toString(),
+                    label: `${o.codigo} - ${o.titulo}`,
+                    icon: <Wrench className="h-4 w-4" />,
+                  }))}
+                  value={field.value}
+                  onChange={field.onChange}
+                  disabled={!clienteId}
+                  placeholder={clienteId ? 'Sin vincular' : 'Seleccione cliente primero'}
+                />
+              )}
+            />
 
-          <Controller
-            name="ticketId"
-            control={control}
-            render={({ field }) => (
-              <Select
-                label="Ticket"
-                options={tickets.map((t) => ({
-                  value: t.id.toString(),
-                  label: `TKT-${String(t.codigoInterno).padStart(5, '0')} - ${t.descripcion.substring(0, 40)}...`,
-                  icon: <Ticket className="h-4 w-4" />,
-                }))}
-                value={field.value}
-                onChange={field.onChange}
-                placeholder="Sin vincular"
-              />
-            )}
-          />
-        </div>
+            <Controller
+              name="ticketId"
+              control={control}
+              render={({ field }) => (
+                <Select
+                  label="Ticket"
+                  options={tickets.map((t) => ({
+                    value: t.id.toString(),
+                    label: `TKT-${String(t.codigoInterno).padStart(5, '0')} - ${t.descripcion.substring(0, 40)}...`,
+                    icon: <Ticket className="h-4 w-4" />,
+                  }))}
+                  value={field.value}
+                  onChange={field.onChange}
+                  placeholder="Sin vincular"
+                />
+              )}
+            />
+          </div>
+        )}
       </form>
     </DialogBase>
   );
