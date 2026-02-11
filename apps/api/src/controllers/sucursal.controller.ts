@@ -13,6 +13,7 @@ const createSedeSchema = z.object({
   contactoNombre: z.string().optional().nullable(),
   contactoTelefono: z.string().optional().nullable(),
   codigoExterno: z.string().optional().nullable(),
+  imagenSucursal: z.string().max(500).optional().nullable(),
 });
 
 const updateSedeSchema = createSedeSchema.partial();

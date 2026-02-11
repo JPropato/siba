@@ -94,23 +94,36 @@ export default function EmpleadoTable({
                 {...actionSheet.getLongPressHandlers(e)}
               >
                 <td className="px-3 py-1.5">
-                  <div className="flex flex-col gap-1">
-                    <div className="flex items-center gap-1.5">
-                      <span className="font-bold text-slate-900 dark:text-white text-sm">
-                        {e.apellido}, {e.nombre}
-                      </span>
-                      {e.esReferente && (
-                        <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500 flex-shrink-0" />
+                  <div className="flex items-center gap-3">
+                    <div className="h-9 w-9 shrink-0 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                      {e.foto ? (
+                        <img
+                          src={e.foto}
+                          alt={`${e.nombre} ${e.apellido}`}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <Users className="h-4 w-4 text-slate-400" />
                       )}
                     </div>
-                    {e.puesto && (
-                      <span className="text-[10px] text-slate-500 dark:text-slate-400">
-                        {e.puesto}
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-bold text-slate-900 dark:text-white text-sm">
+                          {e.apellido}, {e.nombre}
+                        </span>
+                        {e.esReferente && (
+                          <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500 flex-shrink-0" />
+                        )}
+                      </div>
+                      {e.puesto && (
+                        <span className="text-[10px] text-slate-500 dark:text-slate-400">
+                          {e.puesto}
+                        </span>
+                      )}
+                      <span className="text-[10px] text-slate-400">
+                        Ingreso: {new Date(e.inicioRelacionLaboral).toLocaleDateString()}
                       </span>
-                    )}
-                    <span className="text-[10px] text-slate-400">
-                      Ingreso: {new Date(e.inicioRelacionLaboral).toLocaleDateString()}
-                    </span>
+                    </div>
                   </div>
                 </td>
                 <td className="px-3 py-1.5">

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Save, User, MapPin } from 'lucide-react';
+import { Save, User, MapPin, Building2 } from 'lucide-react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -12,6 +12,7 @@ import { DialogBase } from '../ui/core/DialogBase';
 import { Input } from '../ui/core/Input';
 import { Button } from '../ui/core/Button';
 import { Select } from '../ui/core/Select';
+import { ImageUpload } from '../ui/ImageUpload';
 
 const sedeSchema = z.object({
   clienteId: z.string().min(1, 'Debe seleccionar un cliente'),
@@ -22,6 +23,7 @@ const sedeSchema = z.object({
   contactoNombre: z.string().optional().or(z.literal('')),
   contactoTelefono: z.string().optional().or(z.literal('')),
   codigoExterno: z.string().optional().or(z.literal('')),
+  imagenSucursal: z.string().optional().nullable(),
 });
 
 type SedeFormValues = z.infer<typeof sedeSchema>;
@@ -55,6 +57,7 @@ export default function SedeDialog({ isOpen, onClose, onSave, initialData }: Sed
       contactoNombre: '',
       contactoTelefono: '',
       codigoExterno: '',
+      imagenSucursal: null,
     },
   });
 
@@ -88,6 +91,7 @@ export default function SedeDialog({ isOpen, onClose, onSave, initialData }: Sed
           contactoNombre: initialData.contactoNombre || '',
           contactoTelefono: initialData.contactoTelefono || '',
           codigoExterno: initialData.codigoExterno || '',
+          imagenSucursal: initialData.imagenSucursal || null,
         });
       } else {
         reset({
@@ -99,6 +103,7 @@ export default function SedeDialog({ isOpen, onClose, onSave, initialData }: Sed
           contactoNombre: '',
           contactoTelefono: '',
           codigoExterno: '',
+          imagenSucursal: null,
         });
       }
     }
@@ -115,6 +120,7 @@ export default function SedeDialog({ isOpen, onClose, onSave, initialData }: Sed
         contactoNombre: values.contactoNombre?.trim() || undefined,
         contactoTelefono: values.contactoTelefono?.trim() || undefined,
         codigoExterno: values.codigoExterno?.trim() || undefined,
+        imagenSucursal: values.imagenSucursal || null,
       });
       toast.success(initialData ? 'Sede actualizada' : 'Sede creada correctamente');
       onClose();
@@ -154,6 +160,16 @@ export default function SedeDialog({ isOpen, onClose, onSave, initialData }: Sed
       }
     >
       <form id="sede-form" onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <div className="flex items-center gap-4">
+          <Controller
+            name="imagenSucursal"
+            control={control}
+            render={({ field }) => (
+              <ImageUpload value={field.value} onChange={field.onChange} label="Foto de la Sede" />
+            )}
+          />
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Controller
             name="clienteId"
