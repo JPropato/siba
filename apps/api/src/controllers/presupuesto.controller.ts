@@ -217,7 +217,7 @@ export const createVersion = async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Error al crear versión:', error);
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: error.errors });
+      return res.status(400).json({ error: error.errors.map((e) => e.message).join(', ') });
     }
     res.status(500).json({ error: 'Error al crear versión' });
   }
@@ -269,7 +269,7 @@ export const addItem = async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Error al agregar item:', error);
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: error.errors });
+      return res.status(400).json({ error: error.errors.map((e) => e.message).join(', ') });
     }
     res.status(500).json({ error: 'Error al agregar item' });
   }
@@ -312,7 +312,7 @@ export const updateItem = async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Error al actualizar item:', error);
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: error.errors });
+      return res.status(400).json({ error: error.errors.map((e) => e.message).join(', ') });
     }
     res.status(500).json({ error: 'Error al actualizar item' });
   }

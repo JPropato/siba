@@ -43,6 +43,12 @@ app.use(
         'http://127.0.0.1:5173',
         'http://127.0.0.1:5174',
         'http://127.0.0.1:5175',
+        // Local network (ntb086)
+        'http://ntb086:5173',
+        'http://ntb086:5174',
+        'http://ntb086:5175',
+        'http://ntb086:5176',
+        'http://ntb086:3001',
         // Dev
         'http://siba-dev-sibaweb-tfmrbz-e3ea43-148-230-79-241.traefik.me',
         'https://siba-dev.julianpropato.com.ar',

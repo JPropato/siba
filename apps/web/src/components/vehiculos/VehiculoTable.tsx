@@ -1,16 +1,18 @@
 import type { Vehiculo } from '../../types/vehiculos';
 import { useSortableTable } from '../../hooks/useSortableTable';
 import { useActionSheet } from '../../hooks/useActionSheet';
-import { Car, Loader2, Pencil, Trash2 } from 'lucide-react';
+import { Car, Loader2, Pencil, Trash2, Eye, ChevronRight } from 'lucide-react';
 import { EmptyState } from '../ui/EmptyState';
 import { motion } from 'framer-motion';
 import { SortableHeader } from '../ui/core/SortableHeader';
 import { MobileActionSheet } from '../ui/MobileActionSheet';
+import { getOilChangeStatus, getVTVStatus, getLicenseStatus } from '../../utils/vehiculoAlarms';
 
 interface VehiculoTableProps {
   vehiculos: Vehiculo[];
   onEdit: (vehiculo: Vehiculo) => void;
   onDelete: (vehiculo: Vehiculo) => void;
+  onView?: (vehiculo: Vehiculo) => void;
   isLoading: boolean;
 }
 
@@ -18,6 +20,7 @@ export default function VehiculoTable({
   vehiculos,
   onEdit,
   onDelete,
+  onView,
   isLoading,
 }: VehiculoTableProps) {
   const { items, requestSort, sortConfig } = useSortableTable(vehiculos);
@@ -65,6 +68,9 @@ export default function VehiculoTable({
                 sortConfig={sortConfig}
                 onSort={requestSort}
               />
+              <th className="px-3 py-2 font-semibold text-slate-900 dark:text-slate-100 hidden lg:table-cell">
+                Responsables
+              </th>
               <th className="px-3 py-2 font-semibold text-slate-900 dark:text-slate-100">
                 Zona Asignada
               </th>
@@ -77,7 +83,8 @@ export default function VehiculoTable({
             {items.map((v) => (
               <motion.tr
                 key={v.id}
-                className="bg-white dark:bg-slate-950"
+                onClick={() => onView?.(v)}
+                className={`bg-white dark:bg-slate-950 ${onView ? 'cursor-pointer' : ''}`}
                 whileHover={{
                   backgroundColor: 'rgba(248, 250, 252, 1)',
                 }}
@@ -118,20 +125,70 @@ export default function VehiculoTable({
                     >
                       {v.estado.replace('_', ' ')}
                     </span>
-                    {(v.proximosKm || v.proximoService) && (
-                      <div className="flex flex-col text-[10px] text-slate-500">
-                        {v.proximosKm && (
-                          <span>
-                            Prox. Km: <strong>{v.proximosKm.toLocaleString()}</strong>
-                          </span>
-                        )}
-                        {v.proximoService && (
-                          <span>
-                            Service:{' '}
-                            <strong>{new Date(v.proximoService).toLocaleDateString()}</strong>
-                          </span>
-                        )}
-                      </div>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {(() => {
+                        const vtv = getVTVStatus(v.fechaVencimientoVTV);
+                        if (vtv.color === 'red' || vtv.color === 'amber')
+                          return (
+                            <span
+                              className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold ${vtv.color === 'red' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'}`}
+                            >
+                              <ShieldCheck className="h-3 w-3" /> VTV
+                            </span>
+                          );
+                        return null;
+                      })()}
+                      {(() => {
+                        const oil = getOilChangeStatus(v.fechaCambioAceite);
+                        if (oil.color === 'red' || oil.color === 'amber')
+                          return (
+                            <span
+                              className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold ${oil.color === 'red' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'}`}
+                            >
+                              <Droplets className="h-3 w-3" /> Aceite
+                            </span>
+                          );
+                        return null;
+                      })()}
+                      {(() => {
+                        const lic = getLicenseStatus(v.conductor?.fechaVencimientoRegistro);
+                        if (lic.color === 'red' || lic.color === 'amber')
+                          return (
+                            <span
+                              className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold ${lic.color === 'red' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'}`}
+                            >
+                              <Users className="h-3 w-3" /> Lic.
+                            </span>
+                          );
+                        return null;
+                      })()}
+                      {(v._count?.multas ?? 0) > 0 && (
+                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
+                          <CreditCard className="h-3 w-3" /> {v._count?.multas}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </td>
+                <td className="px-3 py-1.5 hidden lg:table-cell">
+                  <div className="flex flex-col gap-0.5 text-[10px]">
+                    {v.tecnicoReferente && (
+                      <span className="text-slate-600 dark:text-slate-400">
+                        <span className="text-slate-400">Ref:</span> {v.tecnicoReferente.apellido}
+                      </span>
+                    )}
+                    {v.tecnico && (
+                      <span className="text-slate-600 dark:text-slate-400">
+                        <span className="text-slate-400">Téc:</span> {v.tecnico.apellido}
+                      </span>
+                    )}
+                    {v.conductor && (
+                      <span className="text-slate-600 dark:text-slate-400">
+                        <span className="text-slate-400">Cond:</span> {v.conductor.apellido}
+                      </span>
+                    )}
+                    {!v.tecnicoReferente && !v.tecnico && !v.conductor && (
+                      <span className="text-slate-400 italic">Sin asignar</span>
                     )}
                   </div>
                 </td>
@@ -146,8 +203,24 @@ export default function VehiculoTable({
                 </td>
                 <td className="px-2 py-1 text-right hidden sm:table-cell">
                   <div className="flex items-center justify-end gap-2">
+                    {onView && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onView(v);
+                        }}
+                        className="h-7 w-7 flex items-center justify-center text-slate-400 hover:text-brand transition-colors rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 focus-visible:ring-2 focus-visible:ring-brand/50"
+                        title="Ver detalles"
+                        aria-label="Ver detalles"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </button>
+                    )}
                     <button
-                      onClick={() => onEdit(v)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEdit(v);
+                      }}
                       className="h-7 w-7 flex items-center justify-center text-slate-400 hover:text-brand transition-colors rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 focus-visible:ring-2 focus-visible:ring-brand/50"
                       title="Editar"
                       aria-label="Editar"
@@ -155,7 +228,10 @@ export default function VehiculoTable({
                       <Pencil className="h-4 w-4" />
                     </button>
                     <button
-                      onClick={() => onDelete(v)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDelete(v);
+                      }}
                       className="h-7 w-7 flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-900/10 focus-visible:ring-2 focus-visible:ring-red-500/50"
                       title="Eliminar"
                       aria-label="Eliminar"
@@ -179,6 +255,16 @@ export default function VehiculoTable({
             : undefined
         }
         actions={[
+          ...(onView
+            ? [
+                {
+                  id: 'view',
+                  label: 'Ver detalle',
+                  icon: <ChevronRight className="h-5 w-5" />,
+                  onClick: () => actionSheet.selectedItem && onView(actionSheet.selectedItem),
+                },
+              ]
+            : []),
           {
             id: 'edit',
             label: 'Editar',
@@ -189,7 +275,7 @@ export default function VehiculoTable({
             id: 'delete',
             label: 'Eliminar',
             icon: <Trash2 className="h-5 w-5" />,
-            variant: 'destructive',
+            variant: 'destructive' as const,
             onClick: () => actionSheet.selectedItem && onDelete(actionSheet.selectedItem),
           },
         ]}

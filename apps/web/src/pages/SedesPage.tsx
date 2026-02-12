@@ -5,7 +5,6 @@ import { toast } from 'sonner';
 import SedeTable from '../components/sedes/SedeTable';
 import SedeDialog from '../components/sedes/SedeDialog';
 import { CollapsibleFilters } from '../components/layout/CollapsibleFilters';
-import { FloatingActionButton } from '../components/layout/FloatingActionButton';
 import { PullToRefresh } from '../components/ui/PullToRefresh';
 import { useSedes, useCreateSede, useUpdateSede, useDeleteSede } from '../hooks/api/useSedes';
 import type { Sede, SedeFormData } from '../types/sedes';
@@ -80,7 +79,7 @@ export default function SedesPage() {
       <div className="px-4 pt-3 pb-6 sm:px-6 space-y-5 animate-in fade-in duration-500">
         <PageHeader
           icon={<Building2 className="h-5 w-5" />}
-          breadcrumb={['Gestión', 'Sedes']}
+          breadcrumb={['Administración', 'Sedes']}
           title="Sedes"
           subtitle="Sucursales y puntos de servicio"
           count={sedes.length}
@@ -126,14 +125,6 @@ export default function SedesPage() {
         />
 
         {ConfirmDialog}
-
-        {/* FAB para móvil */}
-        <FloatingActionButton
-          onClick={handleCreate}
-          icon={<Building2 className="h-6 w-6" />}
-          hideOnDesktop
-          aria-label="Nueva Sede"
-        />
       </div>
     </PullToRefresh>
   );

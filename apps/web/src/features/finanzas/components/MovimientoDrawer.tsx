@@ -7,17 +7,12 @@ import { toast } from 'sonner';
 import { finanzasApi } from '../api/finanzasApi';
 import type {
   CuentaFinanciera,
+  CuentaContable,
+  CentroCosto,
   TipoMovimiento,
   MedioPago,
-  CategoriaIngreso,
-  CategoriaEgreso,
 } from '../types';
-import {
-  CATEGORIA_INGRESO_LABELS,
-  CATEGORIA_EGRESO_LABELS,
-  MEDIO_PAGO_LABELS,
-  MEDIO_PAGO_POR_DEFECTO,
-} from '../types';
+import { MEDIO_PAGO_LABELS, MEDIO_PAGO_POR_DEFECTO } from '../types';
 import { DialogBase } from '../../../components/ui/core/DialogBase';
 import { Input } from '../../../components/ui/core/Input';
 import { Button } from '../../../components/ui/core/Button';
@@ -40,6 +35,7 @@ import {
   Tag,
   Link2,
   AlignLeft,
+  BookOpen,
 } from 'lucide-react';
 import api from '../../../lib/api';
 
@@ -74,26 +70,6 @@ const MEDIOS_PAGO: MedioPago[] = [
   'TARJETA_CREDITO',
   'MERCADOPAGO',
 ];
-const CATEGORIAS_INGRESO: CategoriaIngreso[] = [
-  'COBRO_FACTURA',
-  'ANTICIPO_CLIENTE',
-  'REINTEGRO',
-  'RENDIMIENTO_INVERSION',
-  'RESCATE_INVERSION',
-  'OTRO_INGRESO',
-];
-const CATEGORIAS_EGRESO: CategoriaEgreso[] = [
-  'MATERIALES',
-  'MANO_DE_OBRA',
-  'COMBUSTIBLE',
-  'HERRAMIENTAS',
-  'VIATICOS',
-  'SUBCONTRATISTA',
-  'IMPUESTOS',
-  'SERVICIOS',
-  'TRASPASO_INVERSION',
-  'OTRO_EGRESO',
-];
 
 const movimientoSchema = z
   .object({
@@ -114,30 +90,8 @@ const movimientoSchema = z
       'TARJETA_CREDITO',
       'MERCADOPAGO',
     ]),
-    categoriaIngreso: z
-      .enum([
-        'COBRO_FACTURA',
-        'ANTICIPO_CLIENTE',
-        'REINTEGRO',
-        'RENDIMIENTO_INVERSION',
-        'RESCATE_INVERSION',
-        'OTRO_INGRESO',
-      ])
-      .optional(),
-    categoriaEgreso: z
-      .enum([
-        'MATERIALES',
-        'MANO_DE_OBRA',
-        'COMBUSTIBLE',
-        'HERRAMIENTAS',
-        'VIATICOS',
-        'SUBCONTRATISTA',
-        'IMPUESTOS',
-        'SERVICIOS',
-        'TRASPASO_INVERSION',
-        'OTRO_EGRESO',
-      ])
-      .optional(),
+    cuentaContableId: z.string().optional().or(z.literal('')),
+    centroCostoId: z.string().optional().or(z.literal('')),
     comprobante: z.string().optional().or(z.literal('')),
     comprobanteUrl: z.string().optional().nullable(),
     descripcion: z.string().min(3, 'Ingrese una descripción'),
@@ -252,8 +206,8 @@ const DEFAULT_VALUES: MovimientoFormValues = {
   monto: '',
   fechaMovimiento: new Date().toISOString().split('T')[0],
   medioPago: 'TRANSFERENCIA',
-  categoriaIngreso: 'COBRO_FACTURA',
-  categoriaEgreso: 'MATERIALES',
+  cuentaContableId: '',
+  centroCostoId: '',
   comprobante: '',
   comprobanteUrl: null,
   descripcion: '',
@@ -284,6 +238,8 @@ function SectionHeader({
 
 export default function MovimientoDrawer({ isOpen, onClose, onSuccess }: MovimientoDrawerProps) {
   const [cuentas, setCuentas] = useState<CuentaFinanciera[]>([]);
+  const [cuentasContables, setCuentasContables] = useState<CuentaContable[]>([]);
+  const [centrosCosto, setCentrosCosto] = useState<CentroCosto[]>([]);
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [obras, setObras] = useState<ObraOption[]>([]);
   const [tickets, setTickets] = useState<TicketOption[]>([]);
@@ -331,7 +287,25 @@ export default function MovimientoDrawer({ isOpen, onClose, onSuccess }: Movimie
         console.error(e);
       }
     };
+    const fetchCuentasContables = async () => {
+      try {
+        const data = await finanzasApi.getCuentasContables({ imputable: true });
+        setCuentasContables(data);
+      } catch (e) {
+        console.error(e);
+      }
+    };
+    const fetchCentrosCosto = async () => {
+      try {
+        const data = await finanzasApi.getCentrosCosto();
+        setCentrosCosto(data);
+      } catch (e) {
+        console.error(e);
+      }
+    };
     fetchCuentas();
+    fetchCuentasContables();
+    fetchCentrosCosto();
   }, []);
 
   useEffect(() => {
@@ -409,8 +383,8 @@ export default function MovimientoDrawer({ isOpen, onClose, onSuccess }: Movimie
           monto: Number(values.monto),
           fechaMovimiento: new Date(values.fechaMovimiento).toISOString(),
           medioPago: values.medioPago as MedioPago,
-          categoriaIngreso: values.tipo === 'INGRESO' ? values.categoriaIngreso : null,
-          categoriaEgreso: values.tipo === 'EGRESO' ? values.categoriaEgreso : null,
+          cuentaContableId: values.cuentaContableId ? Number(values.cuentaContableId) : null,
+          centroCostoId: values.centroCostoId ? Number(values.centroCostoId) : null,
           comprobante: values.comprobante || null,
           comprobanteUrl: values.comprobanteUrl || null,
           descripcion: values.descripcion,
@@ -668,52 +642,76 @@ export default function MovimientoDrawer({ isOpen, onClose, onSuccess }: Movimie
             <SectionHeader
               icon={<Tag className="h-4 w-4" />}
               title="Clasificacion"
-              subtitle={
-                tipo === 'INGRESO'
-                  ? 'Medio de pago y categoria del ingreso'
-                  : 'Medio de pago y categoria del egreso'
-              }
+              subtitle="Medio de pago, cuenta contable y centro de costo"
             />
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Controller
-                name="medioPago"
-                control={control}
-                render={({ field }) => (
+            <Controller
+              name="medioPago"
+              control={control}
+              render={({ field }) => (
+                <Select
+                  label="Medio de Pago *"
+                  options={MEDIOS_PAGO.map((mp) => ({
+                    value: mp,
+                    label: MEDIO_PAGO_LABELS[mp],
+                    icon: <CreditCard className="h-4 w-4" />,
+                  }))}
+                  value={field.value}
+                  onChange={field.onChange}
+                />
+              )}
+            />
+            <Controller
+              name="cuentaContableId"
+              control={control}
+              render={({ field }) => {
+                // Sort: show relevant type first (INGRESO→INGRESO cuentas, EGRESO→GASTO cuentas)
+                const sorted = [...cuentasContables].sort((a, b) => {
+                  const preferred = tipo === 'INGRESO' ? 'INGRESO' : 'GASTO';
+                  if (a.tipo === preferred && b.tipo !== preferred) return -1;
+                  if (a.tipo !== preferred && b.tipo === preferred) return 1;
+                  return a.codigo.localeCompare(b.codigo);
+                });
+                return (
                   <Select
-                    label="Medio de Pago *"
-                    options={MEDIOS_PAGO.map((mp) => ({
-                      value: mp,
-                      label: MEDIO_PAGO_LABELS[mp],
-                      icon: <CreditCard className="h-4 w-4" />,
+                    label="Cuenta Contable"
+                    options={sorted.map((cc) => ({
+                      value: cc.id.toString(),
+                      label: `${cc.codigo} - ${cc.nombre}`,
+                      description: cc.parent?.nombre,
+                      icon: <BookOpen className="h-4 w-4" />,
                     }))}
                     value={field.value}
                     onChange={field.onChange}
+                    placeholder="Sin clasificar"
                   />
-                )}
-              />
-              <Controller
-                name={tipo === 'INGRESO' ? 'categoriaIngreso' : 'categoriaEgreso'}
-                control={control}
-                render={({ field }) => (
+                );
+              }}
+            />
+            <Controller
+              name="centroCostoId"
+              control={control}
+              render={({ field }) => {
+                // Only show leaf nodes (centros without children)
+                const parentIds = new Set(
+                  centrosCosto.filter((c) => c.parentId).map((c) => c.parentId)
+                );
+                const leafCentros = centrosCosto.filter((c) => !parentIds.has(c.id));
+                return (
                   <Select
-                    label="Categoria *"
-                    options={
-                      tipo === 'INGRESO'
-                        ? CATEGORIAS_INGRESO.map((cat) => ({
-                            value: cat,
-                            label: CATEGORIA_INGRESO_LABELS[cat],
-                          }))
-                        : CATEGORIAS_EGRESO.map((cat) => ({
-                            value: cat,
-                            label: CATEGORIA_EGRESO_LABELS[cat],
-                          }))
-                    }
+                    label="Centro de Costo"
+                    options={leafCentros.map((cc) => ({
+                      value: cc.id.toString(),
+                      label: cc.nombre,
+                      description: cc.parent?.nombre,
+                      icon: <Building2 className="h-4 w-4" />,
+                    }))}
                     value={field.value}
                     onChange={field.onChange}
+                    placeholder="Sin asignar"
                   />
-                )}
-              />
-            </div>
+                );
+              }}
+            />
           </div>
         )}
 

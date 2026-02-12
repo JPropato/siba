@@ -2,7 +2,6 @@ import { useState, lazy, Suspense, useCallback, useMemo } from 'react';
 import { TrendingUp, Plus, Clock, Percent, PiggyBank, Loader2 } from 'lucide-react';
 import { PageHeader } from '../../../components/ui/PageHeader';
 import { PullToRefresh } from '../../../components/ui/PullToRefresh';
-import { FloatingActionButton } from '../../../components/layout/FloatingActionButton';
 import type { CuentaFinanciera } from '../types';
 import { useCuentas } from '../hooks/useCuentas';
 import InversionesTable from '../components/InversionesTable';
@@ -66,7 +65,7 @@ export default function InversionesPage() {
       <div className="px-4 pt-3 pb-6 sm:px-6 space-y-5 animate-in fade-in duration-500">
         <PageHeader
           icon={<TrendingUp className="h-5 w-5" />}
-          breadcrumb={['Finanzas', 'Inversiones']}
+          breadcrumb={['Tesorería', 'Inversiones']}
           title="Inversiones"
           subtitle="Plazos fijos, FCIs, cauciones y otras inversiones"
           count={inversiones.length}
@@ -160,14 +159,6 @@ export default function InversionesPage() {
             />
           </Suspense>
         )}
-
-        {/* FAB para móvil */}
-        <FloatingActionButton
-          onClick={handleCreate}
-          icon={<Plus className="h-6 w-6" />}
-          hideOnDesktop
-          aria-label="Nueva Inversión"
-        />
       </div>
     </PullToRefresh>
   );

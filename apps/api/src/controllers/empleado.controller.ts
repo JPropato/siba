@@ -287,7 +287,7 @@ export const create = async (req: Request, res: Response) => {
     res.status(201).json(newEmpleado);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: error.errors });
+      return res.status(400).json({ error: error.errors.map((e) => e.message).join(', ') });
     }
     console.error('Error al crear empleado:', error);
     res.status(500).json({ error: 'Error al crear empleado' });
@@ -430,7 +430,7 @@ export const update = async (req: Request, res: Response) => {
     res.json(updated);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: error.errors });
+      return res.status(400).json({ error: error.errors.map((e) => e.message).join(', ') });
     }
     console.error('Error al actualizar empleado:', error);
     res.status(500).json({ error: 'Error al actualizar empleado' });

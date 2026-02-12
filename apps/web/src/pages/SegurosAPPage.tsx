@@ -7,7 +7,6 @@ import {
   CheckCircle,
   AlertTriangle,
   XCircle,
-  Users,
   Loader2,
   ChevronRight,
 } from 'lucide-react';
@@ -109,7 +108,7 @@ export default function SegurosAPPage() {
 
   const { hasPermission } = usePermissions();
   const canWrite = hasPermission('empleados:escribir');
-  const { confirm, ConfirmDialog } = useConfirm();
+  const { ConfirmDialog } = useConfirm();
 
   // Debounce search
   useEffect(() => {
@@ -292,10 +291,7 @@ export default function SegurosAPPage() {
                     Destino
                   </th>
                   <th className="text-left px-4 py-3 font-bold text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider hidden md:table-cell">
-                    F. Solicitud
-                  </th>
-                  <th className="text-left px-4 py-3 font-bold text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider hidden md:table-cell">
-                    F. Efectiva
+                    Vigencia
                   </th>
                   {canWrite && (
                     <th className="text-right px-4 py-3 font-bold text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider">
@@ -309,10 +305,6 @@ export default function SegurosAPPage() {
                   const estadoConfig = ESTADO_SEGURO_AP_CONFIG[seguro.estado];
                   const badgeClass = BADGE_CLASSES[estadoConfig.color] || BADGE_CLASSES.blue;
                   const action = TRANSITION_ACTIONS[seguro.estado];
-                  const effectiveDate =
-                    seguro.estado === 'ACTIVO' || seguro.estado === 'PEDIDO_ALTA'
-                      ? seguro.fechaAltaEfectiva
-                      : seguro.fechaBajaEfectiva;
 
                   return (
                     <tr
@@ -354,14 +346,14 @@ export default function SegurosAPPage() {
                         {seguro.destino || '-'}
                       </td>
 
-                      {/* Fecha solicitud */}
+                      {/* Vigencia */}
                       <td className="px-4 py-3 text-slate-500 dark:text-slate-400 text-xs hidden md:table-cell">
-                        {formatDate(seguro.fechaSolicitudAlta)}
-                      </td>
-
-                      {/* Fecha efectiva */}
-                      <td className="px-4 py-3 text-slate-500 dark:text-slate-400 text-xs hidden md:table-cell">
-                        {formatDate(effectiveDate)}
+                        <div className="flex flex-col gap-0.5">
+                          <span>{formatDate(seguro.fechaInicio)}</span>
+                          {seguro.fechaFinalizacion && (
+                            <span>al {formatDate(seguro.fechaFinalizacion)}</span>
+                          )}
+                        </div>
                       </td>
 
                       {/* Acciones */}
@@ -445,10 +437,17 @@ interface SeguroAPDrawerProps {
     empleadoId: number;
     destino?: string | null;
     observaciones?: string | null;
+    fechaInicio?: string | null;
+    fechaFinalizacion?: string | null;
   }) => Promise<unknown>;
   onUpdate: (data: {
     seguroId: number;
-    data: { destino?: string | null; observaciones?: string | null };
+    data: {
+      destino?: string | null;
+      observaciones?: string | null;
+      fechaInicio?: string | null;
+      fechaFinalizacion?: string | null;
+    };
   }) => Promise<unknown>;
 }
 
@@ -457,6 +456,8 @@ function SeguroAPDrawer({ open, onClose, seguro, onCreate, onUpdate }: SeguroAPD
   const [selectedEmpleadoId, setSelectedEmpleadoId] = useState<number | null>(null);
   const [destino, setDestino] = useState('');
   const [observaciones, setObservaciones] = useState('');
+  const [fechaInicio, setFechaInicio] = useState('');
+  const [fechaFinalizacion, setFechaFinalizacion] = useState('');
   const [saving, setSaving] = useState(false);
 
   const isEditing = !!seguro;
@@ -471,10 +472,16 @@ function SeguroAPDrawer({ open, onClose, seguro, onCreate, onUpdate }: SeguroAPD
       if (seguro) {
         setDestino(seguro.destino || '');
         setObservaciones(seguro.observaciones || '');
+        setFechaInicio(seguro.fechaInicio ? seguro.fechaInicio.split('T')[0] : '');
+        setFechaFinalizacion(
+          seguro.fechaFinalizacion ? seguro.fechaFinalizacion.split('T')[0] : ''
+        );
         setSelectedEmpleadoId(seguro.empleadoId);
       } else {
         setDestino('');
         setObservaciones('');
+        setFechaInicio('');
+        setFechaFinalizacion('');
         setSelectedEmpleadoId(null);
         setEmpleadoSearch('');
       }
@@ -492,7 +499,12 @@ function SeguroAPDrawer({ open, onClose, seguro, onCreate, onUpdate }: SeguroAPD
       if (isEditing) {
         await onUpdate({
           seguroId: seguro!.id,
-          data: { destino: destino || null, observaciones: observaciones || null },
+          data: {
+            destino: destino || null,
+            observaciones: observaciones || null,
+            fechaInicio: fechaInicio || null,
+            fechaFinalizacion: fechaFinalizacion || null,
+          },
         });
         toast.success('Seguro AP actualizado');
       } else {
@@ -500,6 +512,8 @@ function SeguroAPDrawer({ open, onClose, seguro, onCreate, onUpdate }: SeguroAPD
           empleadoId: selectedEmpleadoId!,
           destino: destino || null,
           observaciones: observaciones || null,
+          fechaInicio: fechaInicio || null,
+          fechaFinalizacion: fechaFinalizacion || null,
         });
         toast.success('Seguro AP creado');
       }
@@ -622,6 +636,32 @@ function SeguroAPDrawer({ open, onClose, seguro, onCreate, onUpdate }: SeguroAPD
                 placeholder="Ej: Obra X, Sucursal Y"
                 className={inputClasses}
               />
+            </div>
+
+            {/* Fechas de vigencia */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                  Fecha inicio
+                </label>
+                <input
+                  type="date"
+                  value={fechaInicio}
+                  onChange={(e) => setFechaInicio(e.target.value)}
+                  className={inputClasses}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                  Fecha finalización
+                </label>
+                <input
+                  type="date"
+                  value={fechaFinalizacion}
+                  onChange={(e) => setFechaFinalizacion(e.target.value)}
+                  className={inputClasses}
+                />
+              </div>
             </div>
 
             {/* Observaciones */}

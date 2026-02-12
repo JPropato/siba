@@ -2,8 +2,11 @@ import api from '@/lib/api';
 import type {
   Banco,
   CuentaFinanciera,
+  CuentaContable,
+  CentroCosto,
   Movimiento,
   DashboardFinanzas,
+  BalanceContable,
   MovimientoFilters,
   MovimientosListResponse,
   CreateCuentaDto,
@@ -27,6 +30,12 @@ export const finanzasApi = {
     total: number;
   }> => {
     const response = await api.get(`${BASE_URL}/saldos`);
+    return response.data;
+  },
+
+  getBalanceContable: async (fechaHasta?: string): Promise<BalanceContable> => {
+    const params = fechaHasta ? `?fechaHasta=${fechaHasta}` : '';
+    const response = await api.get(`${BASE_URL}/balance-contable${params}`);
     return response.data;
   },
 
@@ -79,6 +88,9 @@ export const finanzasApi = {
     if (filters.estado) params.append('estado', filters.estado);
     if (filters.fechaDesde) params.append('fechaDesde', filters.fechaDesde);
     if (filters.fechaHasta) params.append('fechaHasta', filters.fechaHasta);
+    if (filters.cuentaContableId)
+      params.append('cuentaContableId', String(filters.cuentaContableId));
+    if (filters.centroCostoId) params.append('centroCostoId', String(filters.centroCostoId));
     if (filters.search) params.append('search', filters.search);
     if (filters.page) params.append('page', String(filters.page));
     if (filters.limit) params.append('limit', String(filters.limit));
@@ -110,6 +122,56 @@ export const finanzasApi = {
   confirmarMovimiento: async (id: number): Promise<Movimiento> => {
     const response = await api.post(`${BASE_URL}/movimientos/${id}/confirmar`);
     return response.data;
+  },
+
+  // === CUENTAS CONTABLES ===
+  getCuentasContables: async (params?: {
+    tipo?: string;
+    imputable?: boolean;
+  }): Promise<CuentaContable[]> => {
+    const searchParams = new URLSearchParams();
+    if (params?.tipo) searchParams.append('tipo', params.tipo);
+    if (params?.imputable !== undefined) searchParams.append('imputable', String(params.imputable));
+    const query = searchParams.toString();
+    const response = await api.get(`${BASE_URL}/cuentas-contables${query ? `?${query}` : ''}`);
+    return response.data;
+  },
+
+  createCuentaContable: async (data: Partial<CuentaContable>): Promise<CuentaContable> => {
+    const response = await api.post(`${BASE_URL}/cuentas-contables`, data);
+    return response.data;
+  },
+
+  updateCuentaContable: async (
+    id: number,
+    data: Partial<CuentaContable>
+  ): Promise<CuentaContable> => {
+    const response = await api.put(`${BASE_URL}/cuentas-contables/${id}`, data);
+    return response.data;
+  },
+
+  deleteCuentaContable: async (id: number): Promise<void> => {
+    await api.delete(`${BASE_URL}/cuentas-contables/${id}`);
+  },
+
+  // === CENTROS DE COSTO ===
+  getCentrosCosto: async (): Promise<CentroCosto[]> => {
+    const response = await api.get(`${BASE_URL}/centros-costo`);
+    return response.data;
+  },
+
+  createCentroCosto: async (data: Partial<CentroCosto>): Promise<CentroCosto> => {
+    const response = await api.post(`${BASE_URL}/centros-costo`, data);
+    return response.data;
+  },
+
+  updateCentroCosto: async (id: number, data: Partial<CentroCosto>): Promise<CentroCosto> => {
+    const response = await api.put(`${BASE_URL}/centros-costo/${id}`, data);
+    return response.data;
+  },
+
+  deleteCentroCosto: async (id: number): Promise<void> => {
+    await api.delete(`${BASE_URL}/centros-costo/${id}`);
   },
 
   // === TRANSFERENCIAS ===

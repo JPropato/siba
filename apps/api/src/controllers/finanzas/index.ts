@@ -17,6 +17,20 @@ export {
   confirmarMovimiento,
 } from './movimiento.controller.js';
 
-export { getDashboard, getSaldos } from './dashboard.controller.js';
+export { getDashboard, getSaldos, getBalanceContable } from './dashboard.controller.js';
 
 export { createTransferencia } from './transferencia.controller.js';
+
+export {
+  getCuentasContables,
+  createCuentaContable,
+  updateCuentaContable,
+  deleteCuentaContable,
+} from './cuentaContable.controller.js';
+
+export {
+  getCentrosCosto,
+  createCentroCosto,
+  updateCentroCosto,
+  deleteCentroCosto,
+} from './centroCosto.controller.js';

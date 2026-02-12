@@ -1,0 +1,159 @@
+---
+title: SIBA System Context - Financial Module Integration
+---
+flowchart TB
+    %% =============================================
+    %% USERS
+    %% =============================================
+
+    subgraph USERS["👥 Users"]
+        EMPLOYEE[("👷 Employee\n(Técnico Referente)")]
+        ADMIN[("👤 Admin\n(Back Office)")]
+        DIRECTOR[("💼 Director")]
+        CLIENT[("🏢 Cliente")]
+    end
+
+    %% =============================================
+    %% SIBA MODULES
+    %% =============================================
+
+    subgraph SIBA["🏗️ SIBA System"]
+
+        subgraph OPERATIONS["📋 Operations Module"]
+            TICKETS["Tickets\n(Service Requests)"]
+            OBRAS["Obras\n(Projects)"]
+        end
+
+        subgraph FINANCE["💰 Financial Module"]
+            CUENTAS["Cuentas Financieras\n(Bank Accounts)"]
+            MOVIMIENTOS["Movimientos\n(Transactions)"]
+            TARJETAS["Tarjetas\n(Cards)"]
+            GASTOS["Gastos\n(Expenses)"]
+        end
+
+        subgraph ACCOUNTING["📊 Accounting Module"]
+            PLAN_CUENTAS["Plan de Cuentas\n(Chart of Accounts)"]
+            CENTROS_COSTO["Centros de Costo\n(Cost Centers)"]
+            BALANCE["Balance Contable\n(Accounting Balance)"]
+        end
+
+        subgraph PURCHASES["🛒 Purchases Module"]
+            PROVEEDORES["Proveedores\n(Suppliers)"]
+            FACTURAS["Facturas Proveedor\n(Invoices)"]
+            CHEQUES["Cheques\n(Checks)"]
+        end
+
+        subgraph BILLING["📄 Billing Module"]
+            CLIENTES["Clientes\n(Clients)"]
+            FACTURAS_EMIT["Facturas Emitidas\n(Issued Invoices)"]
+        end
+
+        subgraph HR["👥 HR Module"]
+            EMPLEADOS["Empleados\n(Employees)"]
+            SEGUROS["Seguros AP\n(Insurance)"]
+        end
+
+        subgraph ADMIN_MODULE["⚙️ Administration"]
+            VEHICULOS["Vehículos\n(Vehicles)"]
+            MULTAS["Multas\n(Fines)"]
+            SEDES["Sedes\n(Branches)"]
+        end
+
+    end
+
+    %% =============================================
+    %% EXTERNAL SYSTEMS
+    %% =============================================
+
+    subgraph EXTERNAL["🌐 External Systems"]
+        BANKS["🏦 Banks\n(Account Statements)"]
+        AFIP["🏛️ AFIP\n(Tax Authority)"]
+        ACCOUNTING_SW["💻 Accounting Software\n(Tango, ContaPlus)"]
+        MINIO["📦 MinIO\n(File Storage)"]
+    end
+
+    %% =============================================
+    %% RELATIONSHIPS - USER INTERACTIONS
+    %% =============================================
+
+    EMPLOYEE -->|"Reports issues"| TICKETS
+    EMPLOYEE -->|"Registers expenses\n(Mis Gastos)"| GASTOS
+    EMPLOYEE -->|"Has assigned"| TARJETAS
+
+    ADMIN -->|"Manages"| CUENTAS
+    ADMIN -->|"Registers"| MOVIMIENTOS
+    ADMIN -->|"Creates"| TARJETAS
+    ADMIN -->|"Configures"| PLAN_CUENTAS
+    ADMIN -->|"Manages"| PROVEEDORES
+    ADMIN -->|"Pays"| FACTURAS
+    ADMIN -->|"Issues"| CHEQUES
+
+    DIRECTOR -->|"Uses corporate"| TARJETAS
+    DIRECTOR -->|"Reviews"| BALANCE
+
+    CLIENT -->|"Requests services"| TICKETS
+    CLIENT -->|"Receives"| FACTURAS_EMIT
+
+    %% =============================================
+    %% MODULE INTEGRATIONS
+    %% =============================================
+
+    %% Operations → Finance
+    TICKETS -.->|"Generates costs"| GASTOS
+    TICKETS -.->|"Links to"| MOVIMIENTOS
+    OBRAS -.->|"Assigns costs to"| CENTROS_COSTO
+
+    %% Finance → Accounting (CORE INTEGRATION)
+    MOVIMIENTOS ==>|"MANDATORY:\nimputa a"| PLAN_CUENTAS
+    MOVIMIENTOS ==>|"OPTIONAL:\nasigna a"| CENTROS_COSTO
+    TARJETAS ==>|"Asociada a"| CUENTAS
+    GASTOS ==>|"Auto-creates"| MOVIMIENTOS
+
+    %% Purchases → Finance
+    PROVEEDORES -.->|"Receives payments"| MOVIMIENTOS
+    FACTURAS -.->|"Generates"| MOVIMIENTOS
+    FACTURAS -.->|"Paid with"| CHEQUES
+    CHEQUES ==>|"Creates"| MOVIMIENTOS
+    GASTOS ==>|"MANDATORY:\ncompra a"| PROVEEDORES
+    GASTOS -.->|"OPTIONAL:\nrespalda con"| FACTURAS
+
+    %% Billing → Finance
+    FACTURAS_EMIT ==>|"Creates"| MOVIMIENTOS
+    CLIENTES -.->|"Receives"| FACTURAS_EMIT
+
+    %% HR → Finance
+    EMPLEADOS -.->|"Titular de"| TARJETAS
+    EMPLEADOS -.->|"Responsible for"| MOVIMIENTOS
+
+    %% Administration → Finance
+    VEHICULOS -.->|"Expenses to"| CENTROS_COSTO
+    MULTAS ==>|"Creates"| MOVIMIENTOS
+
+    %% =============================================
+    %% EXTERNAL INTEGRATIONS
+    %% =============================================
+
+    CUENTAS -.->|"Reconciles with"| BANKS
+    BALANCE -.->|"Reports to"| AFIP
+    BALANCE -.->|"Exports to"| ACCOUNTING_SW
+    GASTOS -.->|"Stores receipts in"| MINIO
+
+    %% =============================================
+    %% STYLING
+    %% =============================================
+
+    style FINANCE fill:#fff3e0,stroke:#f57c00,stroke-width:4px
+    style ACCOUNTING fill:#ffebee,stroke:#d32f2f,stroke-width:3px
+    style PURCHASES fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    style OPERATIONS fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
+    style BILLING fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+    style HR fill:#e8f5e9,stroke:#388e3c,stroke-width:2px
+    style ADMIN_MODULE fill:#f9fbe7,stroke:#afb42b,stroke-width:2px
+    style USERS fill:#e0f2f1,stroke:#00897b,stroke-width:2px
+    style EXTERNAL fill:#fafafa,stroke:#757575,stroke-width:1px
+
+    classDef coreEntity fill:#ff6b6b,stroke:#c92a2a,stroke-width:3px,color:#fff
+    classDef integrationPoint fill:#51cf66,stroke:#2f9e44,stroke-width:2px
+
+    class MOVIMIENTOS,PLAN_CUENTAS coreEntity
+    class GASTOS,TARJETAS,PROVEEDORES integrationPoint

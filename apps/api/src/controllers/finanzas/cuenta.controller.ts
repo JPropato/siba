@@ -77,7 +77,7 @@ export const createCuenta = async (req: Request, res: Response) => {
   } catch (error) {
     console.error('[Finanzas] createCuenta error:', error);
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: error.errors });
+      return res.status(400).json({ error: error.errors.map((e) => e.message).join(', ') });
     }
     res.status(500).json({ error: 'Error al crear cuenta' });
   }

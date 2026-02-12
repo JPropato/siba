@@ -2,5 +2,8 @@ export { default as FinanzasDashboard } from './pages/FinanzasDashboard';
 export { default as MovimientosPage } from './pages/MovimientosPage';
 export { default as CuentasPage } from './pages/CuentasPage';
 export { default as InversionesPage } from './pages/InversionesPage';
+export { default as CuentasContablesPage } from './pages/CuentasContablesPage';
+export { default as CentrosCostoPage } from './pages/CentrosCostoPage';
+export { default as ContabilidadDashboard } from './pages/ContabilidadDashboard';
 export * from './types';
 export * from './api/finanzasApi';

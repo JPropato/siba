@@ -1,0 +1,174 @@
+---
+title: SIBA Financial Module - Architecture & Design Patterns
+---
+classDiagram
+    %% =============================================
+    %% CORE ACCOUNTING PATTERN
+    %% =============================================
+
+    class Movimiento {
+        <<Transaction>>
+        +string codigo UK
+        +string tipo INGRESO|EGRESO
+        +decimal monto
+        +date fecha
+        +string concepto
+        +CuentaContableId FK "MANDATORY"
+        +CentroCostoId FK "OPTIONAL"
+        +registrarTransaccion()
+        +anular()
+    }
+
+    class CuentaFinanciera {
+        <<Bank Account / Cash>>
+        +string nombre
+        +string tipo
+        +decimal saldoActual
+        +registrarIngreso()
+        +registrarEgreso()
+        +calcularBalance()
+    }
+
+    class CuentaContable {
+        <<Chart of Accounts>>
+        +string codigo
+        +string nombre
+        +string tipo
+        +boolean esImputable
+        +int nivel
+        +calcularBalance()
+        +getChildren()
+    }
+
+    class CentroCosto {
+        <<Cost Center>>
+        +string codigo
+        +string nombre
+        +calcularCostos()
+    }
+
+    %% =============================================
+    %% TARJETAS MODULE PATTERN
+    %% =============================================
+
+    class TarjetaPrecargable {
+        <<Payment Method>>
+        +string tipo PRECARGABLE|CORPORATIVA
+        +string estado
+        +CuentaFinancieraId "MANDATORY"
+        +cargar(monto)
+        +gastar(monto)
+        +getSaldo()
+    }
+
+    class GastoTarjeta {
+        <<Expense Transaction>>
+        +string categoria
+        +decimal monto
+        +date fecha
+        +ProveedorId "MANDATORY"
+        +FacturaProveedorId "OPTIONAL"
+        +MovimientoId "AUTO-CREATED"
+        +registrar()
+        +validarSaldo()
+    }
+
+    class ConfigCategoriaGasto {
+        <<Category Config>>
+        +string categoria UK
+        +CuentaContableId
+        +getCuentaContable()
+    }
+
+    %% =============================================
+    %% PROVIDER & INVOICE PATTERN
+    %% =============================================
+
+    class Proveedor {
+        <<Supplier>>
+        +string razonSocial
+        +string cuit UK
+        +string condicionIva
+        +getFacturas()
+        +getTotalDeuda()
+    }
+
+    class FacturaProveedor {
+        <<Supplier Invoice>>
+        +string tipoComprobante
+        +decimal total
+        +decimal saldoPendiente
+        +string estado
+        +registrarPago()
+        +calcularSaldo()
+    }
+
+    %% =============================================
+    %% PAYMENT METHODS PATTERN
+    %% =============================================
+
+    class Cheque {
+        <<Payment Method>>
+        +string numeroCheque UK
+        +date fechaPago
+        +decimal monto
+        +string estado
+        +MovimientoId "AUTO-CREATED"
+        +emitir()
+        +marcarCobrado()
+    }
+
+    class Transferencia {
+        <<Payment Method>>
+        +CuentaOrigenId
+        +CuentaDestinoId
+        +MovimientoEgresoId "AUTO"
+        +MovimientoIngresoId "AUTO"
+        +ejecutar()
+    }
+
+    %% =============================================
+    %% RELATIONSHIPS
+    %% =============================================
+
+    %% Core accounting relationships
+    Movimiento "N" --> "1" CuentaFinanciera : registrado_en
+    Movimiento "N" --> "1" CuentaContable : imputa_a "MANDATORY"
+    Movimiento "N" --> "0..1" CentroCosto : asignado_a
+    Movimiento "N" --> "0..1" Proveedor : pagado_a
+    Movimiento "N" --> "0..1" FacturaProveedor : paga
+
+    %% Tarjetas relationships
+    TarjetaPrecargable "1" --> "1" CuentaFinanciera : asociada_a "MANDATORY"
+    GastoTarjeta "1" --> "1" TarjetaPrecargable : gasta_en
+    GastoTarjeta "1" --> "1" Movimiento : genera "AUTO"
+    GastoTarjeta "N" --> "1" Proveedor : compra_a "MANDATORY"
+    GastoTarjeta "N" --> "0..1" FacturaProveedor : respaldado_por
+    GastoTarjeta "N" --> "1" ConfigCategoriaGasto : usa_categoria
+    ConfigCategoriaGasto "N" --> "1" CuentaContable : mapea_a
+
+    %% Provider relationships
+    Proveedor "1" --> "N" FacturaProveedor : emite
+    FacturaProveedor "1" --> "N" Movimiento : genera_pagos
+
+    %% Payment methods
+    Cheque "1" --> "1" Movimiento : genera "AUTO"
+    Cheque "N" --> "1" CuentaFinanciera : debitado_de
+    Cheque "N" --> "0..1" FacturaProveedor : paga
+    Transferencia "1" --> "2" Movimiento : genera "AUTO (EGRESO + INGRESO)"
+    Transferencia "N" --> "1" CuentaFinanciera : origen
+    Transferencia "N" --> "1" CuentaFinanciera : destino
+
+    %% =============================================
+    %% NOTES & PATTERNS
+    %% =============================================
+
+    note for Movimiento "CORE PRINCIPLE: Every financial transaction\nmust create a Movimiento with:\n- CuentaContable (accounting account) - MANDATORY\n- CentroCosto (cost center) - OPTIONAL\n- Empleado/Ticket context - OPTIONAL"
+
+    note for GastoTarjeta "TARJETAS PATTERN:\n1. Employee makes expense\n2. Select/Create Proveedor (MANDATORY)\n3. Attach FacturaProveedor (OPTIONAL)\n4. Select category → auto-gets CuentaContable\n5. Auto-create Movimiento EGRESO\n6. Update card balance"
+
+    note for ConfigCategoriaGasto "CATEGORY MAPPING:\nEach expense category maps to\na specific CuentaContable.\nConfigurable from admin UI.\nEnsures consistent accounting."
+
+    note for Transferencia "DOUBLE-ENTRY:\nTransfers create TWO Movimientos:\n- EGRESO from origen\n- INGRESO to destino\nMaintaining balance integrity"
+
+    note for CuentaContable "CHART OF ACCOUNTS:\nHierarchical structure:\n1. Activo\n2. Pasivo\n3. Patrimonio\n4. Ingresos\n5. Gastos\n\nBalances calculated automatically"

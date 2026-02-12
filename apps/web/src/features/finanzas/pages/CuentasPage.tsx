@@ -16,7 +16,6 @@ import {
 import { toast } from 'sonner';
 import { PageHeader } from '../../../components/ui/PageHeader';
 import { PullToRefresh } from '../../../components/ui/PullToRefresh';
-import { FloatingActionButton } from '../../../components/layout/FloatingActionButton';
 import { EmptyState } from '../../../components/ui/EmptyState';
 import { useConfirm } from '../../../hooks/useConfirm';
 import { TIPO_CUENTA_CONFIG } from '../types';
@@ -99,7 +98,7 @@ export default function CuentasPage() {
       <div className="px-4 pt-3 pb-6 sm:px-6 space-y-5 animate-in fade-in duration-500">
         <PageHeader
           icon={<Landmark className="h-5 w-5" />}
-          breadcrumb={['Finanzas', 'Cuentas']}
+          breadcrumb={['Tesorería', 'Cuentas']}
           title="Cuentas y Bancos"
           subtitle="Gestión de disponibilidades y saldos bancarios"
           count={cuentas.length}
@@ -281,14 +280,6 @@ export default function CuentasPage() {
         )}
 
         {ConfirmDialog}
-
-        {/* FAB para móvil */}
-        <FloatingActionButton
-          onClick={handleCreate}
-          icon={<Plus className="h-6 w-6" />}
-          hideOnDesktop
-          aria-label="Nueva Cuenta"
-        />
       </div>
     </PullToRefresh>
   );

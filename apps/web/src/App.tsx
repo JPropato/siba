@@ -38,6 +38,35 @@ const CuentasPage = lazy(() =>
 const InversionesPage = lazy(() =>
   import('./features/finanzas').then((m) => ({ default: m.InversionesPage }))
 );
+const CuentasContablesPage = lazy(() =>
+  import('./features/finanzas').then((m) => ({ default: m.CuentasContablesPage }))
+);
+const CentrosCostoPage = lazy(() =>
+  import('./features/finanzas').then((m) => ({ default: m.CentrosCostoPage }))
+);
+const ContabilidadDashboard = lazy(() =>
+  import('./features/finanzas').then((m) => ({ default: m.ContabilidadDashboard }))
+);
+const ComprasHomePage = lazy(() =>
+  import('./features/compras').then((m) => ({ default: m.ComprasHomePage }))
+);
+const ProveedoresPage = lazy(() =>
+  import('./features/compras').then((m) => ({ default: m.ProveedoresPage }))
+);
+const FacturasProveedorPage = lazy(() =>
+  import('./features/compras').then((m) => ({ default: m.FacturasPage }))
+);
+const ChequesPage = lazy(() =>
+  import('./features/compras').then((m) => ({ default: m.ChequesPage }))
+);
+const TarjetasPage = lazy(() => import('./pages/TarjetasPage'));
+const RendicionesPage = lazy(() => import('./pages/RendicionesPage'));
+const FacturacionHomePage = lazy(() =>
+  import('./features/facturacion').then((m) => ({ default: m.FacturacionHomePage }))
+);
+const FacturasEmitidasPage = lazy(() =>
+  import('./features/facturacion').then((m) => ({ default: m.FacturasEmitidasPage }))
+);
 const SegurosAPPage = lazy(() => import('./pages/SegurosAPPage'));
 const AuditPage = lazy(() => import('./features/audit/pages/AuditPage'));
 
@@ -117,65 +146,100 @@ function DashboardWrapper({ children }: { children: React.ReactNode }) {
 
   const handleNavigate = (id: string) => {
     if (id === 'dashboard') navigate('/dashboard');
-    if (id === 'usuarios') navigate('/dashboard/users');
-    if (id === 'roles') navigate('/dashboard/roles');
-    if (id === 'clientes') navigate('/dashboard/clients');
-    if (id === 'zonas') navigate('/dashboard/zones');
-    if (id === 'sedes') navigate('/dashboard/sedes');
-    if (id === 'vehiculos') navigate('/dashboard/vehicles');
-    if (id === 'materiales') navigate('/dashboard/materials');
-    if (id === 'empleados') navigate('/dashboard/empleados');
-    if (id === 'seguros-ap') navigate('/dashboard/seguros-ap');
-    if (id === 'vacaciones') navigate('/dashboard/vacaciones');
-    if (id === 'sueldos') navigate('/dashboard/sueldos');
-    if (id === 'ausencias') navigate('/dashboard/ausencias');
+    // Operaciones
     if (id === 'tickets') navigate('/dashboard/tickets');
     if (id === 'obras') navigate('/dashboard/obras');
+    // Compras
+    if (id === 'proveedores') navigate('/dashboard/compras/proveedores');
+    if (id === 'facturas-proveedor') navigate('/dashboard/compras/facturas');
+    // Ventas
+    if (id === 'clientes') navigate('/dashboard/clients');
+    if (id === 'facturas-emitidas') navigate('/dashboard/facturacion/facturas');
+    // Tesorería
     if (id === 'finanzas-dashboard') navigate('/dashboard/finanzas');
-    if (id === 'finanzas-movimientos') navigate('/dashboard/finanzas/movimientos');
     if (id === 'finanzas-cuentas') navigate('/dashboard/finanzas/cuentas');
-    if (id === 'finanzas-inversiones') navigate('/dashboard/finanzas/inversiones');
+    if (id === 'finanzas-movimientos') navigate('/dashboard/finanzas/movimientos');
+    if (id === 'cheques') navigate('/dashboard/compras/cheques');
+    if (id === 'tarjetas') navigate('/dashboard/finanzas/tarjetas');
+    if (id === 'rendiciones') navigate('/dashboard/finanzas/rendiciones');
+    // Contabilidad
+    if (id === 'contabilidad-dashboard') navigate('/dashboard/finanzas/contabilidad');
+    if (id === 'finanzas-plan-cuentas') navigate('/dashboard/finanzas/plan-cuentas');
+    if (id === 'finanzas-centros-costo') navigate('/dashboard/finanzas/centros-costo');
+    // RRHH
+    if (id === 'empleados') navigate('/dashboard/empleados');
+    if (id === 'seguros-ap') navigate('/dashboard/seguros-ap');
+    // Administración
+    if (id === 'sedes') navigate('/dashboard/sedes');
+    if (id === 'vehiculos') navigate('/dashboard/vehicles');
+    if (id === 'zonas') navigate('/dashboard/zones');
+    if (id === 'materiales') navigate('/dashboard/materials');
+    // Seguridad
+    if (id === 'usuarios') navigate('/dashboard/users');
+    if (id === 'roles') navigate('/dashboard/roles');
     if (id === 'audit') navigate('/dashboard/audit');
   };
 
   const getPageInfo = (path: string) => {
-    if (path.includes('users')) return { id: 'usuarios', label: 'Usuarios' };
-    if (path.includes('roles')) return { id: 'roles', label: 'Roles' };
+    // Operaciones
+    if (path.match(/\/tickets\/\d+/))
+      return { id: 'tickets', label: 'Detalle Ticket', parentLabel: 'Operaciones' };
+    if (path.includes('tickets'))
+      return { id: 'tickets', label: 'Tickets', parentLabel: 'Operaciones' };
+    if (path.includes('obras')) return { id: 'obras', label: 'Obras', parentLabel: 'Operaciones' };
+    // Compras
+    if (path.includes('compras/proveedores'))
+      return { id: 'proveedores', label: 'Proveedores', parentLabel: 'Compras' };
+    if (path.includes('compras/facturas'))
+      return { id: 'facturas-proveedor', label: 'Facturas', parentLabel: 'Compras' };
+    if (path.includes('compras/cheques'))
+      return { id: 'cheques', label: 'Cheques', parentLabel: 'Tesorería' };
+    // Ventas
     if (path.includes('clients'))
-      return { id: 'clientes', label: 'Clientes', parentLabel: 'Administración' };
-    if (path.includes('zones'))
-      return { id: 'zonas', label: 'Zonas', parentLabel: 'Administración' };
-    if (path.includes('sedes'))
-      return { id: 'sedes', label: 'Sedes', parentLabel: 'Administración' };
-    if (path.includes('vehicles'))
-      return { id: 'vehiculos', label: 'Vehículos', parentLabel: 'Administración' };
-    if (path.includes('materials'))
-      return { id: 'materiales', label: 'Materiales', parentLabel: 'Catálogo' };
+      return { id: 'clientes', label: 'Clientes', parentLabel: 'Ventas' };
+    if (path.includes('facturacion/facturas'))
+      return { id: 'facturas-emitidas', label: 'Facturas', parentLabel: 'Ventas' };
+    // Tesorería / Contabilidad (finanzas sub-routes first)
+    if (path.includes('finanzas/tarjetas'))
+      return { id: 'tarjetas', label: 'Tarjetas', parentLabel: 'Tesorería' };
+    if (path.includes('finanzas/rendiciones'))
+      return { id: 'rendiciones', label: 'Mis Gastos', parentLabel: 'Tesorería' };
+    if (path.includes('finanzas/movimientos'))
+      return { id: 'finanzas-movimientos', label: 'Movimientos', parentLabel: 'Tesorería' };
+    if (path.includes('finanzas/cuentas'))
+      return { id: 'finanzas-cuentas', label: 'Cuentas / Bancos', parentLabel: 'Tesorería' };
+    if (path.includes('finanzas/contabilidad'))
+      return { id: 'contabilidad-dashboard', label: 'Dashboard', parentLabel: 'Contabilidad' };
+    if (path.includes('finanzas/plan-cuentas'))
+      return { id: 'finanzas-plan-cuentas', label: 'Plan de Cuentas', parentLabel: 'Contabilidad' };
+    if (path.includes('finanzas/centros-costo'))
+      return {
+        id: 'finanzas-centros-costo',
+        label: 'Centros de Costo',
+        parentLabel: 'Contabilidad',
+      };
+    if (path.includes('finanzas'))
+      return { id: 'finanzas-dashboard', label: 'Dashboard', parentLabel: 'Tesorería' };
+    // RRHH
     if (path.includes('seguros-ap'))
       return { id: 'seguros-ap', label: 'Seguros AP', parentLabel: 'Recursos Humanos' };
     if (path.includes('empleados'))
       return { id: 'empleados', label: 'Empleados', parentLabel: 'Recursos Humanos' };
-    if (path.includes('vacaciones'))
-      return { id: 'vacaciones', label: 'Vacaciones', parentLabel: 'Recursos Humanos' };
-    if (path.includes('sueldos'))
-      return { id: 'sueldos', label: 'Sueldos', parentLabel: 'Recursos Humanos' };
-    if (path.includes('ausencias'))
-      return { id: 'ausencias', label: 'Ausencias', parentLabel: 'Recursos Humanos' };
-    if (path.match(/\/tickets\/\d+/))
-      return { id: 'tickets', label: 'Detalle Ticket', parentLabel: 'Comercial' };
-    if (path.includes('tickets'))
-      return { id: 'tickets', label: 'Tickets', parentLabel: 'Comercial' };
-    if (path.includes('obras')) return { id: 'obras', label: 'Obras', parentLabel: 'Comercial' };
-    if (path.includes('finanzas/movimientos'))
-      return { id: 'finanzas-movimientos', label: 'Movimientos', parentLabel: 'Finanzas' };
-    if (path.includes('finanzas/cuentas'))
-      return { id: 'finanzas-cuentas', label: 'Cuentas/Bancos', parentLabel: 'Finanzas' };
-    if (path.includes('finanzas/inversiones'))
-      return { id: 'finanzas-inversiones', label: 'Inversiones', parentLabel: 'Finanzas' };
-    if (path.includes('finanzas'))
-      return { id: 'finanzas-dashboard', label: 'Dashboard', parentLabel: 'Finanzas' };
+    // Administración
+    if (path.includes('sedes'))
+      return { id: 'sedes', label: 'Sedes', parentLabel: 'Administración' };
+    if (path.includes('vehicles'))
+      return { id: 'vehiculos', label: 'Vehículos', parentLabel: 'Administración' };
+    if (path.includes('zones'))
+      return { id: 'zonas', label: 'Zonas', parentLabel: 'Administración' };
+    if (path.includes('materials'))
+      return { id: 'materiales', label: 'Materiales', parentLabel: 'Administración' };
+    // Seguridad
+    if (path.includes('users'))
+      return { id: 'usuarios', label: 'Usuarios', parentLabel: 'Seguridad' };
+    if (path.includes('roles')) return { id: 'roles', label: 'Roles', parentLabel: 'Seguridad' };
     if (path.includes('audit'))
-      return { id: 'audit', label: 'Auditoría', parentLabel: 'Administración' };
+      return { id: 'audit', label: 'Auditoría', parentLabel: 'Seguridad' };
     return { id: 'dashboard', label: 'Dashboard' };
   };
 
@@ -391,6 +455,116 @@ export default function App() {
                 <DashboardWrapper>
                   <RequirePermission permission="finanzas:leer">
                     <InversionesPage />
+                  </RequirePermission>
+                </DashboardWrapper>
+              }
+            />
+            <Route
+              path="/dashboard/finanzas/plan-cuentas"
+              element={
+                <DashboardWrapper>
+                  <RequirePermission permission="finanzas:leer">
+                    <CuentasContablesPage />
+                  </RequirePermission>
+                </DashboardWrapper>
+              }
+            />
+            <Route
+              path="/dashboard/finanzas/centros-costo"
+              element={
+                <DashboardWrapper>
+                  <RequirePermission permission="finanzas:leer">
+                    <CentrosCostoPage />
+                  </RequirePermission>
+                </DashboardWrapper>
+              }
+            />
+            <Route
+              path="/dashboard/finanzas/contabilidad"
+              element={
+                <DashboardWrapper>
+                  <RequirePermission permission="finanzas:leer">
+                    <ContabilidadDashboard />
+                  </RequirePermission>
+                </DashboardWrapper>
+              }
+            />
+            <Route
+              path="/dashboard/compras"
+              element={
+                <DashboardWrapper>
+                  <RequirePermission permission="compras:leer">
+                    <ComprasHomePage />
+                  </RequirePermission>
+                </DashboardWrapper>
+              }
+            />
+            <Route
+              path="/dashboard/compras/proveedores"
+              element={
+                <DashboardWrapper>
+                  <RequirePermission permission="compras:leer">
+                    <ProveedoresPage />
+                  </RequirePermission>
+                </DashboardWrapper>
+              }
+            />
+            <Route
+              path="/dashboard/compras/facturas"
+              element={
+                <DashboardWrapper>
+                  <RequirePermission permission="compras:leer">
+                    <FacturasProveedorPage />
+                  </RequirePermission>
+                </DashboardWrapper>
+              }
+            />
+            <Route
+              path="/dashboard/compras/cheques"
+              element={
+                <DashboardWrapper>
+                  <RequirePermission permission="compras:leer">
+                    <ChequesPage />
+                  </RequirePermission>
+                </DashboardWrapper>
+              }
+            />
+            <Route
+              path="/dashboard/finanzas/tarjetas"
+              element={
+                <DashboardWrapper>
+                  <RequirePermission permission="tarjetas:leer">
+                    <TarjetasPage />
+                  </RequirePermission>
+                </DashboardWrapper>
+              }
+            />
+            <Route
+              path="/dashboard/finanzas/rendiciones"
+              element={
+                <DashboardWrapper>
+                  <RequirePermission permission="tarjetas:leer">
+                    <RendicionesPage />
+                  </RequirePermission>
+                </DashboardWrapper>
+              }
+            />
+            <Route
+              path="/dashboard/facturacion"
+              element={
+                <DashboardWrapper>
+                  <RequirePermission permission="facturacion:leer">
+                    <FacturacionHomePage />
+                  </RequirePermission>
+                </DashboardWrapper>
+              }
+            />
+            <Route
+              path="/dashboard/facturacion/facturas"
+              element={
+                <DashboardWrapper>
+                  <RequirePermission permission="facturacion:leer">
+                    <FacturasEmitidasPage />
                   </RequirePermission>
                 </DashboardWrapper>
               }

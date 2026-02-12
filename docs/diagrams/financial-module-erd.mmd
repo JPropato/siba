@@ -1,0 +1,348 @@
+---
+title: SIBA Financial Module - Entity Relationship Diagram
+---
+erDiagram
+    %% ============================================
+    %% CORE FINANCIAL ENTITIES
+    %% ============================================
+
+    BANCO ||--o{ CUENTA_FINANCIERA : "tiene"
+    BANCO ||--o{ TARJETA_PRECARGABLE : "emite"
+    BANCO ||--o{ CHEQUE : "emitido_por"
+
+    CUENTA_FINANCIERA ||--o{ MOVIMIENTO : "registra"
+    CUENTA_FINANCIERA ||--o{ TARJETA_PRECARGABLE : "asociada_a"
+    CUENTA_FINANCIERA ||--o{ TRANSFERENCIA : "origen"
+    CUENTA_FINANCIERA ||--o{ TRANSFERENCIA : "destino"
+    CUENTA_FINANCIERA ||--o{ CHEQUE : "debitado_de"
+
+    %% ============================================
+    %% ACCOUNTING & CLASSIFICATION
+    %% ============================================
+
+    CUENTA_CONTABLE ||--o{ MOVIMIENTO : "imputa_a"
+    CUENTA_CONTABLE ||--o{ CUENTA_CONTABLE : "padre_de"
+    CUENTA_CONTABLE ||--o{ CONFIG_CATEGORIA_GASTO : "asignada_a"
+
+    CENTRO_COSTO ||--o{ MOVIMIENTO : "asigna"
+    CENTRO_COSTO ||--o{ GASTO_TARJETA : "clasifica"
+
+    %% ============================================
+    %% MOVEMENTS & TRANSACTIONS
+    %% ============================================
+
+    MOVIMIENTO }o--|| EMPLEADO : "realizado_por"
+    MOVIMIENTO }o--o| TICKET : "relacionado_con"
+    MOVIMIENTO }o--o| PROVEEDOR : "pagado_a"
+    MOVIMIENTO }o--o| FACTURA_PROVEEDOR : "paga"
+    MOVIMIENTO ||--o| CHEQUE : "origina"
+    MOVIMIENTO ||--o| CARGA_TARJETA : "registra"
+    MOVIMIENTO ||--o| GASTO_TARJETA : "registra"
+    MOVIMIENTO }o--o| TRANSFERENCIA : "parte_de"
+
+    %% ============================================
+    %% CARDS MODULE
+    %% ============================================
+
+    EMPLEADO ||--o{ TARJETA_PRECARGABLE : "titular"
+
+    TARJETA_PRECARGABLE ||--o{ CARGA_TARJETA : "recibe"
+    TARJETA_PRECARGABLE ||--o{ GASTO_TARJETA : "gasta"
+    TARJETA_PRECARGABLE ||--o{ RENDICION : "rinde"
+
+    CARGA_TARJETA ||--|| MOVIMIENTO : "genera"
+    CARGA_TARJETA }o--|| USUARIO : "registrada_por"
+
+    GASTO_TARJETA ||--|| MOVIMIENTO : "genera"
+    GASTO_TARJETA ||--|| PROVEEDOR : "compra_a"
+    GASTO_TARJETA }o--o| FACTURA_PROVEEDOR : "respaldado_por"
+    GASTO_TARJETA }o--o| TICKET : "asociado_a"
+    GASTO_TARJETA }o--o| CENTRO_COSTO : "asignado_a"
+    GASTO_TARJETA }o--|| USUARIO : "registrado_por"
+    GASTO_TARJETA }o--o{ ARCHIVO : "comprobantes"
+    GASTO_TARJETA }o--o| RENDICION : "incluido_en"
+
+    CONFIG_CATEGORIA_GASTO ||--o{ GASTO_TARJETA : "categoriza"
+
+    RENDICION ||--|| TARJETA_PRECARGABLE : "de"
+    RENDICION ||--o{ GASTO_TARJETA : "incluye"
+    RENDICION }o--|| USUARIO : "creada_por"
+    RENDICION }o--o| USUARIO : "aprobada_por"
+
+    %% ============================================
+    %% PURCHASES MODULE
+    %% ============================================
+
+    PROVEEDOR ||--o{ FACTURA_PROVEEDOR : "emite"
+    PROVEEDOR ||--o{ MOVIMIENTO : "recibe_pagos"
+    PROVEEDOR ||--o{ GASTO_TARJETA : "vende_a"
+
+    FACTURA_PROVEEDOR ||--o{ MOVIMIENTO : "genera_pago"
+    FACTURA_PROVEEDOR ||--o| GASTO_TARJETA : "respalda"
+    FACTURA_PROVEEDOR }o--o| CHEQUE : "pagada_con"
+
+    %% ============================================
+    %% PAYMENT METHODS
+    %% ============================================
+
+    CHEQUE ||--|| MOVIMIENTO : "genera"
+    CHEQUE }o--|| PROVEEDOR : "a_la_orden_de"
+    CHEQUE }o--o| FACTURA_PROVEEDOR : "paga"
+
+    TRANSFERENCIA ||--|| MOVIMIENTO : "egreso"
+    TRANSFERENCIA ||--|| MOVIMIENTO : "ingreso"
+
+    %% ============================================
+    %% BILLING MODULE
+    %% ============================================
+
+    FACTURA_EMITIDA }o--|| CLIENTE : "emitida_a"
+    FACTURA_EMITIDA ||--o| MOVIMIENTO : "genera"
+
+    %% ============================================
+    %% OPERATIONS MODULE
+    %% ============================================
+
+    TICKET }o--|| CLIENTE : "reportado_por"
+    TICKET }o--|| EMPLEADO : "asignado_a"
+    TICKET ||--o{ MOVIMIENTO : "genera_costos"
+    TICKET ||--o{ GASTO_TARJETA : "genera_gastos"
+
+    %% ============================================
+    %% ENTITY DEFINITIONS
+    %% ============================================
+
+    BANCO {
+        int id PK
+        string codigo UK
+        string nombreCorto UK
+        string nombreCompleto
+        string cbu
+        string alias
+        boolean activo
+    }
+
+    CUENTA_FINANCIERA {
+        int id PK
+        string nombre
+        string tipo "BANCO|CAJA|EFECTIVO|CAJA_CHICA|INVERSION|CREDITO"
+        int bancoId FK
+        decimal saldoActual
+        string numeroCuenta
+        string cbu
+        string alias
+        string moneda
+        boolean activa
+    }
+
+    MOVIMIENTO {
+        int id PK
+        string codigo UK
+        int cuentaFinancieraId FK
+        string tipo "INGRESO|EGRESO"
+        string medioPago
+        decimal monto
+        date fecha
+        string concepto
+        int cuentaContableId FK "MANDATORY"
+        int centroCostoId FK "OPTIONAL"
+        int empleadoId FK "OPTIONAL"
+        int ticketId FK "OPTIONAL"
+        int proveedorId FK "OPTIONAL"
+        int facturaProveedorId FK "OPTIONAL"
+        string estado "PENDIENTE|CONFIRMADO|ANULADO"
+        string comprobanteNumero
+    }
+
+    CUENTA_CONTABLE {
+        int id PK
+        string codigo UK
+        string nombre
+        string tipo "ACTIVO|PASIVO|PATRIMONIO|INGRESO|GASTO"
+        int nivel
+        int padreId FK
+        boolean esImputable
+        boolean activa
+    }
+
+    CENTRO_COSTO {
+        int id PK
+        string codigo UK
+        string nombre
+        string descripcion
+        boolean activo
+    }
+
+    TARJETA_PRECARGABLE {
+        int id PK
+        string tipo "PRECARGABLE|CORPORATIVA"
+        string estado "ACTIVA|SUSPENDIDA|BAJA"
+        string numeroTarjeta UK
+        string alias
+        int empleadoId FK
+        int cuentaFinancieraId FK "MANDATORY"
+        int bancoId FK
+        string tipoTarjetaFinanciera "CREDITO|DEBITO|PREPAGA"
+        string redProcesadora "VISA|MASTERCARD|etc"
+    }
+
+    CARGA_TARJETA {
+        int id PK
+        int tarjetaId FK
+        decimal monto
+        date fecha
+        string descripcion
+        string comprobante
+        int movimientoId FK "INGRESO"
+        int registradoPorId FK
+    }
+
+    GASTO_TARJETA {
+        int id PK
+        int tarjetaId FK
+        string categoria "GAS|FERRETERIA|NAFTA|etc"
+        string categoriaOtro
+        decimal monto
+        date fecha
+        string concepto
+        int ticketId FK
+        int centroCostoId FK
+        int proveedorId FK "MANDATORY"
+        int facturaProveedorId FK
+        int movimientoId FK "EGRESO"
+        int rendicionId FK
+        int registradoPorId FK
+    }
+
+    CONFIG_CATEGORIA_GASTO {
+        int id PK
+        string categoria UK "GAS|FERRETERIA|etc"
+        string label
+        int cuentaContableId FK
+        boolean activa
+    }
+
+    RENDICION {
+        int id PK
+        string codigo UK
+        int tarjetaId FK
+        string estado "ABIERTA|CERRADA|APROBADA|RECHAZADA"
+        date fechaDesde
+        date fechaHasta
+        decimal totalGastos
+        int cantidadGastos
+        string observaciones
+        string motivoRechazo
+        int aprobadoPorId FK
+        date fechaAprobacion
+        int creadoPorId FK
+    }
+
+    PROVEEDOR {
+        int id PK
+        string razonSocial
+        string cuit UK
+        string condicionIva
+        string telefono
+        string email
+        string direccion
+        boolean activo
+    }
+
+    FACTURA_PROVEEDOR {
+        int id PK
+        int proveedorId FK
+        string tipoComprobante
+        int puntoVenta
+        string numeroComprobante
+        date fechaEmision
+        date fechaVencimiento
+        decimal subtotal
+        decimal iva
+        decimal total
+        string estado "PENDIENTE|PAGADA_PARCIAL|PAGADA|ANULADA"
+        decimal saldoPendiente
+    }
+
+    CHEQUE {
+        int id PK
+        string numeroCheque UK
+        int bancoId FK
+        int cuentaFinancieraId FK
+        int proveedorId FK
+        date fechaEmision
+        date fechaPago
+        decimal monto
+        string estado "PENDIENTE|ENTREGADO|COBRADO|RECHAZADO|ANULADO"
+        string concepto
+        int facturaProveedorId FK
+        int movimientoId FK
+    }
+
+    TRANSFERENCIA {
+        int id PK
+        string codigo UK
+        int cuentaOrigenId FK
+        int cuentaDestinoId FK
+        decimal monto
+        date fecha
+        string concepto
+        int movimientoEgresoId FK
+        int movimientoIngresoId FK
+    }
+
+    FACTURA_EMITIDA {
+        int id PK
+        int clienteId FK
+        string tipoComprobante
+        int puntoVenta
+        string numeroComprobante
+        date fechaEmision
+        decimal subtotal
+        decimal iva
+        decimal total
+        string estado
+        int movimientoId FK
+    }
+
+    EMPLEADO {
+        int id PK
+        string nombre
+        string apellido
+        string cuil UK
+        string email
+        boolean activo
+    }
+
+    TICKET {
+        int id PK
+        int codigoInterno UK
+        string descripcion
+        int clienteId FK
+        int empleadoAsignadoId FK
+        string estado
+    }
+
+    CLIENTE {
+        int id PK
+        string razonSocial
+        string cuit UK
+        string email
+        boolean activo
+    }
+
+    USUARIO {
+        int id PK
+        string nombre
+        string apellido
+        string email UK
+        boolean activo
+    }
+
+    ARCHIVO {
+        int id PK
+        string nombreOriginal
+        string url
+        string mimeType
+        int gastoTarjetaId FK
+    }

@@ -16,6 +16,8 @@ const ROUTE_MODULE_MAP: Record<string, string> = {
   '/api/users': 'usuarios',
   '/api/roles': 'roles',
   '/api/ordenes-trabajo': 'ordenes_trabajo',
+  '/api/compras': 'compras',
+  '/api/tarjetas': 'tarjetas',
 };
 
 // Map HTTP methods to action names
@@ -80,6 +82,8 @@ function guessEntityType(path: string): string {
   if (path.includes('/tickets')) return 'Ticket';
   if (path.includes('/obras')) return 'Obra';
   if (path.includes('/finanzas/movimientos')) return 'Movimiento';
+  if (path.includes('/finanzas/cuentas-contables')) return 'CuentaContable';
+  if (path.includes('/finanzas/centros-costo')) return 'CentroCosto';
   if (path.includes('/finanzas/cuentas')) return 'CuentaFinanciera';
   if (path.includes('/finanzas/transferencias')) return 'Transferencia';
   if (path.includes('/clients')) return 'Cliente';
@@ -92,6 +96,13 @@ function guessEntityType(path: string): string {
   if (path.includes('/users')) return 'Usuario';
   if (path.includes('/roles')) return 'Rol';
   if (path.includes('/ordenes-trabajo')) return 'OrdenTrabajo';
+  if (path.includes('/compras/proveedores')) return 'Proveedor';
+  if (path.includes('/compras/facturas')) return 'FacturaProveedor';
+  if (path.includes('/compras/cheques')) return 'Cheque';
+  if (path.includes('/tarjetas/rendiciones')) return 'Rendicion';
+  if (path.includes('/tarjetas/gastos')) return 'GastoTarjeta';
+  if (path.includes('/tarjetas/config-categorias')) return 'ConfigCategoriaGasto';
+  if (path.includes('/tarjetas')) return 'TarjetaPrecargable';
   return 'Desconocido';
 }
 

@@ -2,7 +2,6 @@ import { useState, useEffect, lazy, Suspense, useCallback } from 'react';
 import { ArrowLeftRight, Plus, Search, Download } from 'lucide-react';
 import { PageHeader } from '../../../components/ui/PageHeader';
 import { PullToRefresh } from '../../../components/ui/PullToRefresh';
-import { FloatingActionButton } from '../../../components/layout/FloatingActionButton';
 import { CollapsibleFilters } from '../../../components/layout/CollapsibleFilters';
 import { Pagination } from '../../../components/ui/Pagination';
 import { Select } from '@/components/ui/core/Select';
@@ -63,7 +62,7 @@ export default function MovimientosPage() {
       <div className="px-4 pt-3 pb-6 sm:px-6 space-y-5 animate-in fade-in duration-500">
         <PageHeader
           icon={<ArrowLeftRight className="h-5 w-5" />}
-          breadcrumb={['Finanzas', 'Movimientos']}
+          breadcrumb={['Tesorería', 'Movimientos']}
           title="Movimientos"
           subtitle={`${total} registros encontrados`}
           count={total}
@@ -143,14 +142,6 @@ export default function MovimientosPage() {
             />
           </Suspense>
         )}
-
-        {/* FAB para móvil */}
-        <FloatingActionButton
-          onClick={handleCreate}
-          icon={<Plus className="h-6 w-6" />}
-          hideOnDesktop
-          aria-label="Nuevo Movimiento"
-        />
       </div>
     </PullToRefresh>
   );

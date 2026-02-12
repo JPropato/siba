@@ -16,7 +16,6 @@ import {
 } from 'lucide-react';
 import { PageHeader } from '../../../components/ui/PageHeader';
 import { PullToRefresh } from '../../../components/ui/PullToRefresh';
-import { FloatingActionButton } from '../../../components/layout/FloatingActionButton';
 import { TIPO_CUENTA_CONFIG } from '../types';
 import { useFinanzasDashboard } from '../hooks/useFinanzasDashboard';
 
@@ -55,7 +54,7 @@ export default function FinanzasDashboard() {
       <div className="px-4 pt-3 pb-6 sm:px-6 space-y-5 animate-in fade-in duration-500">
         <PageHeader
           icon={<BarChart3 className="h-5 w-5" />}
-          breadcrumb={['Finanzas', 'Dashboard']}
+          breadcrumb={['Tesorería', 'Dashboard']}
           title="Panel Financiero"
           subtitle="Estado de caja, bancos y movimientos recientes"
           action={
@@ -231,9 +230,15 @@ export default function FinanzasDashboard() {
                           <p className="text-sm font-medium text-slate-900 dark:text-white line-clamp-1">
                             {mov.descripcion}
                           </p>
-                          <p className="text-[10px] text-slate-400 font-semibold">
-                            {mov.cuenta?.nombre}
-                          </p>
+                          <div className="flex items-center gap-2 text-[10px] text-slate-400 font-semibold">
+                            <span>{mov.cuenta?.nombre}</span>
+                            {mov.cuentaContable && (
+                              <>
+                                <span className="text-slate-300 dark:text-slate-600">·</span>
+                                <span>{mov.cuentaContable.nombre}</span>
+                              </>
+                            )}
+                          </div>
                         </td>
                         <td className="px-3 py-3 text-right whitespace-nowrap">
                           <div
@@ -287,14 +292,6 @@ export default function FinanzasDashboard() {
             />
           </Suspense>
         )}
-
-        {/* FAB para móvil */}
-        <FloatingActionButton
-          onClick={handleCreate}
-          icon={<Plus className="h-6 w-6" />}
-          hideOnDesktop
-          aria-label="Nuevo Movimiento"
-        />
       </div>
     </PullToRefresh>
   );

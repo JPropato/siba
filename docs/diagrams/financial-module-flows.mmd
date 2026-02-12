@@ -1,0 +1,95 @@
+---
+title: SIBA Financial Module - Main Operational Flows
+---
+flowchart TB
+    subgraph CARD_LOAD["💳 Card Load Flow (PRECARGABLE)"]
+        CL1[Employee requests load] --> CL2[Admin registers CargaTarjeta]
+        CL2 --> CL3[Auto-create Movimiento INGRESO]
+        CL3 --> CL4[Update CuentaFinanciera balance]
+        CL4 --> CL5[Employee can use card]
+    end
+
+    subgraph CARD_EXPENSE["💰 Card Expense Flow"]
+        CE1[Employee makes purchase] --> CE2[Employee registers GastoTarjeta]
+        CE2 --> CE3{Proveedor exists?}
+        CE3 -->|No| CE4[Create new Proveedor]
+        CE3 -->|Yes| CE5[Select existing Proveedor]
+        CE4 --> CE6{Has invoice?}
+        CE5 --> CE6
+        CE6 -->|Yes| CE7[Create FacturaProveedor]
+        CE6 -->|No| CE8[Continue without invoice]
+        CE7 --> CE9[Get ConfigCategoriaGasto]
+        CE8 --> CE9
+        CE9 --> CE10[Get CuentaContable from category]
+        CE10 --> CE11[Create Movimiento EGRESO]
+        CE11 --> CE12[Link: cuentaContableId + centroCostoId + employeeId + ticketId]
+        CE12 --> CE13[Update CuentaFinanciera balance]
+        CE13 --> CE14[Link GastoTarjeta to Movimiento]
+        CE14 --> CE15[Upload comprobantes if any]
+    end
+
+    subgraph INVOICE_PAYMENT["📄 Invoice Payment Flow"]
+        IP1[Receive FacturaProveedor] --> IP2{Payment method?}
+        IP2 -->|Transfer| IP3[Create Movimiento EGRESO]
+        IP2 -->|Check| IP4[Create Cheque]
+        IP4 --> IP5[Cheque creates Movimiento EGRESO]
+        IP3 --> IP6[Link to FacturaProveedor]
+        IP5 --> IP6
+        IP6 --> IP7[Update invoice estado]
+        IP7 --> IP8[Update CuentaFinanciera balance]
+    end
+
+    subgraph CHECK_FLOW["🏦 Check Issuance Flow"]
+        CH1[Admin creates Cheque] --> CH2[Select CuentaFinanciera & Banco]
+        CH2 --> CH3[Select Proveedor]
+        CH3 --> CH4{Pay specific invoice?}
+        CH4 -->|Yes| CH5[Link to FacturaProveedor]
+        CH4 -->|No| CH6[General payment]
+        CH5 --> CH7[Create Movimiento EGRESO]
+        CH6 --> CH7
+        CH7 --> CH8[Set cheque estado: PENDIENTE]
+        CH8 --> CH9[Update CuentaFinanciera balance]
+    end
+
+    subgraph TRANSFER_FLOW["↔️ Transfer Between Accounts"]
+        TR1[Admin creates Transferencia] --> TR2[Select origen & destino CuentaFinanciera]
+        TR2 --> TR3[Create Movimiento EGRESO in origen]
+        TR3 --> TR4[Create Movimiento INGRESO in destino]
+        TR4 --> TR5[Link both movimientos to Transferencia]
+        TR5 --> TR6[Update both account balances]
+    end
+
+    subgraph BILLING_FLOW["📋 Issued Invoice Flow"]
+        BL1[Create FacturaEmitida to Cliente] --> BL2[Create Movimiento INGRESO]
+        BL2 --> BL3[Update CuentaFinanciera balance]
+    end
+
+    subgraph ACCOUNTING["📊 Accounting Integration (All Flows)"]
+        AC1[Every Movimiento MUST have:] --> AC2[CuentaContable - Accounting account]
+        AC2 --> AC3[Optional: CentroCosto - Cost center]
+        AC3 --> AC4[Optional: Empleado - Employee responsible]
+        AC4 --> AC5[Optional: Ticket - Related ticket]
+        AC5 --> AC6[Balance Contable automatically updated]
+    end
+
+    %% Flow connections
+    CARD_LOAD --> ACCOUNTING
+    CARD_EXPENSE --> ACCOUNTING
+    INVOICE_PAYMENT --> ACCOUNTING
+    CHECK_FLOW --> ACCOUNTING
+    TRANSFER_FLOW --> ACCOUNTING
+    BILLING_FLOW --> ACCOUNTING
+
+    style CARD_LOAD fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
+    style CARD_EXPENSE fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    style INVOICE_PAYMENT fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    style CHECK_FLOW fill:#e8f5e9,stroke:#388e3c,stroke-width:2px
+    style TRANSFER_FLOW fill:#fff9c4,stroke:#f9a825,stroke-width:2px
+    style BILLING_FLOW fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+    style ACCOUNTING fill:#ffebee,stroke:#d32f2f,stroke-width:3px
+
+    classDef criticalNode fill:#ff5252,stroke:#b71c1c,stroke-width:2px,color:#fff
+    classDef dataNode fill:#90caf9,stroke:#1976d2,stroke-width:2px
+
+    class AC2,CE10 criticalNode
+    class CE11,IP3,IP5,CH7,TR3,TR4,BL2 dataNode

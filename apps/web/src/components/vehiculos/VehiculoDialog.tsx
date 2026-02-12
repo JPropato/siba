@@ -12,7 +12,7 @@ import { Input } from '../ui/core/Input';
 import { Button } from '../ui/core/Button';
 import { Select } from '../ui/core/Select';
 import { DatePicker } from '../ui/core/DatePicker';
-import { Activity, Car, MapPin, Wrench, ShieldCheck } from 'lucide-react';
+import { Activity, Car, MapPin, Wrench, ShieldCheck, Users, Droplets } from 'lucide-react';
 
 const vehiculoSchema = z.object({
   patente: z.string().min(1, 'La patente es requerida'),
@@ -24,6 +24,10 @@ const vehiculoSchema = z.object({
   proximosKm: z.string().optional().or(z.literal('')),
   proximoService: z.string().optional().or(z.literal('')),
   fechaVencimientoVTV: z.string().optional().or(z.literal('')),
+  fechaCambioAceite: z.string().optional().or(z.literal('')),
+  tecnicoReferenteId: z.string().optional().or(z.literal('')),
+  tecnicoId: z.string().optional().or(z.literal('')),
+  conductorId: z.string().optional().or(z.literal('')),
   estado: z.enum(['ACTIVO', 'TALLER', 'FUERA_SERVICIO']),
 });
 
@@ -44,6 +48,12 @@ export default function VehiculoDialog({
 }: VehiculoDialogProps) {
   const [zonas, setZonas] = useState<Zona[]>([]);
   const [isFetchingZonas, setIsFetchingZonas] = useState(false);
+  const [tecnicos, setTecnicos] = useState<
+    { id: number; nombre: string; apellido: string; esReferente: boolean }[]
+  >([]);
+  const [empleados, setEmpleados] = useState<
+    { id: number; nombre: string; apellido: string; fechaVencimientoRegistro: string | null }[]
+  >([]);
 
   const {
     register,
@@ -63,6 +73,10 @@ export default function VehiculoDialog({
       proximosKm: '',
       proximoService: '',
       fechaVencimientoVTV: '',
+      fechaCambioAceite: '',
+      tecnicoReferenteId: '',
+      tecnicoId: '',
+      conductorId: '',
       estado: 'ACTIVO',
     },
   });
@@ -74,6 +88,39 @@ export default function VehiculoDialog({
         try {
           const res = await api.get('/zones?limit=100');
           setZonas(res.data.data || []);
+
+          // Fetch tecnicos (tipo=TECNICO, estado=ACTIVO)
+          const resTec = await api.get('/empleados', {
+            params: { tipo: 'TECNICO', estado: 'ACTIVO', limit: 100 },
+          });
+          setTecnicos(
+            (resTec.data.data || []).map(
+              (e: { id: number; nombre: string; apellido: string; esReferente: boolean }) => ({
+                id: e.id,
+                nombre: e.nombre,
+                apellido: e.apellido,
+                esReferente: e.esReferente,
+              })
+            )
+          );
+
+          // Fetch empleados activos (para conductor)
+          const resEmp = await api.get('/empleados', { params: { estado: 'ACTIVO', limit: 100 } });
+          setEmpleados(
+            (resEmp.data.data || []).map(
+              (e: {
+                id: number;
+                nombre: string;
+                apellido: string;
+                fechaVencimientoRegistro: string | null;
+              }) => ({
+                id: e.id,
+                nombre: e.nombre,
+                apellido: e.apellido,
+                fechaVencimientoRegistro: e.fechaVencimientoRegistro,
+              })
+            )
+          );
         } catch (err) {
           console.error('Error fetching zones:', err);
         } finally {
@@ -97,6 +144,12 @@ export default function VehiculoDialog({
           fechaVencimientoVTV: initialData.fechaVencimientoVTV
             ? new Date(initialData.fechaVencimientoVTV).toISOString().split('T')[0]
             : '',
+          fechaCambioAceite: initialData.fechaCambioAceite
+            ? new Date(initialData.fechaCambioAceite).toISOString().split('T')[0]
+            : '',
+          tecnicoReferenteId: initialData.tecnicoReferenteId?.toString() || '',
+          tecnicoId: initialData.tecnicoId?.toString() || '',
+          conductorId: initialData.conductorId?.toString() || '',
           estado: initialData.estado || 'ACTIVO',
         });
       } else {
@@ -110,6 +163,10 @@ export default function VehiculoDialog({
           proximosKm: '',
           proximoService: '',
           fechaVencimientoVTV: '',
+          fechaCambioAceite: '',
+          tecnicoReferenteId: '',
+          tecnicoId: '',
+          conductorId: '',
           estado: 'ACTIVO',
         });
       }
@@ -132,6 +189,12 @@ export default function VehiculoDialog({
         fechaVencimientoVTV: values.fechaVencimientoVTV
           ? new Date(values.fechaVencimientoVTV).toISOString()
           : null,
+        fechaCambioAceite: values.fechaCambioAceite
+          ? new Date(values.fechaCambioAceite).toISOString()
+          : null,
+        tecnicoReferenteId: values.tecnicoReferenteId ? Number(values.tecnicoReferenteId) : null,
+        tecnicoId: values.tecnicoId ? Number(values.tecnicoId) : null,
+        conductorId: values.conductorId ? Number(values.conductorId) : null,
         estado: values.estado,
       });
       toast.success(initialData ? 'Vehículo actualizado' : 'Vehículo creado correctamente');
@@ -284,7 +347,77 @@ export default function VehiculoDialog({
               placeholder="Ej: 50000"
               {...register('proximosKm')}
             />
+            <Controller
+              name="fechaCambioAceite"
+              control={control}
+              render={({ field }) => (
+                <DatePicker
+                  label="Último Cambio Aceite"
+                  value={field.value || ''}
+                  onChange={field.onChange}
+                  icon={<Droplets className="h-4 w-4" />}
+                />
+              )}
+            />
           </div>
+        </div>
+
+        <div className="space-y-4">
+          <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 dark:border-slate-800 pb-2">
+            Personal Asignado
+          </h3>
+          <div className="grid grid-cols-2 gap-4">
+            <Controller
+              name="tecnicoReferenteId"
+              control={control}
+              render={({ field }) => (
+                <Select
+                  label="Técnico Referente"
+                  options={tecnicos
+                    .filter((t) => t.esReferente)
+                    .map((t) => ({ value: t.id.toString(), label: `${t.apellido}, ${t.nombre}` }))}
+                  value={field.value}
+                  onChange={field.onChange}
+                  placeholder="Sin asignar"
+                  icon={<Wrench className="h-4 w-4" />}
+                />
+              )}
+            />
+            <Controller
+              name="tecnicoId"
+              control={control}
+              render={({ field }) => (
+                <Select
+                  label="Técnico"
+                  options={tecnicos.map((t) => ({
+                    value: t.id.toString(),
+                    label: `${t.apellido}, ${t.nombre}`,
+                  }))}
+                  value={field.value}
+                  onChange={field.onChange}
+                  placeholder="Sin asignar"
+                  icon={<Wrench className="h-4 w-4" />}
+                />
+              )}
+            />
+          </div>
+          <Controller
+            name="conductorId"
+            control={control}
+            render={({ field }) => (
+              <Select
+                label="Conductor"
+                options={empleados.map((e) => ({
+                  value: e.id.toString(),
+                  label: `${e.apellido}, ${e.nombre}${e.fechaVencimientoRegistro ? ` (Reg: ${new Date(e.fechaVencimientoRegistro).toLocaleDateString('es-AR')})` : ''}`,
+                }))}
+                value={field.value}
+                onChange={field.onChange}
+                placeholder="Sin asignar"
+                icon={<Users className="h-4 w-4" />}
+              />
+            )}
+          />
         </div>
       </form>
     </DialogBase>

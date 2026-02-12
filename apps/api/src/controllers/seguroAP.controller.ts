@@ -8,16 +8,20 @@ const createSeguroAPSchema = z.object({
   empleadoId: z.number().int(),
   destino: z.string().max(200).optional().nullable(),
   observaciones: z.string().max(2000).optional().nullable(),
+  fechaInicio: z.string().optional().nullable(),
+  fechaFinalizacion: z.string().optional().nullable(),
 });
 
 const updateSeguroAPSchema = z.object({
   destino: z.string().max(200).optional().nullable(),
   observaciones: z.string().max(2000).optional().nullable(),
+  fechaInicio: z.string().optional().nullable(),
+  fechaFinalizacion: z.string().optional().nullable(),
 });
 
 const cambiarEstadoSchema = z.object({
   nuevoEstado: z.nativeEnum(EstadoSeguroAP),
-  fechaEfectiva: z.string().datetime().or(z.date()).optional(),
+  fechaEfectiva: z.string().optional(),
 });
 
 // Transiciones válidas
@@ -145,6 +149,8 @@ export const create = async (req: Request, res: Response) => {
         empleadoId: body.empleadoId,
         destino: body.destino ?? null,
         observaciones: body.observaciones ?? null,
+        fechaInicio: body.fechaInicio ? new Date(body.fechaInicio) : null,
+        fechaFinalizacion: body.fechaFinalizacion ? new Date(body.fechaFinalizacion) : null,
       },
       include: {
         empleado: {
@@ -156,7 +162,7 @@ export const create = async (req: Request, res: Response) => {
     res.status(201).json(seguro);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: error.errors });
+      return res.status(400).json({ error: error.errors.map((e) => e.message).join(', ') });
     }
     console.error('Error al crear seguro AP:', error);
     res.status(500).json({ error: 'Error al crear seguro AP' });
@@ -178,6 +184,18 @@ export const update = async (req: Request, res: Response) => {
       data: {
         destino: body.destino === undefined ? undefined : (body.destino ?? null),
         observaciones: body.observaciones === undefined ? undefined : (body.observaciones ?? null),
+        fechaInicio:
+          body.fechaInicio === undefined
+            ? undefined
+            : body.fechaInicio
+              ? new Date(body.fechaInicio)
+              : null,
+        fechaFinalizacion:
+          body.fechaFinalizacion === undefined
+            ? undefined
+            : body.fechaFinalizacion
+              ? new Date(body.fechaFinalizacion)
+              : null,
       },
       include: {
         empleado: {
@@ -189,7 +207,7 @@ export const update = async (req: Request, res: Response) => {
     res.json(updated);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: error.errors });
+      return res.status(400).json({ error: error.errors.map((e) => e.message).join(', ') });
     }
     console.error('Error al actualizar seguro AP:', error);
     res.status(500).json({ error: 'Error al actualizar seguro AP' });
@@ -242,7 +260,7 @@ export const cambiarEstado = async (req: Request, res: Response) => {
     res.json(updated);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: error.errors });
+      return res.status(400).json({ error: error.errors.map((e) => e.message).join(', ') });
     }
     console.error('Error al cambiar estado del seguro AP:', error);
     res.status(500).json({ error: 'Error al cambiar estado del seguro AP' });
@@ -251,11 +269,12 @@ export const cambiarEstado = async (req: Request, res: Response) => {
 
 export const getResumen = async (_req: Request, res: Response) => {
   try {
+    const empleadoNoEliminado = { empleado: { fechaEliminacion: null } };
     const [activos, pendientesAlta, pendientesBaja, totalEmpleadosActivos] =
       await prisma.$transaction([
-        prisma.seguroAP.count({ where: { estado: 'ACTIVO' } }),
-        prisma.seguroAP.count({ where: { estado: 'PEDIDO_ALTA' } }),
-        prisma.seguroAP.count({ where: { estado: 'PEDIDO_BAJA' } }),
+        prisma.seguroAP.count({ where: { estado: 'ACTIVO', ...empleadoNoEliminado } }),
+        prisma.seguroAP.count({ where: { estado: 'PEDIDO_ALTA', ...empleadoNoEliminado } }),
+        prisma.seguroAP.count({ where: { estado: 'PEDIDO_BAJA', ...empleadoNoEliminado } }),
         prisma.empleado.count({
           where: { estado: 'ACTIVO', fechaEliminacion: null },
         }),
@@ -263,7 +282,7 @@ export const getResumen = async (_req: Request, res: Response) => {
 
     // Empleados activos sin cobertura (sin seguro ACTIVO ni PEDIDO_ALTA)
     const empleadosConCobertura = await prisma.seguroAP.findMany({
-      where: { estado: { in: ['ACTIVO', 'PEDIDO_ALTA'] } },
+      where: { estado: { in: ['ACTIVO', 'PEDIDO_ALTA'] }, ...empleadoNoEliminado },
       select: { empleadoId: true },
       distinct: ['empleadoId'],
     });

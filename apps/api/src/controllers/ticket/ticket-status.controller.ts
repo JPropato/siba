@@ -100,7 +100,7 @@ export const cambiarEstado = async (req: Request, res: Response) => {
     res.json(updated);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: error.errors });
+      return res.status(400).json({ error: error.errors.map((e) => e.message).join(', ') });
     }
     console.error('Error al cambiar estado:', error);
     res.status(500).json({ error: 'Error al cambiar estado' });

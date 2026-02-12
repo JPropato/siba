@@ -16,12 +16,7 @@ import { SortableHeader } from '../../../components/ui/core/SortableHeader';
 import { MobileActionSheet } from '../../../components/ui/MobileActionSheet';
 import { EmptyState } from '../../../components/ui/EmptyState';
 import type { Movimiento } from '../types';
-import {
-  ESTADO_MOVIMIENTO_CONFIG,
-  MEDIO_PAGO_LABELS,
-  CATEGORIA_INGRESO_LABELS,
-  CATEGORIA_EGRESO_LABELS,
-} from '../types';
+import { ESTADO_MOVIMIENTO_CONFIG, MEDIO_PAGO_LABELS } from '../types';
 
 interface MovimientosTableProps {
   movimientos: Movimiento[];
@@ -112,10 +107,6 @@ export default function MovimientosTable({
           <tbody className="divide-y divide-slate-200 dark:divide-slate-800 bg-white dark:bg-slate-950">
             {sorted.map((mov) => {
               const estado = ESTADO_MOVIMIENTO_CONFIG[mov.estado];
-              const categoriaLabel =
-                mov.tipo === 'INGRESO'
-                  ? CATEGORIA_INGRESO_LABELS[mov.categoriaIngreso!]
-                  : CATEGORIA_EGRESO_LABELS[mov.categoriaEgreso!];
 
               return (
                 <motion.tr
@@ -139,9 +130,11 @@ export default function MovimientosTable({
                         {mov.descripcion}
                       </span>
                       <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-tight font-bold">
-                          {categoriaLabel}
-                        </span>
+                        {mov.cuentaContable && (
+                          <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-tight font-bold">
+                            {mov.cuentaContable.nombre}
+                          </span>
+                        )}
                         {mov.comprobante && (
                           <span className="text-[9px] bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded font-mono text-slate-500">
                             #{mov.comprobante}

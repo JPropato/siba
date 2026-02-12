@@ -1,0 +1,1755 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Módulo Financiero Completo - SIBA</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'base',
+            themeVariables: {
+                primaryColor: '#3b82f6',
+                primaryTextColor: '#fff',
+                primaryBorderColor: '#2563eb',
+                lineColor: '#334155',
+                secondaryColor: '#bd8e3d',
+                tertiaryColor: '#22c55e'
+            }
+        });
+    </script>
+    <style>
+        :root {
+            --brand-color: #3b82f6;
+            --brand-light: #60a5fa;
+            --brand-dark: #2563eb;
+            --gold-primary: #bd8e3d;
+            --gold-light: #e6c489;
+            --slate: #334155;
+            --slate-light: #64748b;
+            --slate-dark: #1e293b;
+            --surface: #ffffff;
+            --background: #f1f5f9;
+            --border: #e2e8f0;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --error: #ef4444;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            line-height: 1.6;
+            color: var(--slate);
+            background: var(--background);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: var(--surface);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--brand-color) 0%, var(--brand-dark) 100%);
+            color: white;
+            padding: 56px 48px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" fill="none"/><path d="M0 0L100 100M100 0L0 100" stroke="rgba(255,255,255,0.05)" stroke-width="1"/></svg>');
+            opacity: 0.3;
+        }
+
+        header .content {
+            position: relative;
+            z-index: 1;
+        }
+
+        header h1 {
+            font-size: 3em;
+            font-weight: 800;
+            margin-bottom: 12px;
+            letter-spacing: -0.03em;
+        }
+
+        header p {
+            font-size: 1.25em;
+            opacity: 0.95;
+            font-weight: 500;
+        }
+
+        nav {
+            background: var(--slate-dark);
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            padding: 14px 18px;
+            display: block;
+            transition: all 0.3s;
+            font-weight: 600;
+            font-size: 0.85em;
+            border-bottom: 3px solid transparent;
+        }
+
+        nav a:hover {
+            background: rgba(255,255,255,0.1);
+            border-bottom-color: var(--gold-primary);
+        }
+
+        .content {
+            padding: 48px 48px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .section {
+            margin-bottom: 72px;
+            scroll-margin-top: 60px;
+        }
+
+        .section h2 {
+            color: var(--brand-color);
+            font-size: 2.2em;
+            font-weight: 800;
+            margin-bottom: 28px;
+            padding-bottom: 14px;
+            border-bottom: 3px solid var(--border);
+            letter-spacing: -0.02em;
+        }
+
+        .section h3 {
+            color: var(--slate-dark);
+            font-size: 1.5em;
+            font-weight: 700;
+            margin: 36px 0 20px 0;
+        }
+
+        .section h4 {
+            color: var(--slate);
+            font-size: 1.2em;
+            font-weight: 700;
+            margin: 24px 0 12px 0;
+        }
+
+        .section p {
+            color: var(--slate-light);
+            font-size: 1.05em;
+            line-height: 1.8;
+            margin-bottom: 16px;
+        }
+
+        .modules-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 28px;
+            margin: 40px 0;
+        }
+
+        .module-card {
+            background: var(--surface);
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border: 2px solid var(--border);
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .module-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: linear-gradient(90deg, var(--brand-color), var(--brand-light));
+        }
+
+        .module-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 16px 32px rgba(59, 130, 246, 0.2);
+            border-color: var(--brand-color);
+        }
+
+        .module-icon {
+            font-size: 3em;
+            margin-bottom: 16px;
+        }
+
+        .module-card h3 {
+            color: var(--brand-color);
+            font-size: 1.4em;
+            font-weight: 800;
+            margin: 0 0 12px 0;
+        }
+
+        .module-card p {
+            color: var(--slate);
+            font-size: 1em;
+            line-height: 1.7;
+            margin-bottom: 20px;
+        }
+
+        .module-features {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .module-features li {
+            padding: 8px 0;
+            color: var(--slate-light);
+            font-size: 0.95em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .module-features li::before {
+            content: '✓';
+            color: var(--success);
+            font-weight: 800;
+            font-size: 1.1em;
+        }
+
+        .diagram-container {
+            background: var(--surface);
+            border-radius: 16px;
+            padding: 40px;
+            margin: 40px 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border: 1px solid var(--border);
+        }
+
+        .mermaid {
+            text-align: center;
+        }
+
+        .feature-highlight {
+            background: linear-gradient(135deg, #eff6ff, #dbeafe);
+            border-left: 5px solid var(--brand-color);
+            padding: 28px;
+            border-radius: 12px;
+            margin: 32px 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .feature-highlight h4 {
+            color: var(--brand-dark);
+            font-size: 1.2em;
+            font-weight: 800;
+            margin-bottom: 12px;
+        }
+
+        .feature-highlight p {
+            color: var(--slate);
+            margin: 0;
+        }
+
+        .feature-highlight ul {
+            margin: 12px 0 0 20px;
+            color: var(--slate);
+        }
+
+        .feature-highlight ul li {
+            margin: 6px 0;
+        }
+
+        .steps-container {
+            background: #f9fafb;
+            border-radius: 12px;
+            padding: 32px;
+            margin: 32px 0;
+        }
+
+        .step-item {
+            background: var(--surface);
+            border-radius: 10px;
+            padding: 24px;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            border-left: 4px solid var(--brand-color);
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+        }
+
+        .step-number {
+            background: var(--brand-color);
+            color: white;
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 1.3em;
+            flex-shrink: 0;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .step-content h4 {
+            color: var(--slate-dark);
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+
+        .step-content p {
+            color: var(--slate-light);
+            margin: 0;
+            font-size: 0.95em;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 32px 0;
+            background: var(--surface);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .comparison-table th {
+            background: var(--brand-color);
+            color: white;
+            font-weight: 700;
+            font-size: 0.95em;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .comparison-table tr:hover {
+            background: #f8fafc;
+        }
+
+        .screen-example {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+            border: 2px solid var(--border);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .screen-example h4 {
+            color: var(--brand-color);
+            margin-bottom: 16px;
+            font-size: 1.1em;
+        }
+
+        .screen-mockup {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 20px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85em;
+            line-height: 1.6;
+            overflow-x: auto;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: 700;
+            margin: 2px 4px;
+        }
+
+        .tag-required { background: #fee2e2; color: #991b1b; }
+        .tag-optional { background: #dbeafe; color: #1e40af; }
+        .tag-automatic { background: #dcfce7; color: #166534; }
+
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin: 24px 0;
+        }
+
+        .info-box {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 24px;
+            border: 1px solid var(--border);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .info-box h4 {
+            color: var(--brand-color);
+            margin-bottom: 12px;
+            font-size: 1.1em;
+        }
+
+        .info-box ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .info-box ul li {
+            padding: 6px 0;
+            color: var(--slate-light);
+            font-size: 0.95em;
+        }
+
+        .info-box ul li::before {
+            content: '•';
+            color: var(--brand-color);
+            font-weight: 800;
+            margin-right: 8px;
+        }
+
+        footer {
+            background: var(--slate-dark);
+            color: white;
+            text-align: center;
+            padding: 40px;
+            margin-top: 60px;
+        }
+
+        footer p {
+            color: rgba(255,255,255,0.9);
+            margin: 0;
+        }
+
+        footer p:first-child {
+            font-weight: 700;
+            font-size: 1.15em;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 768px) {
+            header { padding: 36px 24px; }
+            header h1 { font-size: 2em; }
+            .content { padding: 32px 24px; }
+            nav { flex-direction: column; }
+            nav a {
+                border-bottom: 1px solid rgba(255,255,255,0.1);
+                border-left: 3px solid transparent;
+            }
+            nav a:hover {
+                border-left-color: var(--gold-primary);
+                border-bottom-color: rgba(255,255,255,0.1);
+            }
+            .modules-grid { grid-template-columns: 1fr; }
+            .two-column { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="content">
+                <h1>💼 Módulo Financiero Completo</h1>
+                <p>Gestión integral de finanzas, contabilidad y tesorería · SIBA</p>
+            </div>
+        </header>
+
+        <nav>
+            <a href="#intro">Inicio</a>
+            <a href="#compras">Compras</a>
+            <a href="#tesoreria">Tesorería</a>
+            <a href="#tarjetas">Tarjetas</a>
+            <a href="#contabilidad">Contabilidad</a>
+            <a href="#facturacion">Facturación</a>
+            <a href="#integracion">Integración</a>
+            <a href="#casos-uso">Casos de Uso</a>
+        </nav>
+
+        <div class="content">
+            <!-- ============================================ -->
+            <!-- INTRODUCCIÓN -->
+            <!-- ============================================ -->
+            <section id="intro" class="section">
+                <h2>Sistema Financiero Integral</h2>
+
+                <p style="font-size: 1.2em; margin-bottom: 36px;">
+                    El módulo financiero de SIBA es un <strong>sistema completo e integrado</strong> que gestiona todas las operaciones financieras, contables y de tesorería. Desde el registro de una compra hasta el balance contable final, todo está conectado y automatizado.
+                </p>
+
+                <div class="feature-highlight">
+                    <h4>🎯 Concepto Clave: Movimiento como Centro</h4>
+                    <p>
+                        Cada operación financiera crea un <strong>Movimiento</strong> que automáticamente se integra con:
+                        <br>• <strong>Tesorería</strong> → Actualiza saldo de cuentas
+                        <br>• <strong>Contabilidad</strong> → Imputa a cuentas contables
+                        <br>• <strong>Costos</strong> → Asigna a centros de costo
+                        <br>• <strong>Auditoría</strong> → Registra quién, cuándo y por qué
+                    </p>
+                </div>
+
+                <h3>Módulos Principales</h3>
+                <div class="modules-grid">
+                    <div class="module-card">
+                        <div class="module-icon">🛒</div>
+                        <h3>Compras</h3>
+                        <p>Gestión de proveedores, facturas recibidas, pagos y control de deuda</p>
+                    </div>
+                    <div class="module-card">
+                        <div class="module-icon">💰</div>
+                        <h3>Tesorería</h3>
+                        <p>Cuentas bancarias, cajas, movimientos, transferencias y saldos</p>
+                    </div>
+                    <div class="module-card">
+                        <div class="module-icon">💳</div>
+                        <h3>Tarjetas</h3>
+                        <p>Tarjetas precargables y corporativas para empleados</p>
+                    </div>
+                    <div class="module-card">
+                        <div class="module-icon">📊</div>
+                        <h3>Contabilidad</h3>
+                        <p>Plan de cuentas, centros de costo y balance contable</p>
+                    </div>
+                    <div class="module-card">
+                        <div class="module-icon">📋</div>
+                        <h3>Facturación</h3>
+                        <p>Emisión de facturas a clientes y control de cobros</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================================ -->
+            <!-- MÓDULO DE COMPRAS -->
+            <!-- ============================================ -->
+            <section id="compras" class="section">
+                <h2>🛒 Módulo de Compras</h2>
+
+                <p>
+                    Gestión completa del ciclo de compras: desde el registro de proveedores hasta el control de pagos y deudas.
+                </p>
+
+                <h3>1. Proveedores</h3>
+
+                <div class="screen-example">
+                    <h4>Pantalla: Compras → Proveedores</h4>
+                    <div class="screen-mockup">
+┌─────────────────────────────────────────────┐
+│ 🏪 Proveedores                    [+ Nuevo] │
+├─────────────────────────────────────────────┤
+│                                             │
+│ 📊 Stats                                    │
+│ ┌─────────┬─────────┬──────────┐           │
+│ │ Total   │ Activos │ Deuda    │           │
+│ │ 145     │ 132     │ $450,000 │           │
+│ └─────────┴─────────┴──────────┘           │
+│                                             │
+│ 🔍 Buscar por nombre o CUIT...             │
+│                                             │
+│ LISTA DE PROVEEDORES                        │
+│ ┌───────────────────────────────────────┐  │
+│ │ YPF S.A.                              │  │
+│ │ CUIT: 30-54609968-0                   │  │
+│ │ Cond. IVA: Responsable Inscripto      │  │
+│ │ Deuda: $35,000 | 3 facturas pend.     │  │
+│ │ [Ver] [Editar] [Facturas] [Pagos]     │  │
+│ └───────────────────────────────────────┘  │
+│                                             │
+│ ┌───────────────────────────────────────┐  │
+│ │ Ferretería El Tornillo                │  │
+│ │ CUIT: 20-12345678-9                   │  │
+│ │ Cond. IVA: Monotributo                │  │
+│ │ Deuda: $0 | Al día                    │  │
+│ │ [Ver] [Editar] [Facturas] [Pagos]     │  │
+│ └───────────────────────────────────────┘  │
+└─────────────────────────────────────────────┘
+                    </div>
+                </div>
+
+                <div class="two-column">
+                    <div class="info-box">
+                        <h4>Campos del Proveedor</h4>
+                        <ul>
+                            <li><strong>Razón Social</strong> <span class="tag tag-required">Obligatorio</span></li>
+                            <li><strong>CUIT</strong> <span class="tag tag-required">Obligatorio</span> (único)</li>
+                            <li><strong>Condición IVA</strong> <span class="tag tag-required">Obligatorio</span></li>
+                            <li><strong>Teléfono</strong> <span class="tag tag-optional">Opcional</span></li>
+                            <li><strong>Email</strong> <span class="tag tag-optional">Opcional</span></li>
+                            <li><strong>Dirección</strong> <span class="tag tag-optional">Opcional</span></li>
+                        </ul>
+                    </div>
+
+                    <div class="info-box">
+                        <h4>Información Automática</h4>
+                        <ul>
+                            <li>Total gastado históricamente</li>
+                            <li>Deuda actual pendiente</li>
+                            <li>Cantidad de facturas pendientes</li>
+                            <li>Último pago realizado</li>
+                            <li>Proveedor frecuente (si aplica)</li>
+                            <li>Estado: Activo/Inactivo</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h3>2. Facturas de Proveedor</h3>
+
+                <div class="screen-example">
+                    <h4>Pantalla: Compras → Facturas</h4>
+                    <div class="screen-mockup">
+┌─────────────────────────────────────────────┐
+│ 📄 Facturas Proveedor           [+ Nueva]  │
+├─────────────────────────────────────────────┤
+│                                             │
+│ Filtros: [Todas ▼] [Proveedor ▼] [Estado ▼]│
+│                                             │
+│ FACTURAS PENDIENTES                         │
+│ ┌───────────────────────────────────────┐  │
+│ │ Factura B 0001-00001234               │  │
+│ │ YPF S.A.                              │  │
+│ │ Emitida: 10/02/2026 | Vence: 10/03/26│  │
+│ │ Total: $35,000 | Pendiente: $35,000   │  │
+│ │ Estado: PENDIENTE                     │  │
+│ │ [Pagar] [Ver Detalle] [Editar]        │  │
+│ └───────────────────────────────────────┘  │
+│                                             │
+│ FACTURAS PAGADAS                            │
+│ ┌───────────────────────────────────────┐  │
+│ │ Factura A 0005-00002156               │  │
+│ │ Ferretería El Tornillo                │  │
+│ │ Emitida: 05/02/2026 | Pagada: 08/02/26│  │
+│ │ Total: $12,500 | Saldo: $0            │  │
+│ │ Estado: PAGADA (Cheque #4521)         │  │
+│ │ [Ver Detalle] [Comprobante]           │  │
+│ └───────────────────────────────────────┘  │
+└─────────────────────────────────────────────┘
+                    </div>
+                </div>
+
+                <h3>Flujo Completo de Compra y Pago</h3>
+
+                <div class="steps-container">
+                    <div class="step-item">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h4>Recibir Factura del Proveedor</h4>
+                            <p>Cuando llega una factura (física o electrónica), ingresar a Compras → Facturas → Nueva</p>
+                        </div>
+                    </div>
+
+                    <div class="step-item">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h4>Registrar Datos de la Factura</h4>
+                            <p>
+                                • Seleccionar/Crear proveedor<br>
+                                • Tipo comprobante (A, B, C, etc.)<br>
+                                • Punto venta + Número<br>
+                                • Fecha emisión y vencimiento<br>
+                                • Importes (subtotal, IVA, total)
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="step-item">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <h4>Factura queda PENDIENTE <span class="tag tag-required">Saldo = Total</span></h4>
+                            <p>El sistema crea la factura con estado PENDIENTE. No genera movimiento aún (no se pagó)</p>
+                        </div>
+                    </div>
+
+                    <div class="step-item">
+                        <div class="step-number">4</div>
+                        <div class="step-content">
+                            <h4>Decidir Forma de Pago</h4>
+                            <p>
+                                <strong>Opción A:</strong> Pagar con Cheque → Ir a paso 5<br>
+                                <strong>Opción B:</strong> Pagar con Transferencia → Ir a paso 6<br>
+                                <strong>Opción C:</strong> Pagar con Tarjeta → Ya se hizo al comprar
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="step-item">
+                        <div class="step-number">5</div>
+                        <div class="step-content">
+                            <h4>Pago con Cheque</h4>
+                            <p>
+                                Tesorería → Cheques → Nuevo Cheque<br>
+                                • Seleccionar banco y cuenta<br>
+                                • Beneficiario: Proveedor<br>
+                                • Vincular a factura<br>
+                                • <span class="tag tag-automatic">AUTO</span> Crea Movimiento EGRESO<br>
+                                • <span class="tag tag-automatic">AUTO</span> Actualiza saldo factura
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="step-item">
+                        <div class="step-number">6</div>
+                        <div class="step-content">
+                            <h4>Pago con Transferencia</h4>
+                            <p>
+                                Tesorería → Movimientos → Nuevo Egreso<br>
+                                • Medio pago: Transferencia<br>
+                                • Proveedor: Seleccionar<br>
+                                • Factura: Vincular<br>
+                                • <span class="tag tag-automatic">AUTO</span> Actualiza saldo factura
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="step-item">
+                        <div class="step-number">7</div>
+                        <div class="step-content">
+                            <h4>Factura PAGADA <span class="tag tag-automatic">Saldo = $0</span></h4>
+                            <p>
+                                Estado cambia a PAGADA<br>
+                                Saldo pendiente = $0<br>
+                                Deuda del proveedor se reduce<br>
+                                Registro contable completo
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="feature-highlight">
+                    <h4>💡 Pagos Parciales</h4>
+                    <p>
+                        El sistema soporta <strong>pagos parciales</strong>. Si una factura es de $10,000 y pagas $6,000 con un cheque:
+                        <br>• Estado: PAGADA_PARCIAL
+                        <br>• Saldo pendiente: $4,000
+                        <br>• Puedes hacer otro pago por el resto después
+                    </p>
+                </div>
+            </section>
+
+            <!-- ============================================ -->
+            <!-- MÓDULO DE TESORERÍA -->
+            <!-- ============================================ -->
+            <section id="tesoreria" class="section">
+                <h2>💰 Módulo de Tesorería</h2>
+
+                <p>
+                    Control total del flujo de efectivo: cuentas bancarias, cajas, movimientos y transferencias.
+                </p>
+
+                <h3>1. Cuentas Financieras</h3>
+
+                <div class="screen-example">
+                    <h4>Pantalla: Tesorería → Cuentas / Bancos</h4>
+                    <div class="screen-mockup">
+┌─────────────────────────────────────────────┐
+│ 🏦 Cuentas Financieras          [+ Nueva]  │
+├─────────────────────────────────────────────┤
+│                                             │
+│ 💼 CUENTAS BANCARIAS                        │
+│ ┌───────────────────────────────────────┐  │
+│ │ Banco Galicia - Cta Cte ARS           │  │
+│ │ CBU: 0070999830000001234567           │  │
+│ │ Saldo: $1,245,680                     │  │
+│ │ Estado: ACTIVA                        │  │
+│ │ [Ver Movimientos] [Transferir] [Edit] │  │
+│ └───────────────────────────────────────┘  │
+│                                             │
+│ 💵 CAJAS Y EFECTIVO                         │
+│ ┌───────────────────────────────────────┐  │
+│ │ Caja Sede Central                     │  │
+│ │ Tipo: CAJA                            │  │
+│ │ Saldo: $45,230                        │  │
+│ │ Responsable: Juan Pérez               │  │
+│ │ [Ver Movimientos] [Arq] [Editar]      │  │
+│ └───────────────────────────────────────┘  │
+│                                             │
+│ 💳 TARJETAS (Cuentas virtuales)            │
+│ ┌───────────────────────────────────────┐  │
+│ │ Tarjeta VISA - Juan Pérez             │  │
+│ │ Tipo: Cuenta virtual de tarjeta       │  │
+│ │ Saldo: $12,450                        │  │
+│ │ [Ver Gastos] [Cargar]                 │  │
+│ └───────────────────────────────────────┘  │
+└─────────────────────────────────────────────┘
+                    </div>
+                </div>
+
+                <div class="feature-highlight">
+                    <h4>🎯 Tipos de Cuentas Financieras</h4>
+                    <ul>
+                        <li><strong>BANCO:</strong> Cuenta corriente o caja de ahorro en banco</li>
+                        <li><strong>CAJA:</strong> Caja física en sucursal/oficina</li>
+                        <li><strong>EFECTIVO:</strong> Efectivo en mano (para controlar)</li>
+                        <li><strong>INVERSION:</strong> Plazo fijo, bonos, etc.</li>
+                        <li><strong>CREDITO:</strong> Línea de crédito del banco</li>
+                        <li><strong>CAJA_CHICA:</strong> Fondos para gastos menores</li>
+                    </ul>
+                    <p style="margin-top: 12px;">
+                        Cada tarjeta precargable tiene su propia CuentaFinanciera para control independiente.
+                    </p>
+                </div>
+
+                <h3>2. Movimientos</h3>
+
+                <div class="screen-example">
+                    <h4>Pantalla: Tesorería → Movimientos</h4>
+                    <div class="screen-mockup">
+┌─────────────────────────────────────────────┐
+│ ↔️ Movimientos                  [+ Nuevo]  │
+├─────────────────────────────────────────────┤
+│                                             │
+│ Filtros:                                    │
+│ [Cuenta ▼] [Tipo ▼] [Desde] [Hasta] [🔍]   │
+│                                             │
+│ MOVIMIENTOS RECIENTES                       │
+│ ┌───────────────────────────────────────┐  │
+│ │ 📥 INGRESO | Código: MOV-2026-00145   │  │
+│ │ Concepto: Pago cliente ABC S.A.       │  │
+│ │ Cuenta: Banco Galicia Cta Cte         │  │
+│ │ Monto: +$150,000                      │  │
+│ │ Fecha: 12/02/2026 10:30               │  │
+│ │ Medio: Transferencia bancaria         │  │
+│ │ Cuenta contable: 1.1.1 - Banco        │  │
+│ │ [Ver Detalle] [Comprobante]           │  │
+│ └───────────────────────────────────────┘  │
+│                                             │
+│ ┌───────────────────────────────────────┐  │
+│ │ 📤 EGRESO | Código: MOV-2026-00144    │  │
+│ │ Concepto: Pago proveedor YPF          │  │
+│ │ Cuenta: Banco Galicia Cta Cte         │  │
+│ │ Monto: -$35,000                       │  │
+│ │ Fecha: 11/02/2026 15:45               │  │
+│ │ Medio: Cheque #4521                   │  │
+│ │ Proveedor: YPF S.A.                   │  │
+│ │ Factura: B 0001-00001234              │  │
+│ │ Centro costo: Vehículos               │  │
+│ │ Cuenta contable: 5.1.1 - Combustible  │  │
+│ │ [Ver Detalle] [Cheque]                │  │
+│ └───────────────────────────────────────┘  │
+└─────────────────────────────────────────────┘
+                    </div>
+                </div>
+
+                <div class="two-column">
+                    <div class="info-box">
+                        <h4>Campos Obligatorios</h4>
+                        <ul>
+                            <li>Cuenta Financiera</li>
+                            <li>Tipo (INGRESO o EGRESO)</li>
+                            <li>Monto</li>
+                            <li>Fecha</li>
+                            <li>Concepto/Descripción</li>
+                            <li>Cuenta Contable</li>
+                            <li>Medio de Pago</li>
+                        </ul>
+                    </div>
+
+                    <div class="info-box">
+                        <h4>Campos Opcionales (Contexto)</h4>
+                        <ul>
+                            <li>Centro de Costo</li>
+                            <li>Empleado responsable</li>
+                            <li>Ticket/Obra relacionada</li>
+                            <li>Proveedor</li>
+                            <li>Factura Proveedor</li>
+                            <li>Cliente</li>
+                            <li>Factura Emitida</li>
+                            <li>Comprobante/Archivos</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h3>3. Transferencias entre Cuentas</h3>
+
+                <div class="screen-example">
+                    <h4>Ejemplo: Transferir de Banco a Caja</h4>
+                    <div class="screen-mockup">
+┌─────────────────────────────────────────────┐
+│ 🔄 Nueva Transferencia                      │
+├─────────────────────────────────────────────┤
+│                                             │
+│ Cuenta Origen:                              │
+│ [Banco Galicia Cta Cte ▼] Saldo: $1,245,680│
+│                                             │
+│ Cuenta Destino:                             │
+│ [Caja Sede Central ▼]     Saldo: $45,230   │
+│                                             │
+│ Monto a Transferir:                         │
+│ $ [50,000]                                  │
+│                                             │
+│ Concepto:                                   │
+│ [Extracción para caja chica mensual]        │
+│                                             │
+│ Fecha:                                      │
+│ [12/02/2026 ▼]                             │
+│                                             │
+│            [Cancelar]  [Transferir]         │
+└─────────────────────────────────────────────┘
+
+RESULTADO AUTOMÁTICO:
+✅ Movimiento EGRESO en Banco Galicia (-$50,000)
+✅ Movimiento INGRESO en Caja Central (+$50,000)
+✅ Ambos vinculados a misma Transferencia
+✅ Nuevo saldo Banco: $1,195,680
+✅ Nuevo saldo Caja: $95,230
+                    </div>
+                </div>
+
+                <div class="feature-highlight">
+                    <h4>🔐 Garantía de Consistencia</h4>
+                    <p>
+                        Las transferencias crean <strong>dos movimientos simultáneos</strong> en una transacción atómica:
+                        <br>• Si uno falla, ambos se revierten
+                        <br>• El balance global siempre cuadra (lo que sale de uno entra en otro)
+                        <br>• Trazabilidad completa con código único de transferencia
+                    </p>
+                </div>
+
+                <h3>4. Cheques</h3>
+
+                <div class="screen-example">
+                    <h4>Pantalla: Tesorería → Cheques (también en Compras)</h4>
+                    <div class="screen-mockup">
+┌─────────────────────────────────────────────┐
+│ 💵 Cheques Emitidos             [+ Nuevo]  │
+├─────────────────────────────────────────────┤
+│                                             │
+│ CHEQUES PENDIENTES DE COBRO                 │
+│ ┌───────────────────────────────────────┐  │
+│ │ Cheque #4522                          │  │
+│ │ Banco: Galicia | Cuenta: Cta Cte      │  │
+│ │ A la orden de: YPF S.A.               │  │
+│ │ Monto: $35,000                        │  │
+│ │ Emitido: 12/02/26 | Pago: 12/03/26    │  │
+│ │ Estado: PENDIENTE                     │  │
+│ │ Factura: B 0001-00001234              │  │
+│ │ [Marcar Entregado] [Anular] [Ver]     │  │
+│ └───────────────────────────────────────┘  │
+│                                             │
+│ CHEQUES COBRADOS                            │
+│ ┌───────────────────────────────────────┐  │
+│ │ Cheque #4521                          │  │
+│ │ Banco: Galicia | Cuenta: Cta Cte      │  │
+│ │ A la orden de: Ferretería El Tornillo │  │
+│ │ Monto: $12,500                        │  │
+│ │ Emitido: 08/02/26 | Cobrado: 10/02/26 │  │
+│ │ Estado: COBRADO                       │  │
+│ │ [Ver Movimiento] [Comprobante]        │  │
+│ └───────────────────────────────────────┘  │
+└─────────────────────────────────────────────┘
+                    </div>
+                </div>
+
+                <div class="steps-container">
+                    <h4>Flujo de Emisión de Cheque</h4>
+
+                    <div class="step-item">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h4>Crear Cheque</h4>
+                            <p>Tesorería → Cheques → Nuevo | Ingresar: número, banco, cuenta, beneficiario, monto, fechas</p>
+                        </div>
+                    </div>
+
+                    <div class="step-item">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h4>Vincular Factura (opcional)</h4>
+                            <p>Si es para pagar una factura específica, seleccionarla. El saldo de la factura se actualiza.</p>
+                        </div>
+                    </div>
+
+                    <div class="step-item">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <h4>Sistema crea Movimiento EGRESO <span class="tag tag-automatic">AUTO</span></h4>
+                            <p>Automáticamente se debita la cuenta bancaria. Estado cheque: PENDIENTE</p>
+                        </div>
+                    </div>
+
+                    <div class="step-item">
+                        <div class="step-number">4</div>
+                        <div class="step-content">
+                            <h4>Entregar Cheque</h4>
+                            <p>Cuando se entrega físicamente al proveedor → Marcar como ENTREGADO</p>
+                        </div>
+                    </div>
+
+                    <div class="step-item">
+                        <div class="step-number">5</div>
+                        <div class="step-content">
+                            <h4>Cheque Cobrado</h4>
+                            <p>Cuando el banco lo debita (verificar en extracto) → Marcar como COBRADO</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================================ -->
+            <!-- MÓDULO DE TARJETAS -->
+            <!-- ============================================ -->
+            <section id="tarjetas" class="section">
+                <h2>💳 Módulo de Tarjetas</h2>
+
+                <p>
+                    Sistema de tarjetas precargables y corporativas para empleados con registro de gastos y control automático.
+                </p>
+
+                <h3>Vista de Administrador vs Empleado</h3>
+
+                <div class="two-column">
+                    <div class="info-box">
+                        <h4>👨‍💼 Admin: /finanzas/tarjetas</h4>
+                        <ul>
+                            <li>Ver TODAS las tarjetas</li>
+                            <li>Crear/editar/eliminar tarjetas</li>
+                            <li>Asignar a empleados</li>
+                            <li>Cargar saldo (precargables)</li>
+                            <li>Ver gastos de todos</li>
+                            <li>Configurar categorías</li>
+                            <li>Reportes y análisis</li>
+                        </ul>
+                    </div>
+
+                    <div class="info-box">
+                        <h4>👤 Empleado: /finanzas/rendiciones</h4>
+                        <ul>
+                            <li>Ver solo MIS tarjetas</li>
+                            <li>Registrar gastos</li>
+                            <li>Ver saldo disponible</li>
+                            <li>Ver mis gastos</li>
+                            <li>Subir comprobantes</li>
+                            <li>Interfaz simple y rápida</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h3>Flujo Completo de Tarjetas</h3>
+
+                <div class="diagram-container">
+                    <div class="mermaid">
+flowchart TB
+    START[👨‍💼 Admin crea tarjeta]
+
+    START --> TIPO{Tipo de tarjeta?}
+
+    TIPO -->|Precargable| PREC[Tarjeta PRECARGABLE]
+    TIPO -->|Corporativa| CORP[Tarjeta CORPORATIVA]
+
+    PREC --> CUENTA1[Crear CuentaFinanciera asociada]
+    CORP --> CUENTA1
+
+    CUENTA1 --> ASIGNAR[Asignar a empleado]
+
+    ASIGNAR --> CARGA{¿Precargable?}
+    CARGA -->|Sí| CARGAR[💰 Admin carga saldo]
+    CARGA -->|No| USO
+
+    CARGAR --> MOV_CARGA[Movimiento INGRESO a cuenta tarjeta]
+    MOV_CARGA --> USO
+
+    USO[👤 Empleado usa tarjeta]
+
+    USO --> COMPRA[🛒 Realiza compra con tarjeta]
+    COMPRA --> REGISTRO[📝 Registra gasto en sistema]
+
+    REGISTRO --> FORM[Completa formulario:<br/>- Categoría<br/>- Monto<br/>- Fecha<br/>- Concepto<br/>- PROVEEDOR ⚠️<br/>- Factura opcional<br/>- Comprobante]
+
+    FORM --> GUARDAR[💾 Guardar]
+
+    GUARDAR --> AUTO1[🤖 Sistema automático:]
+    AUTO1 --> AUTO2[Crear GastoTarjeta]
+    AUTO2 --> AUTO3[Crear Movimiento EGRESO]
+    AUTO3 --> AUTO4[Actualizar saldo tarjeta]
+    AUTO4 --> AUTO5[Imputar a cuenta contable]
+    AUTO5 --> AUTO6[Asignar centro de costo]
+    AUTO6 --> DONE[✅ Completado]
+
+    style START fill:#dbeafe,stroke:#3b82f6
+    style PREC fill:#dcfce7,stroke:#22c55e
+    style CORP fill:#fef3c7,stroke:#f59e0b
+    style REGISTRO fill:#fed7aa,stroke:#ea580c
+    style AUTO1 fill:#ede9fe,stroke:#7c3aed
+    style DONE fill:#bbf7d0,stroke:#16a34a
+                    </div>
+                </div>
+
+                <div class="feature-highlight">
+                    <h4>⚠️ Cambio Importante: Proveedor OBLIGATORIO</h4>
+                    <p>
+                        Desde ahora, <strong>no se puede registrar un gasto sin proveedor</strong>. Esto permite:
+                        <br>• Control total de dónde se gasta
+                        <br>• Análisis de proveedores frecuentes
+                        <br>• Negociación de descuentos por volumen
+                        <br>• Auditoría completa
+                        <br><br>
+                        Si el proveedor no existe, se puede crear en el momento ingresando: Nombre, CUIT y Condición IVA.
+                    </p>
+                </div>
+
+                <h3>Configuración de Categorías</h3>
+
+                <div class="screen-example">
+                    <h4>Admin: Tarjetas → Configuración</h4>
+                    <div class="screen-mockup">
+┌─────────────────────────────────────────────┐
+│ ⚙️ Configuración de Categorías de Gasto    │
+├─────────────────────────────────────────────┤
+│                                             │
+│ CATEGORÍA → CUENTA CONTABLE                 │
+│                                             │
+│ ┌─Categoría────────┬─Cuenta Contable────┐  │
+│ │ 🔥 GAS           │ 5.1.2 - Gas        │  │
+│ │ 🔧 FERRETERIA    │ 5.1.5 - Materiales │  │
+│ │ ⛽ NAFTA         │ 5.1.1 - Combustible│  │
+│ │ 🏪 ESTACIONAM.   │ 5.2.3 - Parking    │  │
+│ │ 💧 LAVADERO      │ 5.2.4 - Lavadero   │  │
+│ │ ⚙️  REPUESTOS    │ 5.1.6 - Repuestos  │  │
+│ │ ⚡ MAT. ELECTRIC│ 5.1.7 - Eléctricos │  │
+│ │ 🛣️  PEAJES       │ 5.2.1 - Peajes     │  │
+│ │ 🍔 COMIDA        │ 5.3.1 - Viáticos   │  │
+│ │ 🔨 HERRAMIENTAS  │ 5.1.8 - Herram.    │  │
+│ │ ➕ OTRO          │ 5.9.9 - Varios     │  │
+│ └──────────────────┴────────────────────┘  │
+│                                             │
+│ Al registrar un gasto, la cuenta contable   │
+│ se asigna automáticamente según categoría.  │
+└─────────────────────────────────────────────┘
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================================ -->
+            <!-- MÓDULO DE CONTABILIDAD -->
+            <!-- ============================================ -->
+            <section id="contabilidad" class="section">
+                <h2>📊 Módulo de Contabilidad</h2>
+
+                <p>
+                    Sistema contable integrado con plan de cuentas jerárquico y centros de costo.
+                </p>
+
+                <h3>1. Plan de Cuentas</h3>
+
+                <div class="screen-example">
+                    <h4>Pantalla: Contabilidad → Plan de Cuentas</h4>
+                    <div class="screen-mockup">
+┌─────────────────────────────────────────────┐
+│ 📊 Plan de Cuentas Contables    [+ Nueva]  │
+├─────────────────────────────────────────────┤
+│                                             │
+│ 🌳 ESTRUCTURA JERÁRQUICA                    │
+│                                             │
+│ ▼ 1 - ACTIVO                    $2,450,000 │
+│   ▼ 1.1 - Activo Corriente      $1,800,000 │
+│     • 1.1.1 - Banco Galicia      $1,245,680│
+│     • 1.1.2 - Banco Nación         $450,000│
+│     • 1.1.3 - Caja                  $45,230│
+│     • 1.1.4 - Efectivo              $59,090│
+│   ▼ 1.2 - Activo No Corriente     $650,000 │
+│     • 1.2.1 - Vehículos            $450,000│
+│     • 1.2.2 - Maquinaria           $200,000│
+│                                             │
+│ ▼ 2 - PASIVO                      $850,000 │
+│   ▼ 2.1 - Pasivo Corriente        $850,000 │
+│     • 2.1.1 - Proveedores          $450,000│
+│     • 2.1.2 - Sueldos a pagar      $400,000│
+│                                             │
+│ ▼ 5 - GASTOS                    $1,250,000 │
+│   ▼ 5.1 - Gastos Operativos    $1,000,000 │
+│     • 5.1.1 - Combustibles         $350,000│
+│     • 5.1.2 - Gas                   $80,000│
+│     • 5.1.5 - Materiales           $250,000│
+│   ▼ 5.2 - Gastos Administrativos  $150,000│
+│     • 5.2.1 - Peajes                $45,000│
+│     • 5.2.3 - Parking               $35,000│
+└─────────────────────────────────────────────┘
+                    </div>
+                </div>
+
+                <div class="feature-highlight">
+                    <h4>🌳 Estructura Jerárquica del Plan de Cuentas</h4>
+                    <ul>
+                        <li><strong>Nivel 1:</strong> Categoría principal (1-ACTIVO, 2-PASIVO, etc.)</li>
+                        <li><strong>Nivel 2:</strong> Subcategoría (1.1-Activo Corriente)</li>
+                        <li><strong>Nivel 3:</strong> Cuenta específica (1.1.1-Banco Galicia)</li>
+                        <li><strong>Nivel 4+:</strong> Detalle fino si se necesita</li>
+                    </ul>
+                    <p style="margin-top: 12px;">
+                        <strong>Cuentas Imputables:</strong> Solo las cuentas de último nivel (hojas del árbol) pueden recibir movimientos directos. Las cuentas padre solo agrupan y suman.
+                    </p>
+                </div>
+
+                <h3>2. Centros de Costo</h3>
+
+                <div class="screen-example">
+                    <h4>Pantalla: Contabilidad → Centros de Costo</h4>
+                    <div class="screen-mockup">
+┌─────────────────────────────────────────────┐
+│ 🎯 Centros de Costo             [+ Nuevo]  │
+├─────────────────────────────────────────────┤
+│                                             │
+│ CENTROS ACTIVOS                             │
+│ ┌───────────────────────────────────────┐  │
+│ │ 🚗 VEHICULOS                          │  │
+│ │ Código: CC-VEH                        │  │
+│ │ Gastos del mes: $125,000              │  │
+│ │ Total histórico: $1,450,000           │  │
+│ │ [Ver Detalle] [Reportes] [Editar]     │  │
+│ └───────────────────────────────────────┘  │
+│                                             │
+│ ┌───────────────────────────────────────┐  │
+│ │ 🏢 SUCURSAL NORTE                     │  │
+│ │ Código: CC-SUCN                       │  │
+│ │ Gastos del mes: $85,000               │  │
+│ │ Total histórico: $980,000             │  │
+│ │ [Ver Detalle] [Reportes] [Editar]     │  │
+│ └───────────────────────────────────────┘  │
+│                                             │
+│ ┌───────────────────────────────────────┐  │
+│ │ 🏗️ OBRA - CLIENTE ABC                 │  │
+│ │ Código: CC-OBR-ABC                    │  │
+│ │ Gastos del mes: $215,000              │  │
+│ │ Total histórico: $850,000             │  │
+│ │ Estado: ACTIVO                        │  │
+│ │ [Ver Detalle] [Reportes] [Cerrar]     │  │
+│ └───────────────────────────────────────┘  │
+└─────────────────────────────────────────────┘
+                    </div>
+                </div>
+
+                <div class="two-column">
+                    <div class="info-box">
+                        <h4>Casos de Uso de Centros de Costo</h4>
+                        <ul>
+                            <li><strong>Por departamento:</strong> Ventas, Administración, IT</li>
+                            <li><strong>Por proyecto/obra:</strong> Obra Cliente X, Proyecto Y</li>
+                            <li><strong>Por sucursal:</strong> Sede Norte, Sede Sur</li>
+                            <li><strong>Por vehículo:</strong> Camioneta 1, Camioneta 2</li>
+                            <li><strong>Por cliente:</strong> Cliente A, Cliente B</li>
+                        </ul>
+                    </div>
+
+                    <div class="info-box">
+                        <h4>Reportes Disponibles</h4>
+                        <ul>
+                            <li>Gastos por centro de costo y período</li>
+                            <li>Comparativa entre centros</li>
+                            <li>Evolución mensual por centro</li>
+                            <li>Top gastos por categoría</li>
+                            <li>Rentabilidad por proyecto/obra</li>
+                            <li>Exportar a Excel/PDF</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h3>3. Balance Contable</h3>
+
+                <div class="screen-example">
+                    <h4>Pantalla: Contabilidad → Dashboard</h4>
+                    <div class="screen-mockup">
+┌─────────────────────────────────────────────┐
+│ 📈 Balance Contable - Febrero 2026         │
+├─────────────────────────────────────────────┤
+│                                             │
+│ BALANCE GENERAL                             │
+│                                             │
+│ ACTIVO                          $2,450,000  │
+│   Activo Corriente              $1,800,000  │
+│   Activo No Corriente             $650,000  │
+│                                             │
+│ PASIVO                            $850,000  │
+│   Pasivo Corriente                $850,000  │
+│                                             │
+│ PATRIMONIO NETO                 $1,600,000  │
+│   (Activo - Pasivo)                         │
+│                                             │
+│ ─────────────────────────────────────────   │
+│                                             │
+│ ESTADO DE RESULTADOS (Mes actual)           │
+│                                             │
+│ INGRESOS                          $550,000  │
+│   Ventas servicios                $550,000  │
+│                                             │
+│ GASTOS                           ($425,000) │
+│   Gastos operativos              ($350,000) │
+│   Gastos administrativos          ($75,000) │
+│                                             │
+│ RESULTADO                         $125,000  │
+│ (Ganancia del mes) ✅                       │
+└─────────────────────────────────────────────┘
+                    </div>
+                </div>
+
+                <div class="feature-highlight">
+                    <h4>🤖 Balances Calculados Automáticamente</h4>
+                    <p>
+                        El sistema calcula los balances en tiempo real sin intervención manual:
+                        <br>• Cada Movimiento actualiza la cuenta contable correspondiente
+                        <br>• Las cuentas padre suman automáticamente sus hijos
+                        <br>• El balance general siempre está actualizado
+                        <br>• Reportes disponibles para cualquier período (día, mes, año)
+                    </p>
+                </div>
+            </section>
+
+            <!-- ============================================ -->
+            <!-- MÓDULO DE FACTURACIÓN -->
+            <!-- ============================================ -->
+            <section id="facturacion" class="section">
+                <h2>📋 Módulo de Facturación</h2>
+
+                <p>
+                    Emisión de facturas a clientes con control de cobros y generación automática de ingresos.
+                </p>
+
+                <h3>Flujo de Facturación</h3>
+
+                <div class="steps-container">
+                    <div class="step-item">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h4>Realizar Servicio/Venta</h4>
+                            <p>Completar el trabajo para el cliente (ticket, obra, etc.)</p>
+                        </div>
+                    </div>
+
+                    <div class="step-item">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h4>Crear Factura</h4>
+                            <p>
+                                Facturación → Nueva Factura<br>
+                                • Cliente<br>
+                                • Tipo comprobante (A, B, C)<br>
+                                • Items/Servicios<br>
+                                • Importes
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="step-item">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <h4>Sistema Genera Movimiento INGRESO <span class="tag tag-automatic">AUTO</span></h4>
+                            <p>
+                                Automáticamente:
+                                <br>• Crea Movimiento INGRESO
+                                <br>• Actualiza saldo cuenta
+                                <br>• Imputa a cuenta contable de Ingresos
+                                <br>• Calcula IVA si aplica
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="step-item">
+                        <div class="step-number">4</div>
+                        <div class="step-content">
+                            <h4>Enviar/Entregar Factura</h4>
+                            <p>Entregar factura al cliente (física o electrónica AFIP si está integrado)</p>
+                        </div>
+                    </div>
+
+                    <div class="step-item">
+                        <div class="step-number">5</div>
+                        <div class="step-content">
+                            <h4>Control de Cobro</h4>
+                            <p>
+                                Cuando el cliente paga:
+                                <br>• Marcar factura como cobrada
+                                <br>• Vincular al movimiento de cobro
+                                <br>• Estado: COBRADA
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="screen-example">
+                    <h4>Pantalla: Facturación → Facturas</h4>
+                    <div class="screen-mockup">
+┌─────────────────────────────────────────────┐
+│ 📋 Facturas Emitidas            [+ Nueva]  │
+├─────────────────────────────────────────────┤
+│                                             │
+│ FACTURAS PENDIENTES DE COBRO                │
+│ ┌───────────────────────────────────────┐  │
+│ │ Factura B 0001-00005678               │  │
+│ │ Cliente: ABC Construcciones S.A.      │  │
+│ │ Emitida: 01/02/2026                   │  │
+│ │ Total: $150,000                       │  │
+│ │ Estado: PENDIENTE COBRO               │  │
+│ │ Vencimiento: 01/03/2026 (30 días)     │  │
+│ │ [Marcar Cobrada] [Ver] [Enviar]       │  │
+│ └───────────────────────────────────────┘  │
+│                                             │
+│ FACTURAS COBRADAS                           │
+│ ┌───────────────────────────────────────┐  │
+│ │ Factura B 0001-00005677               │  │
+│ │ Cliente: XYZ Servicios SRL            │  │
+│ │ Emitida: 28/01/2026 | Cobrada: 05/02  │  │
+│ │ Total: $85,000                        │  │
+│ │ Estado: COBRADA ✅                     │  │
+│ │ [Ver] [Comprobante]                   │  │
+│ └───────────────────────────────────────┘  │
+└─────────────────────────────────────────────┘
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================================ -->
+            <!-- INTEGRACIÓN -->
+            <!-- ============================================ -->
+            <section id="integracion" class="section">
+                <h2>🔗 Integración Total del Sistema</h2>
+
+                <h3>El Movimiento como Núcleo Central</h3>
+
+                <div class="diagram-container">
+                    <div class="mermaid">
+graph TB
+    MOV[📝 MOVIMIENTO<br/>Registro Central]
+
+    MOV -->|Actualiza| CUENTA[🏦 Cuenta Financiera<br/>Saldo en tiempo real]
+    MOV -->|Imputa a| CONTABLE[📊 Cuenta Contable<br/>Balance automático]
+    MOV -->|Asigna a| CENTRO[🎯 Centro de Costo<br/>Análisis de costos]
+    MOV -->|Registra| EMPLEADO[👤 Empleado<br/>Responsable]
+    MOV -->|Vincula| TICKET[🎫 Ticket/Obra<br/>Contexto operativo]
+    MOV -->|Paga a| PROVEEDOR[🏪 Proveedor<br/>Control deuda]
+    MOV -->|Cancela| FACTURA[📄 Factura<br/>Estado actualizado]
+
+    GASTO[💳 Gasto Tarjeta] -.->|Genera| MOV
+    CHEQUE[💵 Cheque] -.->|Genera| MOV
+    TRANS[🔄 Transferencia] -.->|Genera 2x| MOV
+    FACT_EMI[📋 Factura Emitida] -.->|Genera| MOV
+
+    style MOV fill:#3b82f6,stroke:#2563eb,stroke-width:4px,color:#fff
+    style CUENTA fill:#dcfce7,stroke:#22c55e
+    style CONTABLE fill:#fef3c7,stroke:#f59e0b
+    style CENTRO fill:#ede9fe,stroke:#7c3aed
+    style GASTO fill:#fed7aa,stroke:#ea580c
+    style CHEQUE fill:#dbeafe,stroke:#3b82f6
+                    </div>
+                </div>
+
+                <div class="feature-highlight">
+                    <h4>🎯 Una Acción → Múltiples Actualizaciones</h4>
+                    <p>
+                        <strong>Ejemplo: Registrar un gasto de $10,000 en nafta con tarjeta</strong>
+                        <br><br>
+                        <strong>Lo que haces (1 acción):</strong>
+                        <br>• Completar formulario de gasto
+                        <br>• Click en Guardar
+                        <br><br>
+                        <strong>Lo que el sistema hace automáticamente (8+ acciones):</strong>
+                        <br>✅ Crea GastoTarjeta con todos los datos
+                        <br>✅ Crea Movimiento EGRESO por $10,000
+                        <br>✅ Actualiza saldo de la tarjeta (-$10,000)
+                        <br>✅ Imputa a cuenta contable "5.1.1 - Combustibles"
+                        <br>✅ Asigna al centro de costo "Vehículos"
+                        <br>✅ Vincula al proveedor YPF
+                        <br>✅ Vincula la factura si la ingresaste
+                        <br>✅ Guarda los comprobantes en MinIO
+                        <br>✅ Actualiza el balance contable general
+                        <br>✅ Registra auditoría: quién, cuándo, desde dónde
+                    </p>
+                </div>
+            </section>
+
+            <!-- ============================================ -->
+            <!-- CASOS DE USO -->
+            <!-- ============================================ -->
+            <section id="casos-uso" class="section">
+                <h2>📖 Casos de Uso Prácticos</h2>
+
+                <h3>Caso 1: Compra de Materiales y Pago</h3>
+
+                <div class="steps-container">
+                    <div class="step-item">
+                        <div class="step-number">📦</div>
+                        <div class="step-content">
+                            <h4>Situación</h4>
+                            <p>Compramos materiales en Ferretería por $25,000. Nos dan Factura B. Pagamos con cheque.</p>
+                        </div>
+                    </div>
+
+                    <div class="step-item">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h4>Registrar Factura</h4>
+                            <p>
+                                Compras → Facturas → Nueva<br>
+                                • Proveedor: Ferretería El Tornillo<br>
+                                • Factura B 0005-00002156<br>
+                                • Total: $25,000<br>
+                                → Estado: PENDIENTE
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="step-item">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h4>Emitir Cheque</h4>
+                            <p>
+                                Tesorería → Cheques → Nuevo<br>
+                                • Banco Galicia<br>
+                                • Beneficiario: Ferretería El Tornillo<br>
+                                • Monto: $25,000<br>
+                                • Factura: B 0005-00002156<br>
+                                → <span class="tag tag-automatic">AUTO</span> Crea Movimiento EGRESO<br>
+                                → <span class="tag tag-automatic">AUTO</span> Factura → PAGADA
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="step-item">
+                        <div class="step-number">✅</div>
+                        <div class="step-content">
+                            <h4>Resultado</h4>
+                            <p>
+                                • Saldo banco: -$25,000<br>
+                                • Deuda proveedor: $0<br>
+                                • Balance contable actualizado<br>
+                                • Cheque: PENDIENTE (hasta que lo cobren)
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <h3>Caso 2: Empleado Gasta con Tarjeta</h3>
+
+                <div class="steps-container">
+                    <div class="step-item">
+                        <div class="step-number">💳</div>
+                        <div class="step-content">
+                            <h4>Situación</h4>
+                            <p>Empleado carga nafta por $15,000 en YPF con su tarjeta precargable.</p>
+                        </div>
+                    </div>
+
+                    <div class="step-item">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h4>Empleado Registra Gasto</h4>
+                            <p>
+                                Mis Gastos → Nuevo Gasto<br>
+                                • Categoría: Nafta<br>
+                                • Monto: $15,000<br>
+                                • Proveedor: YPF S.A.<br>
+                                • Sube foto del ticket
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="step-item">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h4>Sistema Procesa <span class="tag tag-automatic">AUTO</span></h4>
+                            <p>
+                                • Crea GastoTarjeta<br>
+                                • Movimiento EGRESO ($15,000)<br>
+                                • Saldo tarjeta: -$15,000<br>
+                                • Cuenta: 5.1.1 - Combustibles<br>
+                                • Centro: Vehículos
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="step-item">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <h4>Admin ve y Analiza</h4>
+                            <p>
+                                Admin puede ver:<br>
+                                • Cuánto se gastó en nafta este mes<br>
+                                • Qué empleado gastó<br>
+                                • En qué estaciones (proveedores)<br>
+                                • Saldo restante de cada tarjeta
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="step-item">
+                        <div class="step-number">✅</div>
+                        <div class="step-content">
+                            <h4>Resultado</h4>
+                            <p>
+                                • Gasto registrado con comprobante<br>
+                                • Contabilidad actualizada automáticamente<br>
+                                • Control de saldo tarjeta<br>
+                                • Análisis por proveedor disponible
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <h3>Caso 3: Facturar a Cliente y Cobrar</h3>
+
+                <div class="steps-container">
+                    <div class="step-item">
+                        <div class="step-number">📋</div>
+                        <div class="step-content">
+                            <h4>Situación</h4>
+                            <p>Terminamos un trabajo para Cliente ABC. Total: $150,000. Emitimos factura.</p>
+                        </div>
+                    </div>
+
+                    <div class="step-item">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h4>Emitir Factura</h4>
+                            <p>
+                                Facturación → Nueva Factura<br>
+                                • Cliente: ABC Construcciones<br>
+                                • Factura B 0001-00005678<br>
+                                • Total: $150,000<br>
+                                → <span class="tag tag-automatic">AUTO</span> Movimiento INGRESO<br>
+                                → Estado: PENDIENTE COBRO
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="step-item">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h4>Cliente Paga (días después)</h4>
+                            <p>
+                                Cliente hace transferencia bancaria<br>
+                                → Verificar en extracto bancario<br>
+                                → Marcar factura como COBRADA
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="step-item">
+                        <div class="step-number">✅</div>
+                        <div class="step-content">
+                            <h4>Resultado</h4>
+                            <p>
+                                • Ingreso registrado: +$150,000<br>
+                                • Balance de resultados actualizado<br>
+                                • Factura: COBRADA<br>
+                                • Cliente al día
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================================ -->
+            <!-- RESUMEN FINAL -->
+            <!-- ============================================ -->
+            <section class="section">
+                <h2>🎯 Resumen y Beneficios</h2>
+
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>Proceso</th>
+                            <th>Sin Sistema</th>
+                            <th>Con SIBA</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Registro de Compra</strong></td>
+                            <td>❌ Excel + papel + WhatsApp</td>
+                            <td>✅ Un formulario web</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Control de Pagos</strong></td>
+                            <td>❌ Revisar facturas manualmente</td>
+                            <td>✅ Lista automática de pendientes</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Saldos Bancarios</strong></td>
+                            <td>❌ Llamar al banco o esperar extracto</td>
+                            <td>✅ En tiempo real en dashboard</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Gastos Empleados</strong></td>
+                            <td>❌ Planillas y tickets en papel</td>
+                            <td>✅ Registro digital con foto</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Contabilidad</strong></td>
+                            <td>❌ Contador imputa manualmente</td>
+                            <td>✅ Automática con cada operación</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Balance</strong></td>
+                            <td>❌ Esperar a fin de mes</td>
+                            <td>✅ Disponible al instante</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Análisis de Costos</strong></td>
+                            <td>❌ Casi imposible hacer bien</td>
+                            <td>✅ Reportes por centro de costo</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Auditoría</strong></td>
+                            <td>❌ No hay registro de quién hizo qué</td>
+                            <td>✅ Trazabilidad completa</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Decisiones</strong></td>
+                            <td>❌ Intuición y "creo que..."</td>
+                            <td>✅ Datos reales y actualizados</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Tiempo Invertido</strong></td>
+                            <td>❌ Horas de trabajo manual/día</td>
+                            <td>✅ Minutos/día con automatización</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="feature-highlight" style="background: linear-gradient(135deg, #dcfce7, #bbf7d0); border-left-color: var(--success); margin-top: 40px;">
+                    <h4>💡 Filosofía del Sistema SIBA</h4>
+                    <p style="font-size: 1.1em;">
+                        <strong>"Una sola acción del usuario → Todo el sistema se actualiza automáticamente"</strong>
+                        <br><br>
+                        El objetivo es que hacer las cosas bien sea <strong>más fácil</strong> que hacerlas mal. El sistema guía, valida y automatiza para que:
+                        <br>• No te puedas olvidar pasos importantes
+                        <br>• No tengas que hacer trabajo manual repetitivo
+                        <br>• Los reportes estén siempre listos
+                        <br>• Las decisiones se basen en datos reales
+                    </p>
+                </div>
+            </section>
+        </div>
+
+        <footer>
+            <p>SIBA · Sistema Integral de Back Office y Administración</p>
+            <p style="opacity: 0.8; margin-top: 10px;">Módulo Financiero Completo · Documentación Febrero 2026</p>
+        </footer>
+    </div>
+</body>
+</html>

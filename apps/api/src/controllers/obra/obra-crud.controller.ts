@@ -209,7 +209,7 @@ export const create = async (req: Request, res: Response) => {
   } catch (error) {
     console.error('[ObraController] ERROR:', error);
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: error.errors });
+      return res.status(400).json({ error: error.errors.map((e) => e.message).join(', ') });
     }
     res.status(500).json({
       error: 'Error al crear obra',
@@ -263,7 +263,7 @@ export const update = async (req: Request, res: Response) => {
   } catch (error) {
     console.error('[ObraController] UPDATE ERROR:', error);
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: error.errors });
+      return res.status(400).json({ error: error.errors.map((e) => e.message).join(', ') });
     }
     res.status(500).json({
       error: 'Error al actualizar obra',

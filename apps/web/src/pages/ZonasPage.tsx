@@ -5,7 +5,6 @@ import { toast } from 'sonner';
 import ZonaTable from '../components/zonas/ZonaTable';
 import ZonaDialog from '../components/zonas/ZonaDialog';
 import { CollapsibleFilters } from '../components/layout/CollapsibleFilters';
-import { FloatingActionButton } from '../components/layout/FloatingActionButton';
 import { PullToRefresh } from '../components/ui/PullToRefresh';
 import { useZonas, useCreateZona, useUpdateZona, useDeleteZona } from '../hooks/api/useZonas';
 import type { Zona, ZonaFormData } from '../types/zona';
@@ -80,7 +79,7 @@ export default function ZonasPage() {
       <div className="px-4 pt-3 pb-6 sm:px-6 space-y-5 animate-in fade-in duration-500">
         <PageHeader
           icon={<MapPin className="h-5 w-5" />}
-          breadcrumb={['Logística', 'Zonas']}
+          breadcrumb={['Administración', 'Zonas']}
           title="Zonas"
           subtitle="Áreas geográficas de operación"
           count={zones.length}
@@ -126,14 +125,6 @@ export default function ZonasPage() {
         />
 
         {ConfirmDialog}
-
-        {/* FAB para móvil */}
-        <FloatingActionButton
-          onClick={handleCreate}
-          icon={<MapPin className="h-6 w-6" />}
-          hideOnDesktop
-          aria-label="Nueva Zona"
-        />
       </div>
     </PullToRefresh>
   );

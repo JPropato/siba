@@ -1,0 +1,110 @@
+---
+title: Guía Visual - Módulo de Tarjetas para Empleados
+---
+flowchart TB
+    START([👤 Empleado\ncon tarjeta asignada])
+
+    subgraph ACCESO["🔐 Acceso al Sistema"]
+        A1[Ingresar a SIBA]
+        A2[Ir a Tesorería]
+        A3[Click en 'Mis Gastos']
+    end
+
+    subgraph VISTA["📱 Pantalla Principal"]
+        V1[Ver mis tarjetas asignadas]
+        V2[Ver saldo disponible]
+        V3[Ver gastos del mes]
+        V4[Ver gastos recientes]
+    end
+
+    subgraph REGISTRO["💰 Registrar Nuevo Gasto"]
+        R1[Click 'Nuevo Gasto']
+        R2[Seleccionar categoría<br/>🔥 Gas, 🔧 Ferretería, ⛽ Nafta, etc.]
+        R3[Ingresar monto y fecha]
+        R4[Describir el gasto]
+        R5{¿Proveedor existente?}
+        R6A[Buscar y seleccionar<br/>proveedor de la lista]
+        R6B[Crear nuevo proveedor<br/>Ingresar: Nombre, CUIT, Cond. IVA]
+        R7{¿Tiene factura?}
+        R8A[Adjuntar datos factura<br/>Tipo, Nro, Fecha]
+        R8B[Continuar sin factura]
+        R9[¿Asociar a ticket?<br/>opcional]
+        R10[Subir foto del comprobante<br/>opcional pero recomendado]
+        R11[Guardar gasto]
+    end
+
+    subgraph RESULTADO["✅ Resultado Automático"]
+        RES1[💾 Gasto registrado]
+        RES2[💳 Saldo actualizado]
+        RES3[📊 Contabilidad actualizada]
+        RES4[🎯 Centro de costo asignado]
+        RES5[✉️ Notificación enviada]
+    end
+
+    subgraph CONSULTA["🔍 Consultar Gastos"]
+        C1[Ver lista de gastos]
+        C2[Filtrar por fecha/categoría]
+        C3[Ver detalles de un gasto]
+        C4[Descargar comprobantes]
+    end
+
+    %% Flujo principal
+    START --> A1
+    A1 --> A2
+    A2 --> A3
+    A3 --> VISTA
+
+    V1 --> V2
+    V2 --> V3
+    V3 --> V4
+    V4 --> R1
+
+    R1 --> R2
+    R2 --> R3
+    R3 --> R4
+    R4 --> R5
+
+    R5 -->|Sí, lo conozco| R6A
+    R5 -->|No, es nuevo| R6B
+
+    R6A --> R7
+    R6B --> R7
+
+    R7 -->|Sí| R8A
+    R7 -->|No| R8B
+
+    R8A --> R9
+    R8B --> R9
+
+    R9 --> R10
+    R10 --> R11
+
+    R11 --> RESULTADO
+
+    RES1 --> RES2
+    RES2 --> RES3
+    RES3 --> RES4
+    RES4 --> RES5
+
+    RES5 --> C1
+    C1 --> C2
+    C2 --> C3
+    C3 --> C4
+
+    C4 --> V4
+
+    %% Styling
+    style START fill:#4caf50,stroke:#2e7d32,stroke-width:3px,color:#fff
+    style ACCESO fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
+    style VISTA fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    style REGISTRO fill:#fff3e0,stroke:#f57c00,stroke-width:3px
+    style RESULTADO fill:#e8f5e9,stroke:#388e3c,stroke-width:2px
+    style CONSULTA fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+
+    classDef mandatory fill:#ff5252,stroke:#b71c1c,stroke-width:2px,color:#fff
+    classDef optional fill:#90caf9,stroke:#1976d2,stroke-width:2px
+    classDef automated fill:#aed581,stroke:#689f38,stroke-width:2px
+
+    class R5,R6A,R6B mandatory
+    class R7,R8A,R8B,R9,R10 optional
+    class RES1,RES2,RES3,RES4,RES5 automated

@@ -173,7 +173,7 @@ export default function TicketDetailPage() {
   }
 
   return (
-    <div className="px-4 pt-3 pb-6 sm:px-6 space-y-5 max-w-7xl mx-auto">
+    <div className="px-4 pt-3 pb-6 sm:px-6 space-y-5 max-w-7xl mx-auto animate-in fade-in duration-500">
       {/* Header card */}
       <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5 sm:p-6 space-y-4">
         {/* Breadcrumb */}

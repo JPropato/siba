@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guía Visual - Módulo de Tarjetas SIBA</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'base',
+            themeVariables: {
+                primaryColor: '#3b82f6',
+                primaryTextColor: '#fff',
+                primaryBorderColor: '#2563eb',
+                lineColor: '#334155',
+                secondaryColor: '#bd8e3d',
+                tertiaryColor: '#22c55e'
+            }
+        });
+    </script>
+    <style>
+        :root {
+            --brand-color: #3b82f6;
+            --brand-light: #60a5fa;
+            --brand-dark: #2563eb;
+            --gold-primary: #bd8e3d;
+            --gold-light: #e6c489;
+            --slate: #334155;
+            --slate-light: #64748b;
+            --slate-dark: #1e293b;
+            --surface: #ffffff;
+            --background: #f1f5f9;
+            --border: #e2e8f0;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --error: #ef4444;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            line-height: 1.6;
+            color: var(--slate);
+            background: var(--background);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: var(--surface);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--brand-color) 0%, var(--brand-dark) 100%);
+            color: white;
+            padding: 48px 40px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" fill="none"/><path d="M0 0L100 100M100 0L0 100" stroke="rgba(255,255,255,0.05)" stroke-width="1"/></svg>');
+            opacity: 0.3;
+        }
+
+        header .content {
+            position: relative;
+            z-index: 1;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            font-weight: 800;
+            margin-bottom: 8px;
+            letter-spacing: -0.02em;
+        }
+
+        header p {
+            font-size: 1.1em;
+            opacity: 0.95;
+            font-weight: 500;
+        }
+
+        nav {
+            background: var(--slate-dark);
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            padding: 16px 24px;
+            display: block;
+            transition: all 0.3s;
+            font-weight: 600;
+            font-size: 0.95em;
+            border-bottom: 3px solid transparent;
+        }
+
+        nav a:hover {
+            background: rgba(255,255,255,0.1);
+            border-bottom-color: var(--gold-primary);
+        }
+
+        .content {
+            padding: 48px 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section {
+            margin-bottom: 64px;
+        }
+
+        .section h2 {
+            color: var(--brand-color);
+            font-size: 2em;
+            font-weight: 800;
+            margin-bottom: 24px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--border);
+            letter-spacing: -0.01em;
+        }
+
+        .section h3 {
+            color: var(--slate-dark);
+            font-size: 1.4em;
+            font-weight: 700;
+            margin: 32px 0 16px 0;
+        }
+
+        .section p {
+            color: var(--slate-light);
+            font-size: 1.05em;
+            line-height: 1.8;
+            margin-bottom: 16px;
+        }
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            margin: 32px 0;
+        }
+
+        .card {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 28px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border: 1px solid var(--border);
+            transition: all 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(59, 130, 246, 0.15);
+            border-color: var(--brand-light);
+        }
+
+        .card h4 {
+            color: var(--brand-color);
+            font-size: 1.2em;
+            font-weight: 700;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .card p {
+            color: var(--slate-light);
+            line-height: 1.7;
+            font-size: 0.98em;
+        }
+
+        .steps {
+            background: #eff6ff;
+            border-radius: 12px;
+            padding: 32px;
+            margin: 32px 0;
+            border: 1px solid #dbeafe;
+        }
+
+        .step {
+            background: var(--surface);
+            border-radius: 10px;
+            padding: 24px;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+            border-left: 4px solid var(--brand-color);
+        }
+
+        .step-number {
+            background: var(--brand-color);
+            color: white;
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 1.3em;
+            flex-shrink: 0;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .step-content h4 {
+            color: var(--slate-dark);
+            margin-bottom: 6px;
+            font-weight: 700;
+            font-size: 1.05em;
+        }
+
+        .step-content p {
+            color: var(--slate-light);
+            margin: 0;
+            font-size: 0.95em;
+        }
+
+        .highlight-box {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border-left: 4px solid var(--warning);
+            padding: 24px;
+            border-radius: 10px;
+            margin: 24px 0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .highlight-box strong {
+            color: #92400e;
+            font-weight: 700;
+        }
+
+        .highlight-box ul {
+            margin: 12px 0 0 20px;
+            color: var(--slate);
+        }
+
+        .highlight-box ul li {
+            margin: 6px 0;
+        }
+
+        .diagram-container {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 32px;
+            margin: 32px 0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border: 1px solid var(--border);
+        }
+
+        .mermaid {
+            text-align: center;
+        }
+
+        .benefits {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+            margin: 32px 0;
+        }
+
+        .benefit {
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+            border: 1px solid #bbf7d0;
+            transition: transform 0.3s;
+        }
+
+        .benefit:hover {
+            transform: translateY(-4px);
+        }
+
+        .benefit-icon {
+            font-size: 2.5em;
+            margin-bottom: 12px;
+        }
+
+        .benefit h4 {
+            color: #166534;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+
+        .benefit p {
+            color: var(--slate);
+            font-size: 0.9em;
+        }
+
+        footer {
+            background: var(--slate-dark);
+            color: white;
+            text-align: center;
+            padding: 32px;
+            margin-top: 48px;
+        }
+
+        footer p {
+            color: rgba(255,255,255,0.9);
+            margin: 0;
+        }
+
+        footer p:first-child {
+            font-weight: 700;
+            font-size: 1.1em;
+            margin-bottom: 8px;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: 700;
+            margin: 4px;
+            letter-spacing: 0.02em;
+        }
+
+        .tag-mandatory {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .tag-optional {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .tag-automatic {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+            margin: 20px 0;
+        }
+
+        ul li {
+            padding: 12px 16px;
+            background: var(--surface);
+            margin: 8px 0;
+            border-radius: 8px;
+            border-left: 3px solid var(--brand-color);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            color: var(--slate);
+        }
+
+        ul li strong {
+            color: var(--slate-dark);
+            font-weight: 700;
+        }
+
+        @media (max-width: 768px) {
+            header {
+                padding: 32px 24px;
+            }
+
+            header h1 {
+                font-size: 1.8em;
+            }
+
+            .content {
+                padding: 32px 24px;
+            }
+
+            nav {
+                flex-direction: column;
+            }
+
+            nav a {
+                border-bottom: 1px solid rgba(255,255,255,0.1);
+                border-left: 3px solid transparent;
+            }
+
+            nav a:hover {
+                border-left-color: var(--gold-primary);
+                border-bottom-color: rgba(255,255,255,0.1);
+            }
+
+            .section h2 {
+                font-size: 1.6em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="content">
+                <h1>💳 Módulo de Tarjetas</h1>
+                <p>Guía completa para empleados y administradores · SIBA</p>
+            </div>
+        </header>
+
+        <nav>
+            <a href="#inicio">Inicio</a>
+            <a href="#empleados">Para Empleados</a>
+            <a href="#registro">Registrar Gasto</a>
+            <a href="#flujo">Flujo del Sistema</a>
+            <a href="#beneficios">Beneficios</a>
+        </nav>
+
+        <div class="content">
+            <!-- Sección: Inicio -->
+            <section id="inicio" class="section">
+                <h2>¿Qué es el Módulo de Tarjetas?</h2>
+
+                <p style="font-size: 1.15em; margin-bottom: 32px;">
+                    Sistema diseñado para que <strong>empleados registren gastos</strong> con tarjetas de la empresa de forma <strong>rápida y sencilla</strong>. La integración contable es automática y en tiempo real.
+                </p>
+
+                <div class="cards">
+                    <div class="card">
+                        <h4>🚀 Rápido</h4>
+                        <p>Registra un gasto en menos de 2 minutos desde cualquier dispositivo.</p>
+                    </div>
+                    <div class="card">
+                        <h4>✨ Simple</h4>
+                        <p>Interfaz intuitiva sin necesidad de conocimientos contables.</p>
+                    </div>
+                    <div class="card">
+                        <h4>⚡ Automático</h4>
+                        <p>La contabilidad se actualiza sin intervención manual.</p>
+                    </div>
+                    <div class="card">
+                        <h4>📊 Transparente</h4>
+                        <p>Consulta el saldo y gastos en tiempo real.</p>
+                    </div>
+                </div>
+
+                <div class="highlight-box">
+                    <strong>👤 Para empleados:</strong> No necesitas saber de contabilidad. Solo registra tus gastos y el sistema hace el resto automáticamente.
+                    <br><br>
+                    <strong>👨‍💼 Para administradores:</strong> Control total con auditoría completa y reportes en tiempo real.
+                </div>
+            </section>
+
+            <!-- Sección: Para Empleados -->
+            <section id="empleados" class="section">
+                <h2>Guía para Empleados</h2>
+
+                <h3>📍 Cómo acceder</h3>
+                <div class="steps">
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h4>Ingresar a SIBA</h4>
+                            <p>Accede con tu usuario y contraseña</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h4>Menú Tesorería</h4>
+                            <p>En el menú lateral, busca "Tesorería"</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <h4>Click en "Mis Gastos"</h4>
+                            <p>Aquí verás tus tarjetas y podrás registrar gastos</p>
+                        </div>
+                    </div>
+                </div>
+
+                <h3>📊 Pantalla Principal</h3>
+                <p><strong>Información disponible:</strong></p>
+                <ul>
+                    <li>💳 <strong>Tus tarjetas asignadas</strong> - Click en una para seleccionarla</li>
+                    <li>💰 <strong>Saldo disponible</strong> - Dinero restante en la tarjeta</li>
+                    <li>📅 <strong>Gastos del mes</strong> - Total gastado en el mes actual</li>
+                    <li>📝 <strong>Gastos recientes</strong> - Historial de tus últimos gastos</li>
+                </ul>
+            </section>
+
+            <!-- Sección: Registro de Gasto -->
+            <section id="registro" class="section">
+                <h2>Cómo Registrar un Gasto</h2>
+
+                <div class="steps">
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h4>Click en "Nuevo Gasto"</h4>
+                            <p>Se abrirá el formulario de registro</p>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h4>Seleccionar categoría <span class="tag tag-mandatory">OBLIGATORIO</span></h4>
+                            <p>Gas, Ferretería, Nafta, Comida, Peajes, etc.</p>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <h4>Ingresar monto y fecha <span class="tag tag-mandatory">OBLIGATORIO</span></h4>
+                            <p>¿Cuánto gastaste y cuándo?</p>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-number">4</div>
+                        <div class="step-content">
+                            <h4>Describir el gasto <span class="tag tag-mandatory">OBLIGATORIO</span></h4>
+                            <p>Ejemplo: "Carga de nafta camioneta", "Compra de cables"</p>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-number">5</div>
+                        <div class="step-content">
+                            <h4>Seleccionar o crear proveedor <span class="tag tag-mandatory">OBLIGATORIO</span></h4>
+                            <p><strong>Opción A:</strong> Buscar en lista de proveedores frecuentes (YPF, Shell, etc.)<br>
+                            <strong>Opción B:</strong> Crear nuevo ingresando: Nombre, CUIT y Condición IVA</p>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-number">6</div>
+                        <div class="step-content">
+                            <h4>Adjuntar factura <span class="tag tag-optional">OPCIONAL</span></h4>
+                            <p>Si tienes factura: Tipo (A/B/C), Punto de venta, Número y Fecha</p>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-number">7</div>
+                        <div class="step-content">
+                            <h4>Asociar a ticket <span class="tag tag-optional">OPCIONAL</span></h4>
+                            <p>Si es para un trabajo específico, selecciona el ticket</p>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-number">8</div>
+                        <div class="step-content">
+                            <h4>Subir comprobante <span class="tag tag-optional">RECOMENDADO</span></h4>
+                            <p>Foto del ticket o recibo (altamente recomendado)</p>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-number">9</div>
+                        <div class="step-content">
+                            <h4>Guardar <span class="tag tag-automatic">AUTOMÁTICO</span></h4>
+                            <p>El sistema procesa todo automáticamente</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="highlight-box">
+                    <strong>💡 Importante:</strong> El proveedor es <strong>obligatorio</strong>. Si no está en la lista, créalo en el momento. Esto permite:
+                    <ul>
+                        <li>✓ Registro completo de dónde gastamos</li>
+                        <li>✓ Identificar proveedores frecuentes</li>
+                        <li>✓ Negociar descuentos por volumen</li>
+                        <li>✓ Auditoría y control de gastos</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Sección: Flujo Completo -->
+            <section id="flujo" class="section">
+                <h2>Flujo del Sistema</h2>
+
+                <h3>Interfaz de Usuario (lo que ves)</h3>
+                <div class="diagram-container">
+                    <div class="mermaid">
+flowchart LR
+    A[🏠 Acceder a<br/>Mis Gastos] --> B[💳 Seleccionar<br/>tarjeta]
+    B --> C[➕ Nuevo<br/>Gasto]
+    C --> D[📝 Completar<br/>formulario]
+    D --> E[💾 Guardar]
+    E --> F[✅ Gasto<br/>registrado]
+
+    style A fill:#dbeafe,stroke:#3b82f6
+    style B fill:#ede9fe,stroke:#7c3aed
+    style C fill:#fef3c7,stroke:#f59e0b
+    style D fill:#fed7aa,stroke:#ea580c
+    style E fill:#bbf7d0,stroke:#22c55e
+    style F fill:#86efac,stroke:#16a34a
+                    </div>
+                </div>
+
+                <h3>Procesamiento Automático (lo que hace el sistema)</h3>
+                <div class="diagram-container">
+                    <div class="mermaid">
+flowchart TB
+    START[📝 Empleado guarda gasto]
+
+    START --> VALIDATE{Validar datos}
+    VALIDATE -->|Error| ERROR[Mostrar mensaje]
+    VALIDATE -->|OK| PROVEEDOR
+
+    PROVEEDOR{¿Proveedor nuevo?}
+    PROVEEDOR -->|Sí| CREATE_PROV[Crear Proveedor]
+    PROVEEDOR -->|No| USE_PROV[Usar existente]
+
+    CREATE_PROV --> FACTURA
+    USE_PROV --> FACTURA
+
+    FACTURA{¿Tiene factura?}
+    FACTURA -->|Sí| CREATE_FACT[Crear Factura]
+    FACTURA -->|No| CATEGORIA
+    CREATE_FACT --> CATEGORIA
+
+    CATEGORIA[Obtener cuenta contable]
+    CATEGORIA --> MOVIMIENTO[Crear transacción]
+
+    MOVIMIENTO --> GASTO[Crear GastoTarjeta]
+    GASTO --> BALANCE[Actualizar saldo]
+
+    BALANCE --> FILES{¿Archivos?}
+    FILES -->|Sí| UPLOAD[Subir a cloud]
+    FILES -->|No| DONE
+    UPLOAD --> DONE
+
+    DONE[✅ Completado]
+
+    style START fill:#fef3c7,stroke:#f59e0b
+    style VALIDATE fill:#dbeafe,stroke:#3b82f6
+    style ERROR fill:#fee2e2,stroke:#dc2626
+    style MOVIMIENTO fill:#fed7aa,stroke:#ea580c
+    style BALANCE fill:#dcfce7,stroke:#22c55e
+    style DONE fill:#bbf7d0,stroke:#16a34a
+                    </div>
+                </div>
+
+                <h3>Resultado Final</h3>
+                <div class="benefits">
+                    <div class="benefit">
+                        <div class="benefit-icon">💾</div>
+                        <h4>Gasto Guardado</h4>
+                        <p>Registro en base de datos</p>
+                    </div>
+                    <div class="benefit">
+                        <div class="benefit-icon">💳</div>
+                        <h4>Saldo Actualizado</h4>
+                        <p>Balance al instante</p>
+                    </div>
+                    <div class="benefit">
+                        <div class="benefit-icon">📊</div>
+                        <h4>Contabilidad OK</h4>
+                        <p>Imputación automática</p>
+                    </div>
+                    <div class="benefit">
+                        <div class="benefit-icon">🎯</div>
+                        <h4>Centro de Costo</h4>
+                        <p>Asignado al área</p>
+                    </div>
+                    <div class="benefit">
+                        <div class="benefit-icon">🔍</div>
+                        <h4>Auditable</h4>
+                        <p>Registro completo</p>
+                    </div>
+                    <div class="benefit">
+                        <div class="benefit-icon">📱</div>
+                        <h4>Visible</h4>
+                        <p>Aparece al instante</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Sección: Beneficios -->
+            <section id="beneficios" class="section">
+                <h2>Beneficios del Sistema</h2>
+
+                <div class="cards">
+                    <div class="card">
+                        <h4>⚡ Para Empleados</h4>
+                        <ul style="line-height: 2;">
+                            <li>✓ Registro rápido desde cualquier lugar</li>
+                            <li>✓ Sin conocimientos contables requeridos</li>
+                            <li>✓ Saldo visible en tiempo real</li>
+                            <li>✓ Historial completo disponible</li>
+                            <li>✓ Comprobantes guardados seguros</li>
+                        </ul>
+                    </div>
+
+                    <div class="card">
+                        <h4>👨‍💼 Para Administradores</h4>
+                        <ul style="line-height: 2;">
+                            <li>✓ Control total por empleado</li>
+                            <li>✓ Reportes en tiempo real</li>
+                            <li>✓ Auditoría completa</li>
+                            <li>✓ Integración contable automática</li>
+                            <li>✓ Análisis de patrones de gasto</li>
+                        </ul>
+                    </div>
+
+                    <div class="card">
+                        <h4>💼 Para la Empresa</h4>
+                        <ul style="line-height: 2;">
+                            <li>✓ Eliminación de errores manuales</li>
+                            <li>✓ Ahorro de tiempo administrativo</li>
+                            <li>✓ Transparencia total</li>
+                            <li>✓ Mejor control de costos</li>
+                            <li>✓ Decisiones basadas en datos</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="highlight-box" style="background: linear-gradient(135deg, #dcfce7, #bbf7d0); border-left-color: var(--success);">
+                    <strong style="color: #166534;">🎯 Objetivo:</strong><br>
+                    Hacer que registrar un gasto sea tan fácil como sacar una foto, mientras la contabilidad se hace automáticamente.
+                </div>
+            </section>
+
+            <!-- Sección: Preguntas Frecuentes -->
+            <section id="faq" class="section">
+                <h2>Preguntas Frecuentes</h2>
+
+                <div class="steps" style="background: #f9fafb; border-color: var(--border);">
+                    <div class="step">
+                        <div class="step-number" style="background: var(--slate-dark);">?</div>
+                        <div class="step-content">
+                            <h4>¿Qué pasa si no tengo la factura?</h4>
+                            <p>No hay problema. La factura es <strong>opcional</strong>. Pero siempre trata de subir una foto del ticket como comprobante.</p>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-number" style="background: var(--slate-dark);">?</div>
+                        <div class="step-content">
+                            <h4>¿Por qué el proveedor es obligatorio?</h4>
+                            <p>Permite mantener un registro de gastos por proveedor, negociar descuentos y auditar. Si no está en la lista, créalo en el momento.</p>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-number" style="background: var(--slate-dark);">?</div>
+                        <div class="step-content">
+                            <h4>¿Puedo editar un gasto después?</h4>
+                            <p>Depende de la configuración, pero generalmente sí mientras no esté cerrado contablemente. Consulta con administración.</p>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-number" style="background: var(--slate-dark);">?</div>
+                        <div class="step-content">
+                            <h4>¿Cómo sé que mi gasto se registró?</h4>
+                            <p>Verás una confirmación y aparecerá inmediatamente en "Gastos Recientes". El saldo también se actualiza al instante.</p>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-number" style="background: var(--slate-dark);">?</div>
+                        <div class="step-content">
+                            <h4>¿Funciona desde el celular?</h4>
+                            <p>Sí, completamente. La interfaz es responsive y puedes registrar gastos desde tu teléfono.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <footer>
+            <p>SIBA · Sistema Integral de Back Office y Administración</p>
+            <p style="opacity: 0.8; margin-top: 8px;">Módulo de Tarjetas · Documentación actualizada Febrero 2026</p>
+        </footer>
+    </div>
+</body>
+</html>

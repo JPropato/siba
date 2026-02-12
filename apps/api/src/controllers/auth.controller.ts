@@ -54,7 +54,7 @@ export const login = async (req: Request, res: Response) => {
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: error.errors });
+      return res.status(400).json({ error: error.errors.map((e) => e.message).join(', ') });
     }
     console.error('[Auth] Login error:', error);
     res.status(500).json({ error: 'Error interno del servidor' });

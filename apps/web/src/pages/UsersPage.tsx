@@ -5,7 +5,6 @@ import { toast } from 'sonner';
 import UserTable from '../components/users/UserTable';
 import UserDialog from '../components/users/UserDialog';
 import { CollapsibleFilters } from '../components/layout/CollapsibleFilters';
-import { FloatingActionButton } from '../components/layout/FloatingActionButton';
 import { PullToRefresh } from '../components/ui/PullToRefresh';
 import { useUsers, useCreateUser, useUpdateUser, useDeleteUser } from '../hooks/api/useUsers';
 import type { User } from '../types/user';
@@ -135,14 +134,6 @@ export default function UsersPage() {
         />
 
         {ConfirmDialog}
-
-        {/* FAB para móvil */}
-        <FloatingActionButton
-          onClick={handleCreate}
-          icon={<Plus className="h-6 w-6" />}
-          hideOnDesktop
-          aria-label="Nuevo Usuario"
-        />
       </div>
     </PullToRefresh>
   );

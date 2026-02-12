@@ -77,7 +77,7 @@ export default function AuditPage() {
       <div className="px-4 pt-3 pb-6 sm:px-6 space-y-5 animate-in fade-in duration-500">
         <PageHeader
           icon={<Shield className="h-5 w-5" />}
-          breadcrumb={['Administración', 'Auditoría']}
+          breadcrumb={['Seguridad', 'Auditoría']}
           title="Registro de Actividad"
           subtitle={`${total} eventos registrados`}
           count={total}

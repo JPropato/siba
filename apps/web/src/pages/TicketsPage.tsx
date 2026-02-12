@@ -30,7 +30,6 @@ import {
   User,
   Send,
 } from 'lucide-react';
-import { FloatingActionButton } from '../components/layout/FloatingActionButton';
 import { Pagination } from '../components/ui/Pagination';
 import { ViewToggle } from '../components/ui/ViewToggle';
 import { PullToRefresh } from '../components/ui/PullToRefresh';
@@ -180,7 +179,7 @@ export default function TicketsPage() {
 
         <PageHeader
           icon={<TicketIcon className="h-5 w-5" />}
-          breadcrumb={['Comercial', 'Tickets']}
+          breadcrumb={['Operaciones', 'Tickets']}
           title="Tickets de Servicio"
           subtitle="Solicitudes de servicio y mantenimiento"
           count={total}
@@ -377,15 +376,6 @@ export default function TicketsPage() {
         )}
 
         {ConfirmDialog}
-
-        <FloatingActionButton
-          onClick={handleCreate}
-          icon={<Plus className="h-6 w-6" />}
-          label="NUEVO"
-          hideOnDesktop
-          variant="primary"
-          size="lg"
-        />
       </div>
     </PullToRefresh>
   );

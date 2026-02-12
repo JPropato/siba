@@ -61,6 +61,65 @@ enum EstadoSeguroAP {
   BAJA
 }
 
+enum TipoMultaVehiculo {
+  ARBA_PATENTE
+  INFRACCION_CABA
+  INFRACCION_PROVINCIA
+}
+
+enum EstadoMultaVehiculo {
+  PENDIENTE
+  PAGADA
+  EN_GESTION
+}
+
+enum TipoTarjeta {
+  PRECARGABLE
+  CORPORATIVA
+}
+
+enum EstadoTarjeta {
+  ACTIVA
+  SUSPENDIDA
+  BAJA
+}
+
+enum CategoriaGastoTarjeta {
+  GAS
+  FERRETERIA
+  ESTACIONAMIENTO
+  LAVADERO
+  NAFTA
+  REPUESTOS
+  MATERIALES_ELECTRICOS
+  PEAJES
+  COMIDA
+  HERRAMIENTAS
+  OTRO
+}
+
+enum EstadoRendicion {
+  ABIERTA
+  CERRADA
+  APROBADA
+  RECHAZADA
+}
+
+enum TipoTarjetaFinanciera {
+  CREDITO
+  DEBITO
+  PREPAGA
+}
+
+enum RedProcesadora {
+  VISA
+  MASTERCARD
+  CABAL
+  NARANJA
+  AMERICAN_EXPRESS
+  MAESTRO
+}
+
 enum RubroTicket {
   CIVIL
   ELECTRICIDAD
@@ -117,6 +176,18 @@ model Usuario {
   // Finanzas relations
   movimientosRegistrados  Movimiento[]
   importacionesMasivas    ImportacionMasiva[]
+
+  // Compras relations
+  facturasRegistradas     FacturaProveedor[]  @relation("FacturaRegistradaPor")
+
+  // Facturacion relations
+  facturasEmitidasRegistradas FacturaEmitida[] @relation("FacturaEmitidaRegistradoPor")
+
+  // Tarjetas relations
+  cargasRegistradas    CargaTarjeta[]  @relation("CargaTarjetaRegistradoPor")
+  gastosRegistrados    GastoTarjeta[]  @relation("GastoTarjetaRegistradoPor")
+  rendicionesAprobadas Rendicion[]     @relation("RendicionAprobadoPor")
+  rendicionesCreadas   Rendicion[]     @relation("RendicionCreadoPor")
 
   // Audit trail
   eventosAuditoria        EventoAuditoria[]
@@ -197,14 +268,21 @@ model Cliente {
   telefono        String?
   email           String?
   direccionFiscal String?   @map("direccion_fiscal")
+
+  // Datos fiscales para facturación ARCA
+  condicionIva    CondicionIva?    @map("condicion_iva")
+  tipoDocumento   TipoDocumento?   @map("tipo_documento")
+  numeroDocumento String?          @map("numero_documento")
+
   fechaCreacion   DateTime  @default(now()) @map("fecha_creacion")
   fechaActualizacion DateTime @updatedAt @map("fecha_actualizacion")
   fechaEliminacion DateTime? @map("fecha_eliminacion")
 
-  sucursales     Sucursal[]
-  ordenesTrabajo OrdenTrabajo[]
-  obras          Obra[]
-  movimientos    Movimiento[]
+  sucursales       Sucursal[]
+  ordenesTrabajo   OrdenTrabajo[]
+  obras            Obra[]
+  movimientos      Movimiento[]
+  facturasEmitidas FacturaEmitida[]
 
   @@map("clientes")
 }
@@ -271,14 +349,27 @@ model Vehiculo {
   tipo            String?
   kilometros      Int?
   fechaVencimientoVTV DateTime? @map("fecha_vencimiento_vtv")
+  fechaCambioAceite  DateTime?  @map("fecha_cambio_aceite")
+  proximosKm         Int?       @map("proximos_km")
+  proximoService     DateTime?  @map("proximo_service")
+  tecnicoReferenteId Int?       @map("tecnico_referente_id")
+  tecnicoId          Int?       @map("tecnico_id")
+  conductorId        Int?       @map("conductor_id")
   estado          String    @default("ACTIVO") // ACTIVO, TALLER, FUERA_SERVICIO
   fechaCreacion   DateTime  @default(now()) @map("fecha_creacion")
   fechaActualizacion DateTime @updatedAt @map("fecha_actualizacion")
   fechaEliminacion DateTime? @map("fecha_eliminacion")
 
   zona Zona? @relation(fields: [zonaId], references: [id])
+  tecnicoReferente Empleado? @relation("VehiculoTecnicoReferente", fields: [tecnicoReferenteId], references: [id])
+  tecnico          Empleado? @relation("VehiculoTecnico", fields: [tecnicoId], references: [id])
+  conductor        Empleado? @relation("VehiculoConductor", fields: [conductorId], references: [id])
+  multas           MultaVehiculo[]
 
   @@index([zonaId])
+  @@index([tecnicoReferenteId])
+  @@index([tecnicoId])
+  @@index([conductorId])
   @@index([estado])
   @@map("vehiculos")
 }
@@ -390,6 +481,10 @@ model Empleado {
   ordenesTrabajo  OrdenTrabajo[] @relation("OrdenTrabajoTecnico")
   movimientos     Movimiento[]
   segurosAP       SeguroAP[]
+  vehiculosComoReferente Vehiculo[] @relation("VehiculoTecnicoReferente")
+  vehiculosComoTecnico   Vehiculo[] @relation("VehiculoTecnico")
+  vehiculosComoConductor Vehiculo[] @relation("VehiculoConductor")
+  tarjetas           TarjetaPrecargable[]
 
   @@index([zonaId])
   @@index([tipo])
@@ -406,6 +501,8 @@ model SeguroAP {
   fechaAltaEfectiva   DateTime?        @map("fecha_alta_efectiva")
   fechaSolicitudBaja  DateTime?        @map("fecha_solicitud_baja")
   fechaBajaEfectiva   DateTime?        @map("fecha_baja_efectiva")
+  fechaInicio         DateTime?        @map("fecha_inicio")
+  fechaFinalizacion   DateTime?        @map("fecha_finalizacion")
   destino             String?
   observaciones       String?          @db.Text
 
@@ -417,6 +514,151 @@ model SeguroAP {
   @@index([empleadoId])
   @@index([estado])
   @@map("seguros_ap")
+}
+
+model MultaVehiculo {
+  id                 Int                  @id @default(autoincrement())
+  vehiculoId         Int                  @map("vehiculo_id")
+  tipo               TipoMultaVehiculo
+  estado             EstadoMultaVehiculo  @default(PENDIENTE)
+  fecha              DateTime
+  monto              Decimal              @db.Decimal(12, 2)
+  numeroActa         String?              @map("numero_acta")
+  descripcion        String?              @db.Text
+  fechaPago          DateTime?            @map("fecha_pago")
+  observaciones      String?              @db.Text
+  fechaCreacion      DateTime             @default(now()) @map("fecha_creacion")
+  fechaActualizacion DateTime             @updatedAt @map("fecha_actualizacion")
+
+  vehiculo           Vehiculo             @relation(fields: [vehiculoId], references: [id])
+
+  @@index([vehiculoId])
+  @@index([tipo])
+  @@index([estado])
+  @@index([fecha])
+  @@map("multas_vehiculo")
+}
+
+// ============ TARJETAS PRECARGABLES ============
+
+model ConfigCategoriaGasto {
+  id                 Int                   @id @default(autoincrement())
+  categoria          CategoriaGastoTarjeta @unique
+  label              String
+  cuentaContableId   Int                   @map("cuenta_contable_id")
+  activa             Boolean               @default(true)
+  fechaActualizacion DateTime              @updatedAt @map("fecha_actualizacion")
+
+  cuentaContable     CuentaContable        @relation(fields: [cuentaContableId], references: [id])
+
+  @@map("config_categorias_gasto")
+}
+
+model TarjetaPrecargable {
+  id                    Int                      @id @default(autoincrement())
+  tipo                  TipoTarjeta
+  tipoTarjetaFinanciera TipoTarjetaFinanciera?   @map("tipo_tarjeta_financiera")
+  redProcesadora        RedProcesadora?          @map("red_procesadora")
+  estado                EstadoTarjeta            @default(ACTIVA)
+  numeroTarjeta         String?                  @unique @map("numero_tarjeta")
+  alias                 String?
+  empleadoId            Int                      @map("empleado_id")
+  cuentaFinancieraId    Int                      @map("cuenta_financiera_id")
+  bancoId               Int?                     @map("banco_id")
+  fechaCreacion         DateTime                 @default(now()) @map("fecha_creacion")
+  fechaActualizacion    DateTime                 @updatedAt @map("fecha_actualizacion")
+  fechaEliminacion      DateTime?                @map("fecha_eliminacion")
+
+  empleado            Empleado         @relation(fields: [empleadoId], references: [id])
+  cuentaFinanciera    CuentaFinanciera @relation(fields: [cuentaFinancieraId], references: [id])
+  banco               Banco?           @relation(fields: [bancoId], references: [id])
+  cargas              CargaTarjeta[]
+  gastos              GastoTarjeta[]
+  rendiciones         Rendicion[]
+
+  @@index([empleadoId])
+  @@index([tipo])
+  @@index([estado])
+  @@map("tarjetas_precargables")
+}
+
+model CargaTarjeta {
+  id              Int       @id @default(autoincrement())
+  tarjetaId       Int       @map("tarjeta_id")
+  monto           Decimal   @db.Decimal(12, 2)
+  fecha           DateTime
+  descripcion     String?
+  comprobante     String?
+  movimientoId    Int       @unique @map("movimiento_id")
+  registradoPorId Int       @map("registrado_por_id")
+  fechaCreacion   DateTime  @default(now()) @map("fecha_creacion")
+
+  tarjeta         TarjetaPrecargable @relation(fields: [tarjetaId], references: [id])
+  movimiento      Movimiento @relation(fields: [movimientoId], references: [id])
+  registradoPor   Usuario @relation("CargaTarjetaRegistradoPor", fields: [registradoPorId], references: [id])
+
+  @@index([tarjetaId])
+  @@index([fecha])
+  @@map("cargas_tarjeta")
+}
+
+model GastoTarjeta {
+  id                  Int                   @id @default(autoincrement())
+  tarjetaId           Int                   @map("tarjeta_id")
+  proveedorId         Int?                  @map("proveedor_id")
+  facturaProveedorId  Int?                  @map("factura_proveedor_id")
+  categoria           CategoriaGastoTarjeta
+  categoriaOtro       String?               @map("categoria_otro")
+  monto               Decimal               @db.Decimal(12, 2)
+  fecha               DateTime
+  concepto            String
+  ticketId            Int?                  @map("ticket_id")
+  centroCostoId       Int?                  @map("centro_costo_id")
+  movimientoId        Int                   @unique @map("movimiento_id")
+  registradoPorId     Int                   @map("registrado_por_id")
+  fechaCreacion       DateTime              @default(now()) @map("fecha_creacion")
+  fechaActualizacion  DateTime              @updatedAt @map("fecha_actualizacion")
+
+  tarjeta            TarjetaPrecargable @relation(fields: [tarjetaId], references: [id])
+  proveedor          Proveedor? @relation(fields: [proveedorId], references: [id])
+  facturaProveedor   FacturaProveedor? @relation(fields: [facturaProveedorId], references: [id])
+  ticket             Ticket? @relation(fields: [ticketId], references: [id])
+  centroCosto        CentroCosto? @relation(fields: [centroCostoId], references: [id])
+  movimiento         Movimiento @relation(fields: [movimientoId], references: [id])
+  registradoPor      Usuario @relation("GastoTarjetaRegistradoPor", fields: [registradoPorId], references: [id])
+  archivos           Archivo[]
+
+  @@index([tarjetaId])
+  @@index([proveedorId])
+  @@index([categoria])
+  @@index([fecha])
+  @@map("gastos_tarjeta")
+}
+
+model Rendicion {
+  id                 Int             @id @default(autoincrement())
+  codigo             String          @unique
+  tarjetaId          Int             @map("tarjeta_id")
+  estado             EstadoRendicion @default(ABIERTA)
+  fechaDesde         DateTime        @map("fecha_desde")
+  fechaHasta         DateTime        @map("fecha_hasta")
+  totalGastos        Decimal         @default(0) @map("total_gastos") @db.Decimal(12, 2)
+  cantidadGastos     Int             @default(0) @map("cantidad_gastos")
+  observaciones      String?         @db.Text
+  motivoRechazo      String?         @map("motivo_rechazo") @db.Text
+  aprobadoPorId      Int?            @map("aprobado_por_id")
+  fechaAprobacion    DateTime?       @map("fecha_aprobacion")
+  creadoPorId        Int             @map("creado_por_id")
+  fechaCreacion      DateTime        @default(now()) @map("fecha_creacion")
+  fechaActualizacion DateTime        @updatedAt @map("fecha_actualizacion")
+
+  tarjeta            TarjetaPrecargable @relation(fields: [tarjetaId], references: [id])
+  aprobadoPor        Usuario? @relation("RendicionAprobadoPor", fields: [aprobadoPorId], references: [id])
+  creadoPor          Usuario @relation("RendicionCreadoPor", fields: [creadoPorId], references: [id])
+
+  @@index([tarjetaId])
+  @@index([estado])
+  @@map("rendiciones")
 }
 
 // ============ TICKETS ============
@@ -458,6 +700,8 @@ model Ticket {
   ordenTrabajo        OrdenTrabajo?
   obra                Obra?
   movimientos         Movimiento[]
+  facturaEmitida      FacturaEmitida?
+  gastosTarjeta      GastoTarjeta[]
 
   @@index([estado])
   @@index([sucursalId])
@@ -521,12 +765,15 @@ model Archivo {
   
   ordenTrabajoId  Int?      @map("orden_trabajo_id")
   ticketId        Int?      @map("ticket_id")
-  
+  gastoTarjetaId  Int?      @map("gasto_tarjeta_id")
+
   fechaCreacion   DateTime  @default(now()) @map("fecha_creacion")
-  
+
   ordenTrabajo    OrdenTrabajo? @relation(fields: [ordenTrabajoId], references: [id])
+  gastoTarjeta    GastoTarjeta? @relation(fields: [gastoTarjetaId], references: [id])
 
   @@index([ordenTrabajoId])
+  @@index([gastoTarjetaId])
   @@map("archivos")
 }
 
@@ -602,7 +849,9 @@ model Obra {
   historialEstados   HistorialEstadoObra[]
   comentarios        ComentarioObra[]
   movimientos        Movimiento[]
-  
+  facturasProveedor  FacturaProveedor[]
+  facturasEmitidas   FacturaEmitida[]
+
   @@index([clienteId])
   @@index([estado])
   @@index([fechaSolicitud])
@@ -722,33 +971,18 @@ enum MedioPago {
   EFECTIVO
   TRANSFERENCIA
   CHEQUE
+  ECHEQ
   TARJETA_DEBITO
   TARJETA_CREDITO
   MERCADOPAGO
 }
 
-enum CategoriaIngreso {
-  COBRO_FACTURA
-  ANTICIPO_CLIENTE
-  REINTEGRO
-  RENDIMIENTO_INVERSION
-  RESCATE_INVERSION
-  TRANSFERENCIA_ENTRADA
-  OTRO_INGRESO
-}
-
-enum CategoriaEgreso {
-  MATERIALES
-  MANO_DE_OBRA
-  COMBUSTIBLE
-  HERRAMIENTAS
-  VIATICOS
-  SUBCONTRATISTA
-  IMPUESTOS
-  SERVICIOS
-  TRASPASO_INVERSION
-  TRANSFERENCIA_SALIDA
-  OTRO_EGRESO
+enum TipoCuentaContable {
+  ACTIVO
+  PASIVO
+  PATRIMONIO
+  INGRESO
+  GASTO
 }
 
 enum EstadoMovimiento {
@@ -756,6 +990,73 @@ enum EstadoMovimiento {
   CONFIRMADO
   CONCILIADO
   ANULADO
+}
+
+// ============ COMPRAS ENUMS ============
+
+enum CondicionIva {
+  RESPONSABLE_INSCRIPTO
+  MONOTRIBUTO
+  EXENTO
+  NO_RESPONSABLE
+  CONSUMIDOR_FINAL
+}
+
+enum TipoComprobante {
+  FACTURA_A
+  FACTURA_B
+  FACTURA_C
+  NOTA_CREDITO_A
+  NOTA_CREDITO_B
+  NOTA_CREDITO_C
+  NOTA_DEBITO_A
+  NOTA_DEBITO_B
+  NOTA_DEBITO_C
+  RECIBO
+  TICKET
+  OTRO
+}
+
+enum EstadoFacturaProveedor {
+  PENDIENTE
+  PAGO_PARCIAL
+  PAGADA
+  ANULADA
+}
+
+enum TipoCheque {
+  FISICO
+  ECHEQ
+}
+
+enum EstadoCheque {
+  CARTERA
+  DEPOSITADO
+  COBRADO
+  ENDOSADO
+  VENDIDO
+  RECHAZADO
+  ANULADO
+}
+
+enum EstadoFacturaEmitida {
+  PENDIENTE
+  COBRO_PARCIAL
+  COBRADA
+  ANULADA
+}
+
+enum TipoDocumento {
+  CUIT             // código ARCA: 80
+  CUIL             // código ARCA: 86
+  DNI              // código ARCA: 96
+  SIN_IDENTIFICAR  // código ARCA: 99 (consumidor final anónimo)
+}
+
+enum ConceptoFactura {
+  PRODUCTOS             // código ARCA: 1
+  SERVICIOS             // código ARCA: 2
+  PRODUCTOS_SERVICIOS   // código ARCA: 3
 }
 
 // ============ FINANZAS MODELOS ============
@@ -767,9 +1068,10 @@ model Banco {
   nombreCorto     String    @map("nombre_corto")  // "Banco Nación"
   logo            String?   // URL del logo
   activo          Boolean   @default(true)
-  
+
   cuentas         CuentaFinanciera[]
-  
+  tarjetas           TarjetaPrecargable[]
+
   @@map("bancos")
 }
 
@@ -796,65 +1098,126 @@ model CuentaFinanciera {
   
   banco           Banco?      @relation(fields: [bancoId], references: [id])
   movimientos     Movimiento[]
-  
+  cheques         Cheque[]
+  tarjetas           TarjetaPrecargable[]
+
   @@map("cuentas_financieras")
+}
+
+model CuentaContable {
+  id                 Int                 @id @default(autoincrement())
+  codigo             String              @unique
+  nombre             String
+  tipo               TipoCuentaContable
+  nivel              Int
+  parentId           Int?                @map("parent_id")
+  imputable          Boolean             @default(true)
+  activa             Boolean             @default(true)
+  descripcion        String?
+
+  parent             CuentaContable?     @relation("CuentaContableTree", fields: [parentId], references: [id])
+  hijos              CuentaContable[]    @relation("CuentaContableTree")
+  movimientos        Movimiento[]
+  facturasProveedor  FacturaProveedor[]
+  facturasEmitidas   FacturaEmitida[]
+  configCategoriasGasto ConfigCategoriaGasto[]
+
+  fechaCreacion      DateTime            @default(now()) @map("fecha_creacion")
+  fechaActualizacion DateTime            @updatedAt @map("fecha_actualizacion")
+
+  @@index([parentId])
+  @@index([tipo])
+  @@map("cuentas_contables")
+}
+
+model CentroCosto {
+  id                 Int              @id @default(autoincrement())
+  codigo             String           @unique
+  nombre             String
+  parentId           Int?             @map("parent_id")
+  activo             Boolean          @default(true)
+  descripcion        String?
+
+  parent             CentroCosto?     @relation("CentroCostoTree", fields: [parentId], references: [id])
+  hijos              CentroCosto[]    @relation("CentroCostoTree")
+  movimientos        Movimiento[]
+  facturasProveedor  FacturaProveedor[]
+  facturasEmitidas   FacturaEmitida[]
+  gastosTarjeta      GastoTarjeta[]
+
+  fechaCreacion      DateTime         @default(now()) @map("fecha_creacion")
+  fechaActualizacion DateTime         @updatedAt @map("fecha_actualizacion")
+
+  @@index([parentId])
+  @@map("centros_costo")
 }
 
 model Movimiento {
   id                Int               @id @default(autoincrement())
-  codigo            String            @unique @default(cuid()) // MOV-xxxxx
-  
+  codigo            String            @unique @default(cuid())
+
   // Clasificación
   tipo              TipoMovimiento
-  categoriaIngreso  CategoriaIngreso?  @map("categoria_ingreso")
-  categoriaEgreso   CategoriaEgreso?   @map("categoria_egreso")
   medioPago         MedioPago          @map("medio_pago")
-  
+
+  // Clasificación contable
+  cuentaContableId  Int?               @map("cuenta_contable_id")
+  centroCostoId     Int?               @map("centro_costo_id")
+
   // Montos
   monto             Decimal           @db.Decimal(12, 2)
   moneda            String            @default("ARS")
-  
+
   // Contexto
   descripcion       String
-  comprobante       String?           // Nro factura, recibo, etc.
-  comprobanteUrl    String?           @map("comprobante_url") // URL del archivo adjunto (factura PDF, etc.)
-  
+  comprobante       String?
+  comprobanteUrl    String?           @map("comprobante_url")
+
   // Fechas
   fechaMovimiento   DateTime          @map("fecha_movimiento")
   fechaRegistro     DateTime          @default(now()) @map("fecha_registro")
-  
+
   // Origen/Cuenta
   cuentaId          Int               @map("cuenta_id")
   cuenta            CuentaFinanciera  @relation(fields: [cuentaId], references: [id])
-  
+
   // Vinculaciones opcionales (contexto)
   clienteId         Int?              @map("cliente_id")
   ticketId          Int?              @map("ticket_id")
   obraId            Int?              @map("obra_id")
-  empleadoId        Int?              @map("empleado_id")  // Quien recibió viático, etc.
-  
+  empleadoId        Int?              @map("empleado_id")
+
   // Estado y auditoría
   estado            EstadoMovimiento  @default(PENDIENTE)
   registradoPorId   Int               @map("registrado_por_id")
-  
-  // Transferencia entre cuentas (referencia compartida entre par de movimientos)
+
+  // Transferencia entre cuentas
   transferenciaRef  String?           @map("transferencia_ref")
 
   // Carga masiva
   importacionId     Int?              @map("importacion_id")
-  
+
   fechaActualizacion DateTime         @updatedAt @map("fecha_actualizacion")
-  
+
   // Relations
+  cuentaContable    CuentaContable?   @relation(fields: [cuentaContableId], references: [id])
+  centroCosto       CentroCosto?      @relation(fields: [centroCostoId], references: [id])
   cliente           Cliente?          @relation(fields: [clienteId], references: [id])
   ticket            Ticket?           @relation(fields: [ticketId], references: [id])
   obra              Obra?             @relation(fields: [obraId], references: [id])
   empleado          Empleado?         @relation(fields: [empleadoId], references: [id])
   registradoPor     Usuario           @relation(fields: [registradoPorId], references: [id])
   importacion       ImportacionMasiva? @relation(fields: [importacionId], references: [id])
-  
+  pagoFactura       PagoFactura?
+  cobroFactura      CobroFactura?
+  chequesVendidos   Cheque[]
+  cargaTarjeta       CargaTarjeta?
+  gastoTarjeta       GastoTarjeta?
+
   @@index([fechaMovimiento])
   @@index([cuentaId])
+  @@index([cuentaContableId])
+  @@index([centroCostoId])
   @@index([tipo])
   @@index([estado])
   @@map("movimientos")
@@ -879,6 +1242,260 @@ model ImportacionMasiva {
   usuario         Usuario   @relation(fields: [usuarioId], references: [id])
   
   @@map("importaciones_masivas")
+}
+
+// ============ COMPRAS MODELOS ============
+
+model Proveedor {
+  id               Int            @id @default(autoincrement())
+  codigo           Int            @unique @default(autoincrement())
+  razonSocial      String         @map("razon_social")
+  cuit             String         @unique
+  condicionIva     CondicionIva   @map("condicion_iva")
+  telefono         String?
+  email            String?
+  direccion        String?
+  contactoNombre   String?        @map("contacto_nombre")
+  contactoTelefono String?        @map("contacto_telefono")
+  notas            String?        @db.Text
+
+  fechaCreacion      DateTime     @default(now()) @map("fecha_creacion")
+  fechaActualizacion DateTime     @updatedAt @map("fecha_actualizacion")
+  fechaEliminacion   DateTime?    @map("fecha_eliminacion")
+
+  facturas         FacturaProveedor[]
+  gastosTarjeta    GastoTarjeta[]
+
+  @@index([condicionIva])
+  @@map("proveedores")
+}
+
+model FacturaProveedor {
+  id                   Int                     @id @default(autoincrement())
+  proveedorId          Int                     @map("proveedor_id")
+  tipoComprobante      TipoComprobante         @map("tipo_comprobante")
+  puntoVenta           Int                     @map("punto_venta")
+  numeroComprobante    String                  @map("numero_comprobante")
+
+  fechaEmision         DateTime                @map("fecha_emision")
+  fechaVencimiento     DateTime?               @map("fecha_vencimiento")
+
+  // Montos
+  subtotal             Decimal                 @db.Decimal(12, 2)
+  montoIva21           Decimal                 @default(0) @map("monto_iva_21") @db.Decimal(12, 2)
+  montoIva105          Decimal                 @default(0) @map("monto_iva_10_5") @db.Decimal(12, 2)
+  montoIva27           Decimal                 @default(0) @map("monto_iva_27") @db.Decimal(12, 2)
+  montoExento          Decimal                 @default(0) @map("monto_exento") @db.Decimal(12, 2)
+  montoNoGravado       Decimal                 @default(0) @map("monto_no_gravado") @db.Decimal(12, 2)
+  percepcionIIBB       Decimal                 @default(0) @map("percepcion_iibb") @db.Decimal(12, 2)
+  percepcionIva        Decimal                 @default(0) @map("percepcion_iva") @db.Decimal(12, 2)
+  otrosImpuestos       Decimal                 @default(0) @map("otros_impuestos") @db.Decimal(12, 2)
+  total                Decimal                 @db.Decimal(12, 2)
+
+  // Retenciones (campos preparados, opcionales)
+  retencionGanancias   Decimal                 @default(0) @map("retencion_ganancias") @db.Decimal(12, 2)
+  retencionIva         Decimal                 @default(0) @map("retencion_iva") @db.Decimal(12, 2)
+  retencionIIBB        Decimal                 @default(0) @map("retencion_iibb") @db.Decimal(12, 2)
+  retencionSUSS        Decimal                 @default(0) @map("retencion_suss") @db.Decimal(12, 2)
+
+  // Total a pagar = total - retenciones
+  totalAPagar          Decimal                 @map("total_a_pagar") @db.Decimal(12, 2)
+  montoPagado          Decimal                 @default(0) @map("monto_pagado") @db.Decimal(12, 2)
+  saldoPendiente       Decimal                 @map("saldo_pendiente") @db.Decimal(12, 2)
+
+  estado               EstadoFacturaProveedor  @default(PENDIENTE)
+
+  // Clasificacion contable
+  cuentaContableId     Int?                    @map("cuenta_contable_id")
+  centroCostoId        Int?                    @map("centro_costo_id")
+  obraId               Int?                    @map("obra_id")
+
+  // Archivo PDF
+  archivoPdf           String?                 @map("archivo_pdf")
+
+  descripcion          String?
+
+  registradoPorId      Int                     @map("registrado_por_id")
+  fechaCreacion        DateTime                @default(now()) @map("fecha_creacion")
+  fechaActualizacion   DateTime                @updatedAt @map("fecha_actualizacion")
+
+  proveedor            Proveedor               @relation(fields: [proveedorId], references: [id])
+  cuentaContable       CuentaContable?         @relation(fields: [cuentaContableId], references: [id])
+  centroCosto          CentroCosto?            @relation(fields: [centroCostoId], references: [id])
+  obra                 Obra?                   @relation(fields: [obraId], references: [id])
+  registradoPor        Usuario                 @relation("FacturaRegistradaPor", fields: [registradoPorId], references: [id])
+  pagos                PagoFactura[]
+  gastosTarjeta        GastoTarjeta[]
+
+  @@unique([proveedorId, tipoComprobante, puntoVenta, numeroComprobante])
+  @@index([proveedorId])
+  @@index([estado])
+  @@index([fechaEmision])
+  @@index([cuentaContableId])
+  @@index([centroCostoId])
+  @@map("facturas_proveedor")
+}
+
+model PagoFactura {
+  id               Int              @id @default(autoincrement())
+  facturaId        Int              @map("factura_id")
+  monto            Decimal          @db.Decimal(12, 2)
+  fechaPago        DateTime         @map("fecha_pago")
+  medioPago        MedioPago        @map("medio_pago")
+
+  movimientoId     Int?             @unique @map("movimiento_id")
+  chequeId         Int?             @map("cheque_id")
+
+  comprobantePago  String?          @map("comprobante_pago")
+  observaciones    String?
+
+  fechaCreacion    DateTime         @default(now()) @map("fecha_creacion")
+
+  factura          FacturaProveedor @relation(fields: [facturaId], references: [id])
+  movimiento       Movimiento?      @relation(fields: [movimientoId], references: [id])
+  cheque           Cheque?          @relation(fields: [chequeId], references: [id])
+
+  @@index([facturaId])
+  @@map("pagos_factura")
+}
+
+model Cheque {
+  id               Int                @id @default(autoincrement())
+  numero           String             @unique
+  tipo             TipoCheque
+
+  bancoEmisor      String             @map("banco_emisor")
+  fechaEmision     DateTime           @map("fecha_emision")
+  fechaCobro       DateTime           @map("fecha_cobro")
+  monto            Decimal            @db.Decimal(12, 2)
+
+  beneficiario     String?
+  emisor           String?
+
+  estado           EstadoCheque       @default(CARTERA)
+
+  cuentaDestinoId  Int?               @map("cuenta_destino_id")
+  fechaDeposito    DateTime?          @map("fecha_deposito")
+  fechaAcreditacion DateTime?         @map("fecha_acreditacion")
+
+  endosadoA        String?            @map("endosado_a")
+  fechaEndoso      DateTime?          @map("fecha_endoso")
+
+  // Venta / comision tracking
+  ventaLoteId          String?            @map("venta_lote_id")
+  ventaEntidad         String?            @map("venta_entidad")
+  ventaTasaDescuento   Decimal?           @db.Decimal(5, 4) @map("venta_tasa_descuento")
+  ventaIvaComision     Decimal?           @db.Decimal(5, 4) @map("venta_iva_comision")
+  ventaComisionBruta   Decimal?           @db.Decimal(12, 2) @map("venta_comision_bruta")
+  ventaMontoNeto       Decimal?           @db.Decimal(12, 2) @map("venta_monto_neto")
+  ventaMovimientoId    Int?               @map("venta_movimiento_id")
+
+  motivoRechazo    String?            @map("motivo_rechazo")
+
+  observaciones    String?            @db.Text
+
+  fechaCreacion    DateTime           @default(now()) @map("fecha_creacion")
+  fechaActualizacion DateTime         @updatedAt @map("fecha_actualizacion")
+
+  cuentaDestino    CuentaFinanciera?  @relation(fields: [cuentaDestinoId], references: [id])
+  ventaMovimiento  Movimiento?        @relation(fields: [ventaMovimientoId], references: [id])
+  pagos            PagoFactura[]
+  cobros           CobroFactura[]
+
+  @@index([estado])
+  @@index([fechaCobro])
+  @@index([tipo])
+  @@index([ventaLoteId])
+  @@map("cheques")
+}
+
+// ============ FACTURACION MODELOS ============
+
+model FacturaEmitida {
+  id                  Int                    @id @default(autoincrement())
+  clienteId           Int                    @map("cliente_id")
+  tipoComprobante     TipoComprobante        @map("tipo_comprobante")
+  puntoVenta          Int                    @map("punto_venta")
+  numeroComprobante   String                 @map("numero_comprobante")
+  fechaEmision        DateTime               @map("fecha_emision")
+  fechaVencimiento    DateTime?              @map("fecha_vencimiento")
+
+  // Montos
+  subtotal            Decimal                @db.Decimal(12, 2)
+  montoIva21          Decimal                @default(0) @db.Decimal(12, 2) @map("monto_iva_21")
+  montoIva105         Decimal                @default(0) @db.Decimal(12, 2) @map("monto_iva_10_5")
+  montoIva27          Decimal                @default(0) @db.Decimal(12, 2) @map("monto_iva_27")
+  montoExento         Decimal                @default(0) @db.Decimal(12, 2) @map("monto_exento")
+  montoNoGravado      Decimal                @default(0) @db.Decimal(12, 2) @map("monto_no_gravado")
+  percepcionIIBB      Decimal                @default(0) @db.Decimal(12, 2) @map("percepcion_iibb")
+  percepcionIva       Decimal                @default(0) @db.Decimal(12, 2) @map("percepcion_iva")
+  otrosImpuestos      Decimal                @default(0) @db.Decimal(12, 2) @map("otros_impuestos")
+  total               Decimal                @db.Decimal(12, 2)
+
+  // Cobros tracking
+  montoCobrado        Decimal                @default(0) @db.Decimal(12, 2) @map("monto_cobrado")
+  saldoPendiente      Decimal                @db.Decimal(12, 2) @map("saldo_pendiente")
+  estado              EstadoFacturaEmitida   @default(PENDIENTE)
+
+  // Clasificacion contable
+  cuentaContableId    Int?                   @map("cuenta_contable_id")
+  centroCostoId       Int?                   @map("centro_costo_id")
+  obraId              Int?                   @map("obra_id")
+  ticketId            Int?                   @unique @map("ticket_id")
+
+  // ARCA (facturación electrónica)
+  concepto            ConceptoFactura?
+  fechaServDesde      DateTime?              @map("fecha_serv_desde")
+  fechaServHasta      DateTime?              @map("fecha_serv_hasta")
+  fechaVtoPago        DateTime?              @map("fecha_vto_pago")
+  cae                 String?
+  caeFechaVto         DateTime?              @map("cae_fecha_vto")
+  arcaResponse        String?                @db.Text @map("arca_response")
+
+  // Meta
+  archivoPdf          String?                @map("archivo_pdf")
+  descripcion         String?                @db.Text
+  registradoPorId     Int                    @map("registrado_por_id")
+  fechaCreacion       DateTime               @default(now()) @map("fecha_creacion")
+  fechaActualizacion  DateTime               @updatedAt @map("fecha_actualizacion")
+
+  // Relations
+  cliente             Cliente                @relation(fields: [clienteId], references: [id])
+  cuentaContable      CuentaContable?        @relation(fields: [cuentaContableId], references: [id])
+  centroCosto         CentroCosto?           @relation(fields: [centroCostoId], references: [id])
+  obra                Obra?                  @relation(fields: [obraId], references: [id])
+  ticket              Ticket?                @relation(fields: [ticketId], references: [id])
+  registradoPor       Usuario                @relation("FacturaEmitidaRegistradoPor", fields: [registradoPorId], references: [id])
+  cobros              CobroFactura[]
+
+  @@unique([puntoVenta, numeroComprobante, tipoComprobante], name: "factura_emitida_comprobante_uq")
+  @@index([clienteId])
+  @@index([estado])
+  @@index([fechaEmision])
+  @@map("facturas_emitidas")
+}
+
+model CobroFactura {
+  id                Int              @id @default(autoincrement())
+  facturaId         Int              @map("factura_id")
+  monto             Decimal          @db.Decimal(12, 2)
+  fechaCobro        DateTime         @map("fecha_cobro")
+  medioPago         MedioPago        @map("medio_pago")
+
+  movimientoId      Int?             @unique @map("movimiento_id")
+  chequeId          Int?             @map("cheque_id")
+
+  comprobanteCobro  String?          @map("comprobante_cobro")
+  observaciones     String?
+
+  fechaCreacion     DateTime         @default(now()) @map("fecha_creacion")
+
+  factura           FacturaEmitida   @relation(fields: [facturaId], references: [id])
+  movimiento        Movimiento?      @relation(fields: [movimientoId], references: [id])
+  cheque            Cheque?          @relation(fields: [chequeId], references: [id])
+
+  @@index([facturaId])
+  @@map("cobros_factura")
 }
 
 // ============ AUDIT TRAIL ============

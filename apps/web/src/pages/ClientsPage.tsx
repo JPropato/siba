@@ -12,7 +12,6 @@ import {
 
 // Lazy loading del dialog (solo se carga cuando se abre)
 const ClientDialog = lazy(() => import('../components/clients/ClientDialog'));
-import { FloatingActionButton } from '../components/layout/FloatingActionButton';
 import { CollapsibleFilters } from '../components/layout/CollapsibleFilters';
 import { PullToRefresh } from '../components/ui/PullToRefresh';
 import type { Cliente, ClienteFormData } from '../types/client';
@@ -88,7 +87,7 @@ export default function ClientsPage() {
       <div className="px-4 pt-3 pb-6 sm:px-6 space-y-5 animate-in fade-in duration-500">
         <PageHeader
           icon={<Building2 className="h-5 w-5" />}
-          breadcrumb={['Gestión', 'Clientes']}
+          breadcrumb={['Ventas', 'Clientes']}
           title="Clientes"
           subtitle="Base centralizada de clientes"
           count={clients.length}
@@ -140,14 +139,6 @@ export default function ClientsPage() {
         )}
 
         {ConfirmDialog}
-
-        {/* FAB para móvil */}
-        <FloatingActionButton
-          onClick={handleCreate}
-          icon={<Plus className="h-6 w-6" />}
-          hideOnDesktop
-          aria-label="Nuevo Cliente"
-        />
       </div>
     </PullToRefresh>
   );

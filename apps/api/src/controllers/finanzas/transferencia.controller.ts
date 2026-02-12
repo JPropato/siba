@@ -42,7 +42,6 @@ export const createTransferencia = async (req: Request, res: Response) => {
       const egreso = await tx.movimiento.create({
         data: {
           tipo: 'EGRESO',
-          categoriaEgreso: 'TRANSFERENCIA_SALIDA',
           medioPago: 'TRANSFERENCIA',
           monto: data.monto,
           descripcion: `${data.descripcion} → ${cuentaDestino.nombre}`,
@@ -61,7 +60,6 @@ export const createTransferencia = async (req: Request, res: Response) => {
       const ingreso = await tx.movimiento.create({
         data: {
           tipo: 'INGRESO',
-          categoriaIngreso: 'TRANSFERENCIA_ENTRADA',
           medioPago: 'TRANSFERENCIA',
           monto: data.monto,
           descripcion: `${data.descripcion} ← ${cuentaOrigen.nombre}`,
@@ -89,7 +87,7 @@ export const createTransferencia = async (req: Request, res: Response) => {
   } catch (error) {
     console.error('[Finanzas] createTransferencia error:', error);
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: error.errors });
+      return res.status(400).json({ error: error.errors.map((e) => e.message).join(', ') });
     }
     res.status(500).json({ error: 'Error al crear la transferencia' });
   }

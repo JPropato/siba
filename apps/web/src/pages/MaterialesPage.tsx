@@ -5,7 +5,6 @@ import MaterialDialog from '../components/materiales/MaterialDialog';
 import type { Material, MaterialFormData } from '../types/materiales';
 import { Select } from '../components/ui/core/Select';
 import { CollapsibleFilters } from '../components/layout/CollapsibleFilters';
-import { FloatingActionButton } from '../components/layout/FloatingActionButton';
 import { PullToRefresh } from '../components/ui/PullToRefresh';
 import { Search, LayoutGrid, PlusSquare, Package } from 'lucide-react';
 import { PageHeader } from '../components/ui/PageHeader';
@@ -93,7 +92,7 @@ export default function MaterialesPage() {
       <div className="px-4 pt-3 pb-6 sm:px-6 space-y-5 animate-in fade-in duration-500">
         <PageHeader
           icon={<Package className="h-5 w-5" />}
-          breadcrumb={['Inventario', 'Materiales']}
+          breadcrumb={['Administración', 'Materiales']}
           title="Materiales"
           subtitle="Catálogo de insumos y equipamiento"
           count={materiales.length}
@@ -159,14 +158,6 @@ export default function MaterialesPage() {
         />
 
         {ConfirmDialog}
-
-        {/* FAB para móvil */}
-        <FloatingActionButton
-          onClick={handleCreate}
-          icon={<PlusSquare className="h-6 w-6" />}
-          hideOnDesktop
-          aria-label="Nuevo Material"
-        />
       </div>
     </PullToRefresh>
   );

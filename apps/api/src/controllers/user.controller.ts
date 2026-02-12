@@ -147,7 +147,7 @@ export const create = async (req: Request, res: Response) => {
     res.status(201).json(safeUser);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: error.errors });
+      return res.status(400).json({ error: error.errors.map((e) => e.message).join(', ') });
     }
     console.error(error);
     res.status(500).json({ error: 'Error al crear usuario' });
@@ -196,7 +196,7 @@ export const update = async (req: Request, res: Response) => {
     res.json(safeUser);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: error.errors });
+      return res.status(400).json({ error: error.errors.map((e) => e.message).join(', ') });
     }
     console.error(error);
     res.status(500).json({ error: 'Error al actualizar usuario' });

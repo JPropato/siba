@@ -130,6 +130,7 @@ router.post('/', upload.single('file'), async (req, res) => {
         url: fileData.url,
         ordenTrabajoId: req.body.ordenTrabajoId ? parseInt(req.body.ordenTrabajoId, 10) : null,
         ticketId: req.body.ticketId ? parseInt(req.body.ticketId, 10) : null,
+        gastoTarjetaId: req.body.gastoTarjetaId ? parseInt(req.body.gastoTarjetaId, 10) : null,
       },
     });
 

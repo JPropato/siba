@@ -27,6 +27,7 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
+    "@arcasdk/core": "^0.3.6",
     "@prisma/client": "^5.22.0",
     "@siba/shared": "*",
     "@types/multer": "^2.0.0",

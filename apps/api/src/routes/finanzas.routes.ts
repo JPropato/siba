@@ -10,6 +10,11 @@ router.use(authenticateToken);
 // === DASHBOARD / REPORTES ===
 router.get('/dashboard', requirePermission('finanzas:leer'), finanzasController.getDashboard);
 router.get('/saldos', requirePermission('finanzas:leer'), finanzasController.getSaldos);
+router.get(
+  '/balance-contable',
+  requirePermission('finanzas:leer'),
+  finanzasController.getBalanceContable
+);
 
 // === BANCOS ===
 router.get('/bancos', requirePermission('finanzas:leer'), finanzasController.getBancos);
@@ -32,6 +37,50 @@ router.post(
   '/transferencias',
   requirePermission('finanzas:escribir'),
   finanzasController.createTransferencia
+);
+
+// === CUENTAS CONTABLES ===
+router.get(
+  '/cuentas-contables',
+  requirePermission('finanzas:leer'),
+  finanzasController.getCuentasContables
+);
+router.post(
+  '/cuentas-contables',
+  requirePermission('finanzas:escribir'),
+  finanzasController.createCuentaContable
+);
+router.put(
+  '/cuentas-contables/:id',
+  requirePermission('finanzas:escribir'),
+  finanzasController.updateCuentaContable
+);
+router.delete(
+  '/cuentas-contables/:id',
+  requirePermission('finanzas:escribir'),
+  finanzasController.deleteCuentaContable
+);
+
+// === CENTROS DE COSTO ===
+router.get(
+  '/centros-costo',
+  requirePermission('finanzas:leer'),
+  finanzasController.getCentrosCosto
+);
+router.post(
+  '/centros-costo',
+  requirePermission('finanzas:escribir'),
+  finanzasController.createCentroCosto
+);
+router.put(
+  '/centros-costo/:id',
+  requirePermission('finanzas:escribir'),
+  finanzasController.updateCentroCosto
+);
+router.delete(
+  '/centros-costo/:id',
+  requirePermission('finanzas:escribir'),
+  finanzasController.deleteCentroCosto
 );
 
 // === MOVIMIENTOS ===

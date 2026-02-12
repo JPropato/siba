@@ -10,7 +10,6 @@ import {
   useUpdateEmpleado,
   useDeleteEmpleado,
 } from '../hooks/api/useEmpleados';
-import { FloatingActionButton } from '../components/layout/FloatingActionButton';
 import { CollapsibleFilters } from '../components/layout/CollapsibleFilters';
 import { PullToRefresh } from '../components/ui/PullToRefresh';
 import type { Empleado, EmpleadoFormData } from '../types/empleados';
@@ -170,14 +169,6 @@ export default function EmpleadosPage() {
         />
 
         {ConfirmDialog}
-
-        {/* FAB para móvil */}
-        <FloatingActionButton
-          onClick={handleCreate}
-          icon={<UserPlus className="h-6 w-6" />}
-          hideOnDesktop
-          aria-label="Nuevo Empleado"
-        />
       </div>
     </PullToRefresh>
   );

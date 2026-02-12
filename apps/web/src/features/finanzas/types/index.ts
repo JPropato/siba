@@ -13,33 +13,37 @@ export type MedioPago =
   | 'EFECTIVO'
   | 'TRANSFERENCIA'
   | 'CHEQUE'
+  | 'ECHEQ'
   | 'TARJETA_DEBITO'
   | 'TARJETA_CREDITO'
   | 'MERCADOPAGO';
 
-export type CategoriaIngreso =
-  | 'COBRO_FACTURA'
-  | 'ANTICIPO_CLIENTE'
-  | 'REINTEGRO'
-  | 'RENDIMIENTO_INVERSION'
-  | 'RESCATE_INVERSION'
-  | 'TRANSFERENCIA_ENTRADA'
-  | 'OTRO_INGRESO';
-
-export type CategoriaEgreso =
-  | 'MATERIALES'
-  | 'MANO_DE_OBRA'
-  | 'COMBUSTIBLE'
-  | 'HERRAMIENTAS'
-  | 'VIATICOS'
-  | 'SUBCONTRATISTA'
-  | 'IMPUESTOS'
-  | 'SERVICIOS'
-  | 'TRASPASO_INVERSION'
-  | 'TRANSFERENCIA_SALIDA'
-  | 'OTRO_EGRESO';
+export type TipoCuentaContable = 'ACTIVO' | 'PASIVO' | 'PATRIMONIO' | 'INGRESO' | 'GASTO';
 
 export type EstadoMovimiento = 'PENDIENTE' | 'CONFIRMADO' | 'CONCILIADO' | 'ANULADO';
+
+export interface CuentaContable {
+  id: number;
+  codigo: string;
+  nombre: string;
+  tipo: TipoCuentaContable;
+  nivel: number;
+  parentId: number | null;
+  imputable: boolean;
+  activa: boolean;
+  descripcion: string | null;
+  parent?: { id: number; codigo: string; nombre: string } | null;
+}
+
+export interface CentroCosto {
+  id: number;
+  codigo: string;
+  nombre: string;
+  parentId: number | null;
+  activo: boolean;
+  descripcion: string | null;
+  parent?: { id: number; codigo: string; nombre: string } | null;
+}
 
 export interface Banco {
   id: number;
@@ -74,8 +78,6 @@ export interface Movimiento {
   id: number;
   codigo: string;
   tipo: TipoMovimiento;
-  categoriaIngreso?: CategoriaIngreso | null;
-  categoriaEgreso?: CategoriaEgreso | null;
   medioPago: MedioPago;
   monto: number;
   moneda: string;
@@ -85,6 +87,8 @@ export interface Movimiento {
   fechaMovimiento: string;
   fechaRegistro: string;
   cuentaId: number;
+  cuentaContableId?: number | null;
+  centroCostoId?: number | null;
   clienteId?: number | null;
   ticketId?: number | null;
   obraId?: number | null;
@@ -96,6 +100,8 @@ export interface Movimiento {
   fechaActualizacion: string;
   // Relations
   cuenta?: { id: number; nombre: string };
+  cuentaContable?: { id: number; codigo: string; nombre: string } | null;
+  centroCosto?: { id: number; codigo: string; nombre: string } | null;
   cliente?: { id: number; razonSocial: string };
   obra?: { id: number; codigo: string; titulo: string };
   ticket?: { id: number; codigoInterno: number };
@@ -127,6 +133,8 @@ export interface MovimientoFilters {
   cuentaId?: number;
   tipo?: TipoMovimiento;
   estado?: EstadoMovimiento;
+  cuentaContableId?: number;
+  centroCostoId?: number;
   fechaDesde?: string;
   fechaHasta?: string;
   search?: string;
@@ -176,6 +184,37 @@ export interface CreateTransferenciaDto {
   comprobante?: string | null;
 }
 
+// Balance Contable
+export interface CuentaConSaldo {
+  id: number;
+  codigo: string;
+  nombre: string;
+  nivel: number;
+  imputable: boolean;
+  saldo: number;
+  hijos?: CuentaConSaldo[];
+}
+
+export interface GrupoContable {
+  total: number;
+  cuentas: CuentaConSaldo[];
+}
+
+export interface BalanceContable {
+  fecha: string;
+  activo: GrupoContable;
+  pasivo: GrupoContable;
+  patrimonio: GrupoContable;
+  ingresos: GrupoContable;
+  gastos: GrupoContable;
+  resultadoPeriodo: number;
+  ecuacionContable: {
+    activo: number;
+    pasivoPlusPatrimonio: number;
+    balanceado: boolean;
+  };
+}
+
 // Configs para UI
 export const TIPO_CUENTA_CONFIG: Record<TipoCuenta, { label: string; icon: string }> = {
   CAJA_CHICA: { label: 'Caja Chica', icon: 'Wallet' },
@@ -195,34 +234,22 @@ export const ESTADO_MOVIMIENTO_CONFIG: Record<
   ANULADO: { label: 'Anulado', color: 'text-red-600', bgColor: 'bg-red-100' },
 };
 
-export const CATEGORIA_INGRESO_LABELS: Record<CategoriaIngreso, string> = {
-  COBRO_FACTURA: 'Cobro de Factura',
-  ANTICIPO_CLIENTE: 'Anticipo de Cliente',
-  REINTEGRO: 'Reintegro',
-  RENDIMIENTO_INVERSION: 'Rendimiento Inversión',
-  RESCATE_INVERSION: 'Rescate Inversión',
-  TRANSFERENCIA_ENTRADA: 'Transferencia Entrada',
-  OTRO_INGRESO: 'Otro Ingreso',
-};
-
-export const CATEGORIA_EGRESO_LABELS: Record<CategoriaEgreso, string> = {
-  MATERIALES: 'Materiales',
-  MANO_DE_OBRA: 'Mano de Obra',
-  COMBUSTIBLE: 'Combustible',
-  HERRAMIENTAS: 'Herramientas',
-  VIATICOS: 'Viáticos',
-  SUBCONTRATISTA: 'Subcontratista',
-  IMPUESTOS: 'Impuestos',
-  SERVICIOS: 'Servicios',
-  TRASPASO_INVERSION: 'Traspaso a Inversión',
-  TRANSFERENCIA_SALIDA: 'Transferencia Salida',
-  OTRO_EGRESO: 'Otro Egreso',
+export const TIPO_CUENTA_CONTABLE_CONFIG: Record<
+  TipoCuentaContable,
+  { label: string; color: string; bgColor: string }
+> = {
+  ACTIVO: { label: 'Activo', color: 'text-blue-600', bgColor: 'bg-blue-100' },
+  PASIVO: { label: 'Pasivo', color: 'text-red-600', bgColor: 'bg-red-100' },
+  PATRIMONIO: { label: 'Patrimonio', color: 'text-purple-600', bgColor: 'bg-purple-100' },
+  INGRESO: { label: 'Ingreso', color: 'text-green-600', bgColor: 'bg-green-100' },
+  GASTO: { label: 'Gasto', color: 'text-amber-600', bgColor: 'bg-amber-100' },
 };
 
 export const MEDIO_PAGO_LABELS: Record<MedioPago, string> = {
   EFECTIVO: 'Efectivo',
   TRANSFERENCIA: 'Transferencia',
   CHEQUE: 'Cheque',
+  ECHEQ: 'E-Cheq',
   TARJETA_DEBITO: 'Tarjeta de Débito',
   TARJETA_CREDITO: 'Tarjeta de Crédito',
   MERCADOPAGO: 'Mercado Pago',

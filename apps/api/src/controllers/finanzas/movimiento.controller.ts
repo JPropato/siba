@@ -1,13 +1,6 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
-import {
-  TipoMovimiento,
-  MedioPago,
-  CategoriaIngreso,
-  CategoriaEgreso,
-  EstadoMovimiento,
-  Prisma,
-} from '@prisma/client';
+import { TipoMovimiento, MedioPago, EstadoMovimiento, Prisma } from '@prisma/client';
 import { prisma } from '../../lib/prisma.js';
 import { actualizarSaldoCuenta } from './utils.js';
 
@@ -17,8 +10,6 @@ import { actualizarSaldoCuenta } from './utils.js';
 
 const createMovimientoSchema = z.object({
   tipo: z.nativeEnum(TipoMovimiento),
-  categoriaIngreso: z.nativeEnum(CategoriaIngreso).optional().nullable(),
-  categoriaEgreso: z.nativeEnum(CategoriaEgreso).optional().nullable(),
   medioPago: z.nativeEnum(MedioPago),
   monto: z.number().positive(),
   moneda: z.string().default('ARS'),
@@ -27,6 +18,8 @@ const createMovimientoSchema = z.object({
   comprobanteUrl: z.string().max(500).optional().nullable(),
   fechaMovimiento: z.string().datetime(),
   cuentaId: z.number().int().positive(),
+  cuentaContableId: z.number().int().positive().optional().nullable(),
+  centroCostoId: z.number().int().positive().optional().nullable(),
   clienteId: z.number().int().positive().optional().nullable(),
   ticketId: z.number().int().positive().optional().nullable(),
   obraId: z.number().int().positive().optional().nullable(),
@@ -46,6 +39,8 @@ export const getMovimientos = async (req: Request, res: Response) => {
       fechaDesde,
       fechaHasta,
       search,
+      cuentaContableId,
+      centroCostoId,
       page = '1',
       limit = '20',
     } = req.query;
@@ -55,6 +50,8 @@ export const getMovimientos = async (req: Request, res: Response) => {
     if (cuentaId) where.cuentaId = Number(cuentaId);
     if (tipo) where.tipo = tipo as TipoMovimiento;
     if (estado) where.estado = estado as EstadoMovimiento;
+    if (cuentaContableId) where.cuentaContableId = Number(cuentaContableId);
+    if (centroCostoId) where.centroCostoId = Number(centroCostoId);
     if (fechaDesde || fechaHasta) {
       where.fechaMovimiento = {};
       if (fechaDesde) where.fechaMovimiento.gte = new Date(fechaDesde as string);
@@ -74,6 +71,8 @@ export const getMovimientos = async (req: Request, res: Response) => {
         where,
         include: {
           cuenta: { select: { id: true, nombre: true } },
+          cuentaContable: { select: { id: true, codigo: true, nombre: true } },
+          centroCosto: { select: { id: true, codigo: true, nombre: true } },
           cliente: { select: { id: true, razonSocial: true } },
           obra: { select: { id: true, codigo: true, titulo: true } },
           ticket: { select: { id: true, codigoInterno: true } },
@@ -108,6 +107,8 @@ export const getMovimientoById = async (req: Request, res: Response) => {
       where: { id },
       include: {
         cuenta: true,
+        cuentaContable: true,
+        centroCosto: true,
         cliente: true,
         obra: true,
         ticket: true,
@@ -130,6 +131,35 @@ export const createMovimiento = async (req: Request, res: Response) => {
     const data = createMovimientoSchema.parse(req.body);
     const userId = req.user?.id || 1;
 
+    // Validate cuentaContableId if provided
+    if (data.cuentaContableId) {
+      const ctaContable = await prisma.cuentaContable.findUnique({
+        where: { id: data.cuentaContableId },
+      });
+      if (!ctaContable) {
+        return res.status(400).json({ error: 'Cuenta contable no encontrada' });
+      }
+      if (!ctaContable.activa) {
+        return res.status(400).json({ error: 'La cuenta contable esta desactivada' });
+      }
+      if (!ctaContable.imputable) {
+        return res.status(400).json({ error: 'La cuenta contable no es imputable' });
+      }
+    }
+
+    // Validate centroCostoId if provided
+    if (data.centroCostoId) {
+      const cc = await prisma.centroCosto.findUnique({
+        where: { id: data.centroCostoId },
+      });
+      if (!cc) {
+        return res.status(400).json({ error: 'Centro de costo no encontrado' });
+      }
+      if (!cc.activo) {
+        return res.status(400).json({ error: 'El centro de costo esta desactivado' });
+      }
+    }
+
     const movimiento = await prisma.movimiento.create({
       data: {
         ...data,
@@ -138,6 +168,8 @@ export const createMovimiento = async (req: Request, res: Response) => {
       },
       include: {
         cuenta: { select: { id: true, nombre: true } },
+        cuentaContable: { select: { id: true, codigo: true, nombre: true } },
+        centroCosto: { select: { id: true, codigo: true, nombre: true } },
         cliente: { select: { id: true, razonSocial: true } },
       },
     });
@@ -149,7 +181,7 @@ export const createMovimiento = async (req: Request, res: Response) => {
   } catch (error) {
     console.error('[Finanzas] createMovimiento error:', error);
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: error.errors });
+      return res.status(400).json({ error: error.errors.map((e) => e.message).join(', ') });
     }
     res.status(500).json({ error: 'Error al crear movimiento' });
   }

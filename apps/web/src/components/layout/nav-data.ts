@@ -18,6 +18,12 @@ import {
   MapPin,
   Truck,
   Map,
+  BookOpen,
+  Store,
+  FileText,
+  Banknote,
+  CreditCard,
+  Receipt,
 } from 'lucide-react';
 
 // ── New flat structure ──────────────────────────────────────
@@ -41,16 +47,42 @@ export const standaloneItems: FlatNavItem[] = [
 
 export const navSections: NavSection[] = [
   {
-    id: 'comercial',
-    label: 'Comercial',
+    id: 'operaciones',
+    label: 'Operaciones',
     items: [
       { id: 'tickets', label: 'Tickets', icon: ClipboardList, permission: 'tickets:leer' },
       { id: 'obras', label: 'Obras', icon: HardHat, permission: 'obras:leer' },
     ],
   },
   {
-    id: 'finanzas',
-    label: 'Finanzas',
+    id: 'compras',
+    label: 'Compras',
+    items: [
+      { id: 'proveedores', label: 'Proveedores', icon: Store, permission: 'compras:leer' },
+      {
+        id: 'facturas-proveedor',
+        label: 'Facturas',
+        icon: FileText,
+        permission: 'compras:leer',
+      },
+    ],
+  },
+  {
+    id: 'ventas',
+    label: 'Ventas',
+    items: [
+      { id: 'clientes', label: 'Clientes', icon: Building2, permission: 'clientes:leer' },
+      {
+        id: 'facturas-emitidas',
+        label: 'Facturas',
+        icon: FileText,
+        permission: 'facturacion:leer',
+      },
+    ],
+  },
+  {
+    id: 'tesoreria',
+    label: 'Tesorería',
     items: [
       {
         id: 'finanzas-dashboard',
@@ -59,34 +91,44 @@ export const navSections: NavSection[] = [
         permission: 'finanzas:leer',
       },
       {
-        id: 'finanzas-movimientos',
-        label: 'Movimientos',
-        icon: ArrowLeftRight,
-        permission: 'finanzas:leer',
-      },
-      {
         id: 'finanzas-cuentas',
         label: 'Cuentas / Bancos',
         icon: Landmark,
         permission: 'finanzas:leer',
       },
+      {
+        id: 'finanzas-movimientos',
+        label: 'Movimientos',
+        icon: ArrowLeftRight,
+        permission: 'finanzas:leer',
+      },
+      { id: 'cheques', label: 'Cheques', icon: Banknote, permission: 'compras:leer' },
+      { id: 'tarjetas', label: 'Tarjetas', icon: Wallet, permission: 'tarjetas:leer' },
+      { id: 'rendiciones', label: 'Mis Gastos', icon: Receipt, permission: 'tarjetas:leer' },
     ],
   },
   {
-    id: 'administracion',
-    label: 'Administracion',
+    id: 'contabilidad',
+    label: 'Contabilidad',
     items: [
-      { id: 'clientes', label: 'Clientes', icon: Building2, permission: 'clientes:leer' },
-      { id: 'sedes', label: 'Sedes', icon: MapPin, permission: 'sedes:leer' },
-      { id: 'vehiculos', label: 'Vehiculos', icon: Truck, permission: 'vehiculos:leer' },
-      { id: 'zonas', label: 'Zonas', icon: Map, permission: 'zonas:leer' },
-    ],
-  },
-  {
-    id: 'catalogo',
-    label: 'Catalogo',
-    items: [
-      { id: 'materiales', label: 'Materiales', icon: Package, permission: 'materiales:leer' },
+      {
+        id: 'contabilidad-dashboard',
+        label: 'Dashboard',
+        icon: BarChart3,
+        permission: 'finanzas:leer',
+      },
+      {
+        id: 'finanzas-plan-cuentas',
+        label: 'Plan de Cuentas',
+        icon: BookOpen,
+        permission: 'finanzas:leer',
+      },
+      {
+        id: 'finanzas-centros-costo',
+        label: 'Centros de Costo',
+        icon: CreditCard,
+        permission: 'finanzas:leer',
+      },
     ],
   },
   {
@@ -95,6 +137,16 @@ export const navSections: NavSection[] = [
     items: [
       { id: 'empleados', label: 'Empleados', icon: Users, permission: 'empleados:leer' },
       { id: 'seguros-ap', label: 'Seguros AP', icon: ShieldCheck, permission: 'empleados:leer' },
+    ],
+  },
+  {
+    id: 'administracion',
+    label: 'Administración',
+    items: [
+      { id: 'sedes', label: 'Sedes', icon: MapPin, permission: 'sedes:leer' },
+      { id: 'vehiculos', label: 'Vehiculos', icon: Truck, permission: 'vehiculos:leer' },
+      { id: 'zonas', label: 'Zonas', icon: Map, permission: 'zonas:leer' },
+      { id: 'materiales', label: 'Materiales', icon: Package, permission: 'materiales:leer' },
     ],
   },
   {
@@ -142,11 +194,13 @@ export const iconMap: Record<string, React.ElementType> = {
 
 export const menuPermissions: Record<string, string | string[] | null> = {
   dashboard: 'dashboard:leer',
-  comercial: ['tickets:leer', 'obras:leer'],
-  finanzas: 'finanzas:leer',
-  administracion: ['clientes:leer', 'vehiculos:leer', 'zonas:leer', 'sedes:leer'],
-  catalogo: 'materiales:leer',
+  operaciones: ['tickets:leer', 'obras:leer'],
+  compras: 'compras:leer',
+  ventas: ['clientes:leer', 'facturacion:leer'],
+  tesoreria: ['finanzas:leer', 'compras:leer', 'tarjetas:leer'],
+  contabilidad: 'finanzas:leer',
   rrhh: 'empleados:leer',
+  administracion: ['sedes:leer', 'vehiculos:leer', 'zonas:leer', 'materiales:leer'],
   seguridad: ['usuarios:leer', 'roles:leer', 'audit:leer'],
   configuracion: null,
 };
@@ -154,8 +208,8 @@ export const menuPermissions: Record<string, string | string[] | null> = {
 export const allNavItems: NavItem[] = [
   { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
   {
-    id: 'comercial',
-    label: 'Comercial',
+    id: 'operaciones',
+    label: 'Operaciones',
     icon: 'trending_up',
     subItems: [
       { id: 'tickets', label: 'Tickets', permission: 'tickets:leer' },
@@ -163,31 +217,44 @@ export const allNavItems: NavItem[] = [
     ],
   },
   {
-    id: 'finanzas',
-    label: 'Finanzas',
+    id: 'compras',
+    label: 'Compras',
+    icon: 'trending_up',
+    subItems: [
+      { id: 'proveedores', label: 'Proveedores', permission: 'compras:leer' },
+      { id: 'facturas-proveedor', label: 'Facturas', permission: 'compras:leer' },
+    ],
+  },
+  {
+    id: 'ventas',
+    label: 'Ventas',
+    icon: 'trending_up',
+    subItems: [
+      { id: 'clientes', label: 'Clientes', permission: 'clientes:leer' },
+      { id: 'facturas-emitidas', label: 'Facturas', permission: 'facturacion:leer' },
+    ],
+  },
+  {
+    id: 'tesoreria',
+    label: 'Tesorería',
     icon: 'account_balance_wallet',
     subItems: [
       { id: 'finanzas-dashboard', label: 'Dashboard', permission: 'finanzas:leer' },
-      { id: 'finanzas-movimientos', label: 'Movimientos', permission: 'finanzas:leer' },
       { id: 'finanzas-cuentas', label: 'Cuentas/Bancos', permission: 'finanzas:leer' },
+      { id: 'finanzas-movimientos', label: 'Movimientos', permission: 'finanzas:leer' },
+      { id: 'cheques', label: 'Cheques', permission: 'compras:leer' },
+      { id: 'tarjetas', label: 'Tarjetas', permission: 'tarjetas:leer' },
     ],
   },
   {
-    id: 'administracion',
-    label: 'Administracion',
-    icon: 'corporate_fare',
+    id: 'contabilidad',
+    label: 'Contabilidad',
+    icon: 'account_balance_wallet',
     subItems: [
-      { id: 'clientes', label: 'Clientes', permission: 'clientes:leer' },
-      { id: 'sedes', label: 'Sedes', permission: 'sedes:leer' },
-      { id: 'vehiculos', label: 'Vehiculos', permission: 'vehiculos:leer' },
-      { id: 'zonas', label: 'Zonas', permission: 'zonas:leer' },
+      { id: 'contabilidad-dashboard', label: 'Dashboard', permission: 'finanzas:leer' },
+      { id: 'finanzas-plan-cuentas', label: 'Plan de Cuentas', permission: 'finanzas:leer' },
+      { id: 'finanzas-centros-costo', label: 'Centros de Costo', permission: 'finanzas:leer' },
     ],
-  },
-  {
-    id: 'catalogo',
-    label: 'Catalogo',
-    icon: 'inventory_2',
-    subItems: [{ id: 'materiales', label: 'Materiales', permission: 'materiales:leer' }],
   },
   {
     id: 'rrhh',
@@ -196,6 +263,17 @@ export const allNavItems: NavItem[] = [
     subItems: [
       { id: 'empleados', label: 'Empleados', permission: 'empleados:leer' },
       { id: 'seguros-ap', label: 'Seguros AP', permission: 'empleados:leer' },
+    ],
+  },
+  {
+    id: 'administracion',
+    label: 'Administración',
+    icon: 'corporate_fare',
+    subItems: [
+      { id: 'sedes', label: 'Sedes', permission: 'sedes:leer' },
+      { id: 'vehiculos', label: 'Vehiculos', permission: 'vehiculos:leer' },
+      { id: 'zonas', label: 'Zonas', permission: 'zonas:leer' },
+      { id: 'materiales', label: 'Materiales', permission: 'materiales:leer' },
     ],
   },
   {

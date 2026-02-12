@@ -187,6 +187,8 @@ export interface SeguroAP {
   fechaAltaEfectiva: string | null;
   fechaSolicitudBaja: string | null;
   fechaBajaEfectiva: string | null;
+  fechaInicio: string | null;
+  fechaFinalizacion: string | null;
   destino: string | null;
   observaciones: string | null;
   fechaCreacion: string;
@@ -205,6 +207,8 @@ export interface SeguroAPFormData {
   empleadoId: number;
   destino?: string | null;
   observaciones?: string | null;
+  fechaInicio?: string | null;
+  fechaFinalizacion?: string | null;
 }
 
 export interface ResumenSegurosAP {
