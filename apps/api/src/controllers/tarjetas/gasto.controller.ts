@@ -35,12 +35,7 @@ const gastoSchemaBase = z.object({
     .object({
       razonSocial: z.string().min(1),
       cuit: z.string().min(11).max(13),
-      condicionIva: z.enum([
-        'RESPONSABLE_INSCRIPTO',
-        'MONOTRIBUTISTA',
-        'EXENTO',
-        'CONSUMIDOR_FINAL',
-      ]),
+      condicionIva: z.enum(['RESPONSABLE_INSCRIPTO', 'MONOTRIBUTO', 'EXENTO', 'CONSUMIDOR_FINAL']),
       telefono: z.string().optional(),
       email: z.string().email().optional(),
       direccion: z.string().optional(),
@@ -54,11 +49,13 @@ const gastoSchemaBase = z.object({
         'FACTURA_A',
         'FACTURA_B',
         'FACTURA_C',
-        'FACTURA_E',
-        'NOTA_CREDITO',
-        'NOTA_DEBITO',
+        'NOTA_CREDITO_A',
+        'NOTA_CREDITO_B',
+        'NOTA_CREDITO_C',
+        'NOTA_DEBITO_A',
+        'NOTA_DEBITO_B',
+        'NOTA_DEBITO_C',
         'RECIBO',
-        'OTRO',
       ]),
       puntoVenta: z.number().int().min(1).max(99999),
       numeroComprobante: z.string().min(1),
@@ -143,11 +140,9 @@ export async function createGasto(req: Request, res: Response) {
       where: { categoria: data.categoria },
     });
     if (!configCategoria)
-      return res
-        .status(400)
-        .json({
-          error: `Categoría ${data.categoria} no configurada. Ejecute el seed de tarjetas.`,
-        });
+      return res.status(400).json({
+        error: `Categoría ${data.categoria} no configurada. Ejecute el seed de tarjetas.`,
+      });
 
     // Determine medioPago based on tipo
     const medioPago = tarjeta.tipo === 'PRECARGABLE' ? 'TARJETA_DEBITO' : 'TARJETA_CREDITO';
@@ -318,9 +313,15 @@ export async function updateGasto(req: Request, res: Response) {
         const configCat = await tx.configCategoriaGasto.findUnique({ where: { categoria: cat } });
         movUpdate.descripcion = `${configCat?.label || cat}: ${data.concepto}`;
       }
-      if (cuentaContableId) movUpdate.cuentaContableId = cuentaContableId;
-      if (data.centroCostoId !== undefined) movUpdate.centroCostoId = data.centroCostoId;
-      if (data.ticketId !== undefined) movUpdate.ticketId = data.ticketId;
+      if (cuentaContableId) movUpdate.cuentaContable = { connect: { id: cuentaContableId } };
+      if (data.centroCostoId !== undefined)
+        movUpdate.centroCosto = data.centroCostoId
+          ? { connect: { id: data.centroCostoId } }
+          : { disconnect: true };
+      if (data.ticketId !== undefined)
+        movUpdate.ticket = data.ticketId
+          ? { connect: { id: data.ticketId } }
+          : { disconnect: true };
 
       if (Object.keys(movUpdate).length > 0) {
         await tx.movimiento.update({ where: { id: gasto.movimientoId }, data: movUpdate });
@@ -334,8 +335,14 @@ export async function updateGasto(req: Request, res: Response) {
       if (data.monto) gastoUpdate.monto = data.monto;
       if (data.fecha) gastoUpdate.fecha = new Date(data.fecha);
       if (data.concepto) gastoUpdate.concepto = data.concepto;
-      if (data.ticketId !== undefined) gastoUpdate.ticketId = data.ticketId;
-      if (data.centroCostoId !== undefined) gastoUpdate.centroCostoId = data.centroCostoId;
+      if (data.ticketId !== undefined)
+        gastoUpdate.ticket = data.ticketId
+          ? { connect: { id: data.ticketId } }
+          : { disconnect: true };
+      if (data.centroCostoId !== undefined)
+        gastoUpdate.centroCosto = data.centroCostoId
+          ? { connect: { id: data.centroCostoId } }
+          : { disconnect: true };
 
       const updated = await tx.gastoTarjeta.update({
         where: { id: gastoId },

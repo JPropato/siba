@@ -1,7 +1,18 @@
 import type { Vehiculo } from '../../types/vehiculos';
 import { useSortableTable } from '../../hooks/useSortableTable';
 import { useActionSheet } from '../../hooks/useActionSheet';
-import { Car, Loader2, Pencil, Trash2, Eye, ChevronRight } from 'lucide-react';
+import {
+  Car,
+  Loader2,
+  Pencil,
+  Trash2,
+  Eye,
+  ChevronRight,
+  ShieldCheck,
+  Droplets,
+  Users,
+  CreditCard,
+} from 'lucide-react';
 import { EmptyState } from '../ui/EmptyState';
 import { motion } from 'framer-motion';
 import { SortableHeader } from '../ui/core/SortableHeader';

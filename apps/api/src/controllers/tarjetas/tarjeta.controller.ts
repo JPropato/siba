@@ -6,10 +6,8 @@ import { prisma } from '../../lib/prisma.js';
 interface ProveedorBasic {
   id: number;
   razonSocial: string;
-  nombreFantasia: string | null;
   cuit: string;
-  condicionIVA: string;
-  activo: boolean;
+  condicionIva: string;
 }
 
 const createSchema = z.object({
@@ -282,10 +280,8 @@ export async function getProveedoresFrecuentes(req: Request, res: Response) {
           select: {
             id: true,
             razonSocial: true,
-            nombreFantasia: true,
             cuit: true,
-            condicionIVA: true,
-            activo: true,
+            condicionIva: true,
           },
         },
       },

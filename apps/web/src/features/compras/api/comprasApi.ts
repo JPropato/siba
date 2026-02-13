@@ -16,7 +16,9 @@ import type {
 
 const BASE_URL = '/compras';
 
-function buildParams(filters: Record<string, unknown>): string {
+function buildParams(
+  filters: Record<string, string | number | boolean | undefined | null>
+): string {
   const params = new URLSearchParams();
   for (const [key, value] of Object.entries(filters)) {
     if (value !== undefined && value !== null && value !== '') {

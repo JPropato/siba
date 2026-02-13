@@ -1,11 +1,7 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
+import { Prisma } from '@prisma/client';
 import { prisma } from '../../lib/prisma.js';
-
-interface RendicionWhereInput {
-  estado?: string;
-  tarjetaId?: number;
-}
 
 const createRendicionSchema = z.object({
   tarjetaId: z.number().int().positive(),
@@ -21,8 +17,8 @@ export async function getRendiciones(req: Request, res: Response) {
     const estado = req.query.estado as string;
     const tarjetaId = req.query.tarjetaId ? Number(req.query.tarjetaId) : undefined;
 
-    const where: RendicionWhereInput = {};
-    if (estado) where.estado = estado;
+    const where: Prisma.RendicionWhereInput = {};
+    if (estado) where.estado = estado as Prisma.EnumEstadoRendicionFilter;
     if (tarjetaId) where.tarjetaId = tarjetaId;
 
     const [data, total] = await Promise.all([
@@ -34,7 +30,7 @@ export async function getRendiciones(req: Request, res: Response) {
           },
           creadoPor: { select: { id: true, nombre: true, apellido: true } },
           aprobadoPor: { select: { id: true, nombre: true, apellido: true } },
-          _count: { select: { gastos: true } },
+          gastos: { select: { id: true } },
         },
         orderBy: { fechaCreacion: 'desc' },
         skip: (page - 1) * limit,
@@ -43,7 +39,14 @@ export async function getRendiciones(req: Request, res: Response) {
       prisma.rendicion.count({ where }),
     ]);
 
-    res.json({ data, total, page, totalPages: Math.ceil(total / limit) });
+    // Add count to response
+    const dataWithCount = data.map((r) => ({
+      ...r,
+      _count: { gastos: r.gastos.length },
+      gastos: undefined,
+    }));
+
+    res.json({ data: dataWithCount, total, page, totalPages: Math.ceil(total / limit) });
   } catch (error) {
     console.error('[Rendiciones] getRendiciones error:', error);
     res.status(500).json({ error: 'Error al obtener rendiciones' });
@@ -64,11 +67,9 @@ export async function createRendicion(req: Request, res: Response) {
       where: { tarjetaId: data.tarjetaId, estado: { in: ['ABIERTA', 'CERRADA'] } },
     });
     if (openRendicion)
-      return res
-        .status(400)
-        .json({
-          error: 'Ya existe una rendición abierta o pendiente de aprobación para esta tarjeta',
-        });
+      return res.status(400).json({
+        error: 'Ya existe una rendición abierta o pendiente de aprobación para esta tarjeta',
+      });
 
     // Find gastos in date range not yet in a rendicion
     const gastosEnRango = await prisma.gastoTarjeta.findMany({

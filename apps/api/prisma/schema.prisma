@@ -607,6 +607,7 @@ model GastoTarjeta {
   tarjetaId           Int                   @map("tarjeta_id")
   proveedorId         Int?                  @map("proveedor_id")
   facturaProveedorId  Int?                  @map("factura_proveedor_id")
+  rendicionId         Int?                  @map("rendicion_id")
   categoria           CategoriaGastoTarjeta
   categoriaOtro       String?               @map("categoria_otro")
   monto               Decimal               @db.Decimal(12, 2)
@@ -622,6 +623,7 @@ model GastoTarjeta {
   tarjeta            TarjetaPrecargable @relation(fields: [tarjetaId], references: [id])
   proveedor          Proveedor? @relation(fields: [proveedorId], references: [id])
   facturaProveedor   FacturaProveedor? @relation(fields: [facturaProveedorId], references: [id])
+  rendicion          Rendicion? @relation(fields: [rendicionId], references: [id])
   ticket             Ticket? @relation(fields: [ticketId], references: [id])
   centroCosto        CentroCosto? @relation(fields: [centroCostoId], references: [id])
   movimiento         Movimiento @relation(fields: [movimientoId], references: [id])
@@ -630,6 +632,7 @@ model GastoTarjeta {
 
   @@index([tarjetaId])
   @@index([proveedorId])
+  @@index([rendicionId])
   @@index([categoria])
   @@index([fecha])
   @@map("gastos_tarjeta")
@@ -655,6 +658,7 @@ model Rendicion {
   tarjeta            TarjetaPrecargable @relation(fields: [tarjetaId], references: [id])
   aprobadoPor        Usuario? @relation("RendicionAprobadoPor", fields: [aprobadoPorId], references: [id])
   creadoPor          Usuario @relation("RendicionCreadoPor", fields: [creadoPorId], references: [id])
+  gastos             GastoTarjeta[]
 
   @@index([tarjetaId])
   @@index([estado])
