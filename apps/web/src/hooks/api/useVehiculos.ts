@@ -128,7 +128,9 @@ export function useUpdateMulta() {
       data,
     }: {
       multaId: number;
-      data: Partial<MultaVehiculoFormData & { estado: EstadoMultaVehiculo; fechaPago: string }>;
+      data: Partial<
+        MultaVehiculoFormData & { estado: EstadoMultaVehiculo; fechaPago: string | null }
+      >;
     }) => api.put(`/vehiculos/multas/${multaId}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: MULTAS_KEY });

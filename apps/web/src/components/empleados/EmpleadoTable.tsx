@@ -107,7 +107,9 @@ export default function EmpleadoTable({
                 Zona
               </th>
               <th className="px-3 py-2 font-semibold text-slate-900 dark:text-slate-100 hidden md:table-cell text-center">
-                <ShieldCheck className="h-4 w-4 inline" title="Seguro AP" />
+                <span title="Seguro AP">
+                  <ShieldCheck className="h-4 w-4 inline" />
+                </span>
               </th>
               <th className="px-3 py-2 font-semibold text-slate-900 dark:text-slate-100 text-right hidden sm:table-cell">
                 Acciones

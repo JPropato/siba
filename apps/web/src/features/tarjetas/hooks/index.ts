@@ -12,7 +12,8 @@ const CONFIG_KEY = ['tarjetas', 'config-categorias'];
 export function useTarjetas(params?: Record<string, unknown>) {
   return useQuery({
     queryKey: [...TARJETAS_KEY, params],
-    queryFn: () => tarjetasApi.getTarjetas(params),
+    queryFn: () =>
+      tarjetasApi.getTarjetas(params as Record<string, string | number | boolean> | undefined),
     placeholderData: (prev) => prev,
   });
 }
@@ -86,7 +87,11 @@ export function useUpdateConfigCategoria() {
 export function useCargas(tarjetaId: number | null, params?: Record<string, unknown>) {
   return useQuery({
     queryKey: [...CARGAS_KEY, tarjetaId, params],
-    queryFn: () => tarjetasApi.getCargas(tarjetaId!, params),
+    queryFn: () =>
+      tarjetasApi.getCargas(
+        tarjetaId!,
+        params as Record<string, string | number | boolean> | undefined
+      ),
     enabled: !!tarjetaId,
     placeholderData: (prev) => prev,
   });
@@ -108,7 +113,11 @@ export function useCreateCarga() {
 export function useGastos(tarjetaId: number | null, params?: Record<string, unknown>) {
   return useQuery({
     queryKey: [...GASTOS_KEY, tarjetaId, params],
-    queryFn: () => tarjetasApi.getGastos(tarjetaId!, params),
+    queryFn: () =>
+      tarjetasApi.getGastos(
+        tarjetaId!,
+        params as Record<string, string | number | boolean> | undefined
+      ),
     enabled: !!tarjetaId,
     placeholderData: (prev) => prev,
   });
@@ -164,7 +173,8 @@ export function useProveedoresFrecuentes(tarjetaId: number | null) {
 export function useRendiciones(params?: Record<string, unknown>) {
   return useQuery({
     queryKey: [...RENDICIONES_KEY, params],
-    queryFn: () => tarjetasApi.getRendiciones(params),
+    queryFn: () =>
+      tarjetasApi.getRendiciones(params as Record<string, string | number | boolean> | undefined),
     placeholderData: (prev) => prev,
   });
 }

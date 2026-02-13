@@ -384,7 +384,7 @@ export default function ChequesPage() {
       title: 'Cobrar cheque',
       message: `Confirmar cobro del cheque N° ${cheque.numero} por ${formatCurrency(cheque.monto)}?`,
       confirmLabel: 'Cobrar',
-      variant: 'default',
+      variant: 'info',
     });
     if (!ok) return;
     try {
@@ -1024,7 +1024,7 @@ export default function ChequesPage() {
             setDepositarCheque(null);
             setDepositarCuentaId('');
           }}
-          type="dialog"
+          type="modal"
           maxWidth="sm"
           title="Depositar Cheque"
           icon={
@@ -1083,7 +1083,7 @@ export default function ChequesPage() {
             setEndosarCheque(null);
             setEndosarA('');
           }}
-          type="dialog"
+          type="modal"
           maxWidth="sm"
           title="Endosar Cheque"
           icon={
@@ -1141,7 +1141,7 @@ export default function ChequesPage() {
             setRechazarCheque(null);
             setMotivoRechazo('');
           }}
-          type="dialog"
+          type="modal"
           maxWidth="sm"
           title="Rechazar Cheque"
           icon={
@@ -1196,7 +1196,7 @@ export default function ChequesPage() {
         <DialogBase
           isOpen={!!venderChequeItem}
           onClose={() => setVenderChequeItem(null)}
-          type="dialog"
+          type="modal"
           maxWidth="sm"
           title="Vender Cheque"
           icon={
@@ -1290,7 +1290,7 @@ export default function ChequesPage() {
         <DialogBase
           isOpen={batchVenderOpen}
           onClose={() => setBatchVenderOpen(false)}
-          type="dialog"
+          type="modal"
           maxWidth="md"
           title={`Vender ${selectedCheques.length} Cheques`}
           icon={
@@ -1421,7 +1421,7 @@ export default function ChequesPage() {
             setAcreditarCheques([]);
             setAcreditarCuentaId('');
           }}
-          type="dialog"
+          type="modal"
           maxWidth="sm"
           title="Acreditar Venta"
           icon={

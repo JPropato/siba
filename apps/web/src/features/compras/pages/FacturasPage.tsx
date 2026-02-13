@@ -937,7 +937,7 @@ export default function FacturasPage() {
         <DialogBase
           isOpen={!!pagoFactura}
           onClose={() => setPagoFactura(null)}
-          type="dialog"
+          type="modal"
           maxWidth="sm"
           title="Registrar Pago"
           icon={

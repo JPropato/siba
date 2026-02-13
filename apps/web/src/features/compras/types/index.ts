@@ -144,12 +144,14 @@ export interface Cheque {
 
 // Filters
 export interface ProveedorFilters {
+  [key: string]: string | number | boolean | null | undefined;
   search?: string;
   page?: number;
   limit?: number;
 }
 
 export interface FacturaFilters {
+  [key: string]: string | number | boolean | null | undefined;
   proveedorId?: number;
   estado?: EstadoFacturaProveedor;
   fechaDesde?: string;
@@ -160,6 +162,7 @@ export interface FacturaFilters {
 }
 
 export interface ChequeFilters {
+  [key: string]: string | number | boolean | null | undefined;
   tipo?: TipoCheque;
   estado?: EstadoCheque;
   fechaCobroDesde?: string;

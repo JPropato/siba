@@ -88,7 +88,10 @@ export default function VehiculoDetailSheet({ vehiculo, isOpen, onClose }: Props
   };
 
   const handleSaveMulta = async (
-    data: MultaVehiculoFormData & { estado?: EstadoMultaVehiculo; fechaPago?: string | null }
+    data: MultaVehiculoFormData & {
+      estado?: EstadoMultaVehiculo;
+      fechaPago?: string | null | undefined;
+    }
   ) => {
     if (selectedMulta) {
       await updateMulta.mutateAsync({ multaId: selectedMulta.id, data });

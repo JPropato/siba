@@ -152,7 +152,7 @@ export default function RendicionDialog({
       title: 'Cerrar Rendición',
       message: 'Una vez cerrada, no se podrán agregar más gastos. ¿Desea continuar?',
       confirmLabel: 'Cerrar',
-      variant: 'default',
+      variant: 'warning',
     });
     if (!ok) return;
 
@@ -172,7 +172,7 @@ export default function RendicionDialog({
       title: 'Aprobar Rendición',
       message: `¿Confirma la aprobación de la rendición ${initialData.codigo} por ${formatMoney(initialData.totalGastos)}?`,
       confirmLabel: 'Aprobar',
-      variant: 'success',
+      variant: 'info',
     });
     if (!ok) return;
 
@@ -391,25 +391,10 @@ export default function RendicionDialog({
       <DialogBase
         isOpen={isOpen}
         onClose={onClose}
-        title={
-          <div className="flex items-center gap-2">
-            <FileText className="h-5 w-5 text-brand" />
-            <span>{initialData.codigo}</span>
-          </div>
-        }
-        description={
-          <div className="flex items-center gap-2 mt-1">
-            <span
-              className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${estadoConfig.color}`}
-            >
-              {estadoConfig.label}
-            </span>
-            <span className="text-slate-500 dark:text-slate-400">
-              {initialData.tarjeta?.alias || initialData.tarjeta?.numeroTarjeta}
-            </span>
-          </div>
-        }
+        title={`Rendición ${initialData.codigo}`}
+        description={`${estadoConfig.label} - ${initialData.tarjeta?.alias || initialData.tarjeta?.numeroTarjeta || ''}`}
         maxWidth="2xl"
+        icon={<FileText className="h-5 w-5 text-brand" />}
         footer={renderViewFooter()}
       >
         <div className="space-y-6">

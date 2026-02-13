@@ -1,5 +1,20 @@
 import { useState, useCallback } from 'react';
-import { Receipt, Plus, CreditCard, Calendar, DollarSign } from 'lucide-react';
+import {
+  Receipt,
+  Plus,
+  CreditCard,
+  Calendar,
+  DollarSign,
+  Flame,
+  Wrench,
+  Droplets,
+  Fuel,
+  Cog,
+  Zap,
+  UtensilsCrossed,
+  Hammer,
+  MoreHorizontal,
+} from 'lucide-react';
 import { PageHeader } from '../components/ui/PageHeader';
 import { PullToRefresh } from '../components/ui/PullToRefresh';
 import { StatCard } from '../components/dashboard/StatCard';
@@ -11,11 +26,8 @@ import {
   type TarjetaPrecargable,
   type GastoFormData,
   useCreateGasto,
+  type CategoriaGastoTarjeta,
 } from '../features/tarjetas';
-import { Badge } from '../components/ui/Badge';
-import { formatDistanceToNow } from 'date-fns';
-import { es } from 'date-fns/locale';
-import { CATEGORIA_GASTO_CONFIG } from '../features/tarjetas/types';
 
 export default function RendicionesPage() {
   const [selectedTarjeta, setSelectedTarjeta] = useState<TarjetaPrecargable | null>(null);
@@ -79,6 +91,70 @@ export default function RendicionesPage() {
     }).format(amount);
   };
 
+  // Format relative time (simple version without date-fns)
+  const formatRelativeTime = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffMins < 60) return `hace ${diffMins} min`;
+    if (diffHours < 24) return `hace ${diffHours}h`;
+    if (diffDays === 1) return 'ayer';
+    if (diffDays < 30) return `hace ${diffDays} días`;
+    return date.toLocaleDateString('es-AR');
+  };
+
+  // Define categoria config with icons and colors
+  const CATEGORIA_GASTO_CONFIG: Record<
+    CategoriaGastoTarjeta,
+    {
+      label: string;
+      icon: React.ComponentType<{ className?: string }>;
+      bgColor: string;
+      color: string;
+    }
+  > = {
+    GAS: { label: 'Gas', icon: Flame, bgColor: 'bg-orange-100', color: 'text-orange-600' },
+    FERRETERIA: {
+      label: 'Ferretería',
+      icon: Wrench,
+      bgColor: 'bg-blue-100',
+      color: 'text-blue-600',
+    },
+    ESTACIONAMIENTO: {
+      label: 'Estacionamiento',
+      icon: CreditCard,
+      bgColor: 'bg-purple-100',
+      color: 'text-purple-600',
+    },
+    LAVADERO: { label: 'Lavadero', icon: Droplets, bgColor: 'bg-cyan-100', color: 'text-cyan-600' },
+    NAFTA: { label: 'Nafta', icon: Fuel, bgColor: 'bg-red-100', color: 'text-red-600' },
+    REPUESTOS: { label: 'Repuestos', icon: Cog, bgColor: 'bg-gray-100', color: 'text-gray-600' },
+    MATERIALES_ELECTRICOS: {
+      label: 'Materiales Eléctricos',
+      icon: Zap,
+      bgColor: 'bg-yellow-100',
+      color: 'text-yellow-600',
+    },
+    PEAJES: { label: 'Peajes', icon: Calendar, bgColor: 'bg-indigo-100', color: 'text-indigo-600' },
+    COMIDA: {
+      label: 'Comida',
+      icon: UtensilsCrossed,
+      bgColor: 'bg-green-100',
+      color: 'text-green-600',
+    },
+    HERRAMIENTAS: {
+      label: 'Herramientas',
+      icon: Hammer,
+      bgColor: 'bg-amber-100',
+      color: 'text-amber-600',
+    },
+    OTRO: { label: 'Otro', icon: MoreHorizontal, bgColor: 'bg-slate-100', color: 'text-slate-600' },
+  };
+
   const totalGastosMes = gastos
     .filter((g) => {
       const fecha = new Date(g.fecha);
@@ -115,7 +191,7 @@ export default function RendicionesPage() {
               title="Saldo Disponible"
               value={formatCurrency(saldoTarjeta)}
               icon={DollarSign}
-              color={saldoTarjeta >= 0 ? 'emerald' : 'red'}
+              color={saldoTarjeta >= 0 ? 'emerald' : 'orange'}
             />
             <StatCard
               title="Gastos Este Mes"
@@ -155,9 +231,11 @@ export default function RendicionesPage() {
                         {tarjeta.alias || 'Sin alias'}
                       </span>
                     </div>
-                    <Badge variant={tarjeta.tipo === 'PRECARGABLE' ? 'blue' : 'gold'} size="sm">
+                    <span
+                      className={`px-2 py-0.5 rounded-full text-xs font-semibold ${tarjeta.tipo === 'PRECARGABLE' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}`}
+                    >
                       {tarjeta.tipo === 'PRECARGABLE' ? 'Precargable' : 'Corporativa'}
-                    </Badge>
+                    </span>
                   </div>
                   {tarjeta.numeroTarjeta && (
                     <div className="text-xs text-slate-600 dark:text-slate-400 mb-2">
@@ -229,7 +307,7 @@ export default function RendicionesPage() {
                             <div className="text-xs text-slate-500">
                               {categoriaConfig.label}
                               {gasto.ticket && (
-                                <span className="ml-2">· Ticket #{gasto.ticket.codigo}</span>
+                                <span className="ml-2">· Ticket #{gasto.ticket.codigoInterno}</span>
                               )}
                             </div>
                           </div>
@@ -239,10 +317,7 @@ export default function RendicionesPage() {
                             {formatCurrency(Number(gasto.monto))}
                           </div>
                           <div className="text-xs text-slate-500">
-                            {formatDistanceToNow(new Date(gasto.fecha), {
-                              addSuffix: true,
-                              locale: es,
-                            })}
+                            {formatRelativeTime(gasto.fecha)}
                           </div>
                         </div>
                       </div>
@@ -250,20 +325,20 @@ export default function RendicionesPage() {
                       {/* Additional info */}
                       <div className="flex flex-wrap gap-2 mt-3">
                         {gasto.centroCosto && (
-                          <Badge variant="slate" size="sm">
+                          <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">
                             {gasto.centroCosto.nombre}
-                          </Badge>
+                          </span>
                         )}
                         {gasto.movimiento?.cuentaContable && (
-                          <Badge variant="slate" size="sm">
+                          <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">
                             {gasto.movimiento.cuentaContable.codigo} -{' '}
                             {gasto.movimiento.cuentaContable.nombre}
-                          </Badge>
+                          </span>
                         )}
                         {gasto.archivos && gasto.archivos.length > 0 && (
-                          <Badge variant="blue" size="sm">
+                          <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">
                             {gasto.archivos.length} comprobante(s)
-                          </Badge>
+                          </span>
                         )}
                       </div>
                     </div>
@@ -278,7 +353,7 @@ export default function RendicionesPage() {
           isOpen={isGastoDialogOpen}
           onClose={() => setIsGastoDialogOpen(false)}
           onSave={handleSaveGasto}
-          tarjetaId={selectedTarjeta?.id ?? null}
+          tarjetaId={selectedTarjeta?.id ?? 0}
         />
       </div>
     </PullToRefresh>

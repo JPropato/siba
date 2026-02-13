@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Save, User, MapPin, Building2 } from 'lucide-react';
+import { Save, User, MapPin } from 'lucide-react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';

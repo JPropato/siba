@@ -312,7 +312,20 @@ export default function MovimientoDrawer({ isOpen, onClose, onSuccess }: Movimie
     if (cuentaIdValue && !isTransferencia) {
       const cuenta = cuentas.find((c) => c.id.toString() === cuentaIdValue);
       if (cuenta) {
-        setValue('medioPago', MEDIO_PAGO_POR_DEFECTO[cuenta.tipo]);
+        const medioPago = MEDIO_PAGO_POR_DEFECTO[cuenta.tipo];
+        // Filter out ECHEQ as it's only valid for cheques module
+        if (medioPago !== 'ECHEQ') {
+          setValue(
+            'medioPago',
+            medioPago as
+              | 'EFECTIVO'
+              | 'TRANSFERENCIA'
+              | 'CHEQUE'
+              | 'TARJETA_DEBITO'
+              | 'TARJETA_CREDITO'
+              | 'MERCADOPAGO'
+          );
+        }
       }
     }
   }, [cuentaIdValue, cuentas, setValue, isTransferencia]);

@@ -232,11 +232,11 @@ export default function GastoDialog({
             | 'FACTURA_A'
             | 'FACTURA_B'
             | 'FACTURA_C'
-            | 'TICKET'
+            | 'FACTURA_E'
             | 'NOTA_CREDITO'
             | 'NOTA_DEBITO'
-            | 'REMITO'
-            | 'RECIBO',
+            | 'RECIBO'
+            | 'OTRO',
           puntoVenta: Number(values.facturaPuntoVenta),
           numeroComprobante: values.facturaNumeroComprobante.trim(),
           fechaEmision: values.facturaFechaEmision || values.fecha,

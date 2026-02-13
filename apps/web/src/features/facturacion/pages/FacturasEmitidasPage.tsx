@@ -925,7 +925,7 @@ export default function FacturasEmitidasPage() {
         <DialogBase
           isOpen={!!cobroFactura}
           onClose={() => setCobroFactura(null)}
-          type="dialog"
+          type="modal"
           maxWidth="sm"
           title="Registrar Cobro"
           icon={

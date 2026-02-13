@@ -62,6 +62,7 @@ export interface CobroFactura {
 
 // Filters
 export interface FacturaEmitidaFilters {
+  [key: string]: string | number | boolean | null | undefined;
   clienteId?: number;
   estado?: EstadoFacturaEmitida;
   fechaDesde?: string;
