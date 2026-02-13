@@ -24,6 +24,7 @@ import {
   Banknote,
   CreditCard,
   Receipt,
+  LayoutGrid,
 } from 'lucide-react';
 
 // ── New flat structure ──────────────────────────────────────
@@ -50,6 +51,7 @@ export const navSections: NavSection[] = [
     id: 'operaciones',
     label: 'Operaciones',
     items: [
+      { id: 'operaciones-home', label: 'Inicio', icon: LayoutGrid, permission: 'tickets:leer' },
       { id: 'tickets', label: 'Tickets', icon: ClipboardList, permission: 'tickets:leer' },
       { id: 'obras', label: 'Obras', icon: HardHat, permission: 'obras:leer' },
     ],
@@ -84,6 +86,7 @@ export const navSections: NavSection[] = [
     id: 'tesoreria',
     label: 'Tesorería',
     items: [
+      { id: 'tesoreria-home', label: 'Inicio', icon: LayoutGrid, permission: 'finanzas:leer' },
       {
         id: 'finanzas-dashboard',
         label: 'Dashboard',
@@ -111,6 +114,7 @@ export const navSections: NavSection[] = [
     id: 'contabilidad',
     label: 'Contabilidad',
     items: [
+      { id: 'contabilidad-home', label: 'Inicio', icon: LayoutGrid, permission: 'finanzas:leer' },
       {
         id: 'contabilidad-dashboard',
         label: 'Dashboard',
@@ -135,6 +139,7 @@ export const navSections: NavSection[] = [
     id: 'rrhh',
     label: 'Recursos Humanos',
     items: [
+      { id: 'rrhh-home', label: 'Inicio', icon: LayoutGrid, permission: 'empleados:leer' },
       { id: 'empleados', label: 'Empleados', icon: Users, permission: 'empleados:leer' },
       { id: 'seguros-ap', label: 'Seguros AP', icon: ShieldCheck, permission: 'empleados:leer' },
     ],
@@ -143,6 +148,7 @@ export const navSections: NavSection[] = [
     id: 'administracion',
     label: 'Administración',
     items: [
+      { id: 'administracion-home', label: 'Inicio', icon: LayoutGrid, permission: 'sedes:leer' },
       { id: 'sedes', label: 'Sedes', icon: MapPin, permission: 'sedes:leer' },
       { id: 'vehiculos', label: 'Vehiculos', icon: Truck, permission: 'vehiculos:leer' },
       { id: 'zonas', label: 'Zonas', icon: Map, permission: 'zonas:leer' },
@@ -153,6 +159,7 @@ export const navSections: NavSection[] = [
     id: 'seguridad',
     label: 'Seguridad',
     items: [
+      { id: 'seguridad-home', label: 'Inicio', icon: LayoutGrid, permission: 'usuarios:leer' },
       { id: 'usuarios', label: 'Usuarios', icon: ShieldCheck, permission: 'usuarios:leer' },
       { id: 'roles', label: 'Roles', icon: ShieldCheck, permission: 'roles:leer' },
       { id: 'audit', label: 'Auditoría', icon: Shield, permission: 'audit:leer' },

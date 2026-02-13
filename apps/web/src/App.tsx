@@ -69,6 +69,20 @@ const FacturasEmitidasPage = lazy(() =>
 );
 const SegurosAPPage = lazy(() => import('./pages/SegurosAPPage'));
 const AuditPage = lazy(() => import('./features/audit/pages/AuditPage'));
+const OperacionesHomePage = lazy(() =>
+  import('./features/operaciones').then((m) => ({ default: m.OperacionesHomePage }))
+);
+const TesoreriaHomePage = lazy(() =>
+  import('./features/finanzas').then((m) => ({ default: m.TesoreriaHomePage }))
+);
+const RRHHHomePage = lazy(() =>
+  import('./features/rrhh').then((m) => ({ default: m.RRHHHomePage }))
+);
+const AdministracionHomePage = lazy(() => import('./pages/AdministracionHomePage'));
+const SeguridadHomePage = lazy(() => import('./pages/SeguridadHomePage'));
+const ContabilidadHomePage = lazy(() =>
+  import('./features/finanzas').then((m) => ({ default: m.ContabilidadHomePage }))
+);
 
 // --- Page Loading Fallback ---
 function PageLoadingFallback() {
@@ -146,6 +160,13 @@ function DashboardWrapper({ children }: { children: React.ReactNode }) {
 
   const handleNavigate = (id: string) => {
     if (id === 'dashboard') navigate('/dashboard');
+    // Home pages
+    if (id === 'operaciones-home') navigate('/dashboard/operaciones');
+    if (id === 'tesoreria-home') navigate('/dashboard/tesoreria');
+    if (id === 'contabilidad-home') navigate('/dashboard/contabilidad');
+    if (id === 'rrhh-home') navigate('/dashboard/rrhh');
+    if (id === 'administracion-home') navigate('/dashboard/administracion');
+    if (id === 'seguridad-home') navigate('/dashboard/seguridad');
     // Operaciones
     if (id === 'tickets') navigate('/dashboard/tickets');
     if (id === 'obras') navigate('/dashboard/obras');
@@ -181,6 +202,19 @@ function DashboardWrapper({ children }: { children: React.ReactNode }) {
   };
 
   const getPageInfo = (path: string) => {
+    // Home pages
+    if (path === '/dashboard/operaciones')
+      return { id: 'operaciones-home', label: 'Inicio', parentLabel: 'Operaciones' };
+    if (path === '/dashboard/tesoreria')
+      return { id: 'tesoreria-home', label: 'Inicio', parentLabel: 'Tesorería' };
+    if (path === '/dashboard/contabilidad')
+      return { id: 'contabilidad-home', label: 'Inicio', parentLabel: 'Contabilidad' };
+    if (path === '/dashboard/rrhh')
+      return { id: 'rrhh-home', label: 'Inicio', parentLabel: 'Recursos Humanos' };
+    if (path === '/dashboard/administracion')
+      return { id: 'administracion-home', label: 'Inicio', parentLabel: 'Administración' };
+    if (path === '/dashboard/seguridad')
+      return { id: 'seguridad-home', label: 'Inicio', parentLabel: 'Seguridad' };
     // Operaciones
     if (path.match(/\/tickets\/\d+/))
       return { id: 'tickets', label: 'Detalle Ticket', parentLabel: 'Operaciones' };
@@ -265,6 +299,66 @@ export default function App() {
                 <DashboardWrapper>
                   <RequirePermission permission="dashboard:leer">
                     <DashboardPage />
+                  </RequirePermission>
+                </DashboardWrapper>
+              }
+            />
+            <Route
+              path="/dashboard/operaciones"
+              element={
+                <DashboardWrapper>
+                  <RequirePermission permission="tickets:leer">
+                    <OperacionesHomePage />
+                  </RequirePermission>
+                </DashboardWrapper>
+              }
+            />
+            <Route
+              path="/dashboard/tesoreria"
+              element={
+                <DashboardWrapper>
+                  <RequirePermission permission="finanzas:leer">
+                    <TesoreriaHomePage />
+                  </RequirePermission>
+                </DashboardWrapper>
+              }
+            />
+            <Route
+              path="/dashboard/contabilidad"
+              element={
+                <DashboardWrapper>
+                  <RequirePermission permission="finanzas:leer">
+                    <ContabilidadHomePage />
+                  </RequirePermission>
+                </DashboardWrapper>
+              }
+            />
+            <Route
+              path="/dashboard/rrhh"
+              element={
+                <DashboardWrapper>
+                  <RequirePermission permission="empleados:leer">
+                    <RRHHHomePage />
+                  </RequirePermission>
+                </DashboardWrapper>
+              }
+            />
+            <Route
+              path="/dashboard/administracion"
+              element={
+                <DashboardWrapper>
+                  <RequirePermission permission="sedes:leer">
+                    <AdministracionHomePage />
+                  </RequirePermission>
+                </DashboardWrapper>
+              }
+            />
+            <Route
+              path="/dashboard/seguridad"
+              element={
+                <DashboardWrapper>
+                  <RequirePermission permission="usuarios:leer">
+                    <SeguridadHomePage />
                   </RequirePermission>
                 </DashboardWrapper>
               }

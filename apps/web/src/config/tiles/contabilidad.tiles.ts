@@ -1,0 +1,111 @@
+import {
+  Calculator,
+  Plus,
+  FolderTree,
+  Building2,
+  BarChart3,
+  FileText,
+  TrendingUp,
+  BookOpen,
+} from 'lucide-react';
+import type { ModuleTilesConfig } from '../../types/tiles';
+
+export const contabilidadTiles: ModuleTilesConfig = {
+  moduleId: 'contabilidad',
+  moduleName: 'Contabilidad',
+  icon: Calculator,
+  breadcrumb: ['Contabilidad', 'Inicio'],
+  subtitle: 'Gestión contable, plan de cuentas y centros de costo',
+  categories: [
+    {
+      id: 'acciones',
+      title: 'Acciones',
+      tiles: [
+        {
+          id: 'nueva-cuenta-contable',
+          icon: Plus,
+          title: 'Nueva Cuenta',
+          description: 'Agregar cuenta contable',
+          path: '/dashboard/finanzas/plan-cuentas?action=create',
+          permission: 'finanzas:escribir',
+          type: 'action',
+        },
+        {
+          id: 'nuevo-centro-costo',
+          icon: Building2,
+          title: 'Nuevo Centro de Costo',
+          description: 'Crear centro de costo',
+          path: '/dashboard/finanzas/centros-costo?action=create',
+          permission: 'finanzas:escribir',
+          type: 'action',
+        },
+      ],
+    },
+    {
+      id: 'consultas',
+      title: 'Consultas',
+      tiles: [
+        {
+          id: 'dashboard-contable',
+          icon: BarChart3,
+          title: 'Dashboard Contable',
+          description: 'Balance y ecuación contable',
+          path: '/dashboard/contabilidad-dashboard',
+          permission: 'finanzas:leer',
+          type: 'query',
+        },
+        {
+          id: 'plan-cuentas',
+          icon: FolderTree,
+          title: 'Plan de Cuentas',
+          description: 'Ver estructura contable',
+          path: '/dashboard/finanzas/plan-cuentas',
+          permission: 'finanzas:leer',
+          type: 'query',
+        },
+        {
+          id: 'centros-costo',
+          icon: Building2,
+          title: 'Centros de Costo',
+          description: 'Gestionar centros de costo',
+          path: '/dashboard/finanzas/centros-costo',
+          permission: 'finanzas:leer',
+          type: 'query',
+        },
+      ],
+    },
+    {
+      id: 'reportes',
+      title: 'Reportes',
+      tiles: [
+        {
+          id: 'balance-general',
+          icon: BookOpen,
+          title: 'Balance General',
+          description: 'Balance de situación patrimonial',
+          path: '/dashboard/contabilidad-dashboard?tab=balance',
+          permission: 'finanzas:leer',
+          type: 'report',
+        },
+        {
+          id: 'estado-resultados',
+          icon: TrendingUp,
+          title: 'Estado de Resultados',
+          description: 'Ganancias y pérdidas',
+          path: '/dashboard/contabilidad-dashboard?tab=resultados',
+          permission: 'finanzas:leer',
+          type: 'report',
+        },
+        {
+          id: 'libro-mayor',
+          icon: FileText,
+          title: 'Libro Mayor',
+          description: 'Movimientos por cuenta',
+          path: '/dashboard/finanzas/movimientos?agrupar=cuenta',
+          permission: 'finanzas:leer',
+          type: 'report',
+        },
+      ],
+    },
+  ],
+};

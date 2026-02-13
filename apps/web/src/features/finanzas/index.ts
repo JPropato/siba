@@ -1,4 +1,6 @@
 export { default as FinanzasDashboard } from './pages/FinanzasDashboard';
+export { default as TesoreriaHomePage } from './pages/TesoreriaHomePage';
+export { default as ContabilidadHomePage } from './pages/ContabilidadHomePage';
 export { default as MovimientosPage } from './pages/MovimientosPage';
 export { default as CuentasPage } from './pages/CuentasPage';
 export { default as InversionesPage } from './pages/InversionesPage';

@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import {
   Receipt,
   Plus,
@@ -14,10 +14,15 @@ import {
   UtensilsCrossed,
   Hammer,
   MoreHorizontal,
+  History,
+  FileText,
 } from 'lucide-react';
 import { PageHeader } from '../components/ui/PageHeader';
 import { PullToRefresh } from '../components/ui/PullToRefresh';
 import { StatCard } from '../components/dashboard/StatCard';
+import { ActionTile } from '../components/tiles/ActionTile';
+import { TileGrid } from '../components/tiles/TileGrid';
+import { TileSection } from '../components/tiles/TileSection';
 import { toast } from 'sonner';
 import {
   useTarjetas,
@@ -34,6 +39,10 @@ export default function RendicionesPage() {
   const [isGastoDialogOpen, setIsGastoDialogOpen] = useState(false);
   const [mesActual] = useState(new Date().getMonth() + 1);
   const [anioActual] = useState(new Date().getFullYear());
+
+  // Refs for scrolling
+  const tarjetasRef = useRef<HTMLDivElement>(null);
+  const gastosRef = useRef<HTMLDivElement>(null);
 
   // Fetch user's cards
   const {
@@ -61,9 +70,24 @@ export default function RendicionesPage() {
   const handleNuevoGasto = () => {
     if (!selectedTarjeta) {
       toast.error('Seleccione una tarjeta primero');
+      // Scroll to tarjetas section
+      tarjetasRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       return;
     }
     setIsGastoDialogOpen(true);
+  };
+
+  const handleVerTarjetas = () => {
+    tarjetasRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  const handleVerHistorial = () => {
+    if (!selectedTarjeta) {
+      toast.info('Seleccione una tarjeta primero');
+      tarjetasRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
+    gastosRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   const handleSaveGasto = async (data: GastoFormData) => {
@@ -172,39 +196,71 @@ export default function RendicionesPage() {
           breadcrumb={['Tesorería', 'Rendiciones']}
           title="Mis Gastos"
           subtitle="Registre sus gastos con tarjeta de forma rápida y sencilla"
-          action={
-            <button
-              onClick={handleNuevoGasto}
-              disabled={!selectedTarjeta}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-brand hover:bg-brand-dark text-white text-xs font-bold rounded-lg shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Plus className="h-4 w-4" />
-              Nuevo Gasto
-            </button>
-          }
         />
 
-        {/* Stats */}
+        {/* ACTION TILES - PRIMERA PANTALLA (PROMINENTE) */}
+        <TileSection title="Acciones Rápidas">
+          <TileGrid columns={4}>
+            <ActionTile
+              icon={<Plus className="h-6 w-6" />}
+              title="Nuevo Gasto"
+              description="Registrar un gasto con tarjeta"
+              onClick={handleNuevoGasto}
+              variant="action"
+            />
+            <ActionTile
+              icon={<CreditCard className="h-6 w-6" />}
+              title="Mis Tarjetas"
+              description="Ver y seleccionar tarjetas"
+              onClick={handleVerTarjetas}
+              variant="query"
+              badge={tarjetas.length > 0 ? tarjetas.length : undefined}
+            />
+            <ActionTile
+              icon={<History className="h-6 w-6" />}
+              title="Historial"
+              description="Ver todos mis gastos"
+              onClick={handleVerHistorial}
+              variant="query"
+              badge={gastos.length > 0 ? gastos.length : undefined}
+            />
+            <ActionTile
+              icon={<FileText className="h-6 w-6" />}
+              title="Nueva Rendición"
+              description="Crear rendición de gastos"
+              onClick={() => toast.info('Funcionalidad próximamente')}
+              variant="report"
+              disabled
+            />
+          </TileGrid>
+        </TileSection>
+
+        {/* Stats - SECUNDARIOS (solo si hay tarjeta seleccionada) */}
         {selectedTarjeta && (
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            <StatCard
-              title="Saldo Disponible"
-              value={formatCurrency(saldoTarjeta)}
-              icon={DollarSign}
-              color={saldoTarjeta >= 0 ? 'emerald' : 'orange'}
-            />
-            <StatCard
-              title="Gastos Este Mes"
-              value={formatCurrency(totalGastosMes)}
-              icon={Receipt}
-              color="brand"
-            />
-            <StatCard title="Total Gastos" value={gastos.length} icon={Calendar} color="indigo" />
+          <div className="space-y-2">
+            <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+              Resumen - {selectedTarjeta.alias || 'Tarjeta Seleccionada'}
+            </h3>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <StatCard
+                title="Saldo Disponible"
+                value={formatCurrency(saldoTarjeta)}
+                icon={DollarSign}
+                color={saldoTarjeta >= 0 ? 'emerald' : 'orange'}
+              />
+              <StatCard
+                title="Gastos Este Mes"
+                value={formatCurrency(totalGastosMes)}
+                icon={Receipt}
+                color="brand"
+              />
+              <StatCard title="Total Gastos" value={gastos.length} icon={Calendar} color="indigo" />
+            </div>
           </div>
         )}
 
         {/* Card Selection */}
-        <div className="space-y-3">
+        <div ref={tarjetasRef} className="space-y-3 scroll-mt-4">
           <h2 className="text-sm font-bold text-slate-900 dark:text-white">Mis Tarjetas</h2>
           {loadingTarjetas ? (
             <div className="text-center py-8 text-sm text-slate-500">Cargando tarjetas...</div>
@@ -262,7 +318,7 @@ export default function RendicionesPage() {
 
         {/* Recent Expenses */}
         {selectedTarjeta && (
-          <div className="space-y-3">
+          <div ref={gastosRef} className="space-y-3 scroll-mt-4">
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-bold text-slate-900 dark:text-white">Gastos Recientes</h2>
               <button
