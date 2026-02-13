@@ -60,11 +60,11 @@ export default function DashboardHomePage() {
           title="Inicio"
           subtitle="Acceso rápido a todas las funcionalidades"
           breadcrumb={['Inicio']}
-          icon={LayoutGrid}
+          icon={<LayoutGrid className="h-5 w-5" />}
         />
         <div className="px-4 py-8">
           <EmptyState
-            icon={LayoutGrid}
+            icon={<LayoutGrid className="h-12 w-12" />}
             title="Sin acceso"
             description="No tienes permisos para acceder a ningún módulo"
           />
@@ -80,7 +80,7 @@ export default function DashboardHomePage() {
           title="Inicio"
           subtitle="Acceso rápido a todas las funcionalidades"
           breadcrumb={['Inicio']}
-          icon={LayoutGrid}
+          icon={<LayoutGrid className="h-5 w-5" />}
         />
 
         <div className="px-4 py-6 space-y-8">

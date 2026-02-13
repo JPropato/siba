@@ -93,7 +93,7 @@ export function ModuleHomePage({ config }: ModuleHomePageProps) {
   );
 }
 
-function QuickStat({ config }: { config: ModuleTilesConfig['quickStats'][0] }) {
+function QuickStat({ config }: { config: NonNullable<ModuleTilesConfig['quickStats']>[0] }) {
   // TODO: Implement async stat loading with useQuery
   // For now, just show placeholder
   return <StatCard title={config.title} value="--" icon={config.icon} color={config.color} />;
