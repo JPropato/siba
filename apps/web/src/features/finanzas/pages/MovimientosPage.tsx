@@ -9,7 +9,6 @@ import { LayoutGrid, AlertCircle } from 'lucide-react';
 import MovimientosTable from '../components/MovimientosTable';
 import { useMovimientos } from '../hooks/useMovimientos';
 import type { TipoMovimiento, EstadoMovimiento } from '../types';
-import type { Movimiento } from '../types';
 import { ESTADO_MOVIMIENTO_CONFIG } from '../types';
 
 const MovimientoDrawer = lazy(() => import('../components/MovimientoDrawer'));
@@ -51,7 +50,7 @@ export default function MovimientosPage() {
     setIsDrawerOpen(true);
   };
 
-  const handleEdit = (_mov: Movimiento) => {
+  const handleEdit = () => {
     setIsDrawerOpen(true);
   };
 

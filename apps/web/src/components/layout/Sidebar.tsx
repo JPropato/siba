@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useCallback } from 'react';
 import { usePermissions } from '../../hooks/usePermissions';
 import { cn } from '../../lib/utils';
 import logoBauman from '../../assets/logo-bauman.png';
@@ -24,16 +24,16 @@ export function Sidebar({
 }: SidebarProps) {
   const { hasPermission, isSuperAdmin } = usePermissions();
 
-  const canView = (item: FlatNavItem) => {
-    if (!item.permission) return true;
-    if (isSuperAdmin()) return true;
-    return hasPermission(item.permission);
-  };
-
-  const filteredStandalone = useMemo(
-    () => standaloneItems.filter(canView),
+  const canView = useCallback(
+    (item: FlatNavItem) => {
+      if (!item.permission) return true;
+      if (isSuperAdmin()) return true;
+      return hasPermission(item.permission);
+    },
     [hasPermission, isSuperAdmin]
   );
+
+  const filteredStandalone = useMemo(() => standaloneItems.filter(canView), [canView]);
 
   const filteredSections = useMemo(
     () =>
@@ -43,7 +43,7 @@ export function Sidebar({
           items: section.items.filter(canView),
         }))
         .filter((section) => section.items.length > 0),
-    [hasPermission, isSuperAdmin]
+    [canView]
   );
 
   const handleClick = (item: FlatNavItem, parentLabel?: string) => {

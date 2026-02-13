@@ -11,7 +11,7 @@ import './App.css';
 // Lazy loading de páginas para reducir bundle inicial (~2MB → ~500KB)
 // LoginPage y DashboardLayout no se lazy-load porque se necesitan inmediatamente
 const LoginPage = lazy(() => import('./pages/LoginPage'));
-const DashboardPage = lazy(() => import('./pages/DashboardPage'));
+const DashboardHomePage = lazy(() => import('./pages/DashboardHomePage'));
 const UsersPage = lazy(() => import('./pages/UsersPage'));
 const RolesPage = lazy(() => import('./pages/RolesPage'));
 const ClientsPage = lazy(() => import('./pages/ClientsPage'));
@@ -297,9 +297,7 @@ export default function App() {
               path="/dashboard"
               element={
                 <DashboardWrapper>
-                  <RequirePermission permission="dashboard:leer">
-                    <DashboardPage />
-                  </RequirePermission>
+                  <DashboardHomePage />
                 </DashboardWrapper>
               }
             />

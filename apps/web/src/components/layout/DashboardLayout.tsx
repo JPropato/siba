@@ -19,16 +19,15 @@ interface DashboardLayoutProps {
 export function DashboardLayout({ children, currentPage, onNavigate }: DashboardLayoutProps) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
 
-  // Initialize dark mode from system preference
-  useEffect(() => {
+  // Initialize dark mode from system preference (lazy initialization)
+  const [darkMode, setDarkMode] = useState(() => {
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    setDarkMode(prefersDark);
     if (prefersDark) {
       document.documentElement.classList.add('dark');
     }
-  }, []);
+    return prefersDark;
+  });
 
   // Close mobile menu on resize to desktop
   useEffect(() => {
