@@ -9,6 +9,7 @@ import cookieParser from 'cookie-parser';
 import routes from './routes/index.js';
 import { errorHandler, notFoundHandler } from './middlewares/error.middleware.js';
 import { auditMiddleware } from './middlewares/audit.middleware.js';
+import { initializeSocket } from './lib/socket.js';
 
 const app = express();
 // Confiar en el proxy (Dokploy/Traefik) para detectar HTTPS correctamente
@@ -149,6 +150,9 @@ app.use(errorHandler);
 const server = app.listen(Number(PORT), '0.0.0.0', async () => {
   console.log(`🚀 API running on http://localhost:${PORT}`);
   console.log(`   Health check: http://localhost:${PORT}/api/health`);
+
+  // Initialize Socket.io for chat
+  initializeSocket(server);
 
   try {
     console.log('⏳ Connecting to Database...');

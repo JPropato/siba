@@ -17,6 +17,8 @@ import comprasRoutes from './compras.routes.js';
 import facturacionRoutes from './facturacion.routes.js';
 import auditRoutes from './audit.routes.js';
 import tarjetasRoutes from './tarjetas.routes.js';
+import chatRoutes from './chat.routes.js';
+import sseRoutes from './sse.routes.js';
 
 const router = Router();
 
@@ -39,5 +41,7 @@ router.use('/compras', comprasRoutes);
 router.use('/facturacion', facturacionRoutes);
 router.use('/audit', auditRoutes);
 router.use('/tarjetas', tarjetasRoutes);
+router.use('/chat', chatRoutes);
+router.use('/', sseRoutes);
 
 export default router;

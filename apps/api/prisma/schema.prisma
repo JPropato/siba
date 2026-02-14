@@ -192,6 +192,11 @@ model Usuario {
   // Audit trail
   eventosAuditoria        EventoAuditoria[]
 
+  // Chat relations
+  conversacionesCreadas   Conversacion[]   @relation("ConversacionCreador")
+  chatParticipaciones     Participante[]   @relation("ChatParticipante")
+  chatMensajes            Mensaje[]        @relation("ChatMensajeAutor")
+
   @@map("usuarios")
 }
 
@@ -1500,6 +1505,86 @@ model CobroFactura {
 
   @@index([facturaId])
   @@map("cobros_factura")
+}
+
+// ============ CHAT INTERNO ============
+
+enum TipoConversacion {
+  DIRECTA
+  GRUPAL
+}
+
+enum RolParticipante {
+  ADMIN
+  MIEMBRO
+}
+
+enum TipoContenido {
+  TEXTO
+  ARCHIVO
+  SISTEMA
+}
+
+model Conversacion {
+  id                 Int                @id @default(autoincrement())
+  tipo               TipoConversacion
+  nombre             String?
+  descripcion        String?
+
+  // Vinculo opcional a entidad
+  entidadTipo        String?            @map("entidad_tipo")
+  entidadId          Int?               @map("entidad_id")
+
+  creadoPorId        Int                @map("creado_por_id")
+  creadoPor          Usuario            @relation("ConversacionCreador", fields: [creadoPorId], references: [id])
+
+  fechaCreacion      DateTime           @default(now()) @map("fecha_creacion")
+  fechaActualizacion DateTime           @updatedAt @map("fecha_actualizacion")
+  ultimoMensajeAt    DateTime?          @map("ultimo_mensaje_at")
+
+  participantes      Participante[]
+  mensajes           Mensaje[]
+
+  @@index([creadoPorId])
+  @@index([ultimoMensajeAt])
+  @@map("conversaciones_chat")
+}
+
+model Participante {
+  id              Int              @id @default(autoincrement())
+  conversacionId  Int              @map("conversacion_id")
+  conversacion    Conversacion     @relation(fields: [conversacionId], references: [id], onDelete: Cascade)
+  usuarioId       Int              @map("usuario_id")
+  usuario         Usuario          @relation("ChatParticipante", fields: [usuarioId], references: [id])
+
+  rol             RolParticipante  @default(MIEMBRO)
+
+  fechaIngreso    DateTime         @default(now()) @map("fecha_ingreso")
+  ultimoLeido     DateTime?        @map("ultimo_leido")
+  silenciado      Boolean          @default(false)
+
+  @@unique([conversacionId, usuarioId])
+  @@index([usuarioId])
+  @@map("participantes_chat")
+}
+
+model Mensaje {
+  id              Int            @id @default(autoincrement())
+  conversacionId  Int            @map("conversacion_id")
+  conversacion    Conversacion   @relation(fields: [conversacionId], references: [id], onDelete: Cascade)
+  autorId         Int            @map("autor_id")
+  autor           Usuario        @relation("ChatMensajeAutor", fields: [autorId], references: [id])
+
+  contenido       String         @db.Text
+  tipoContenido   TipoContenido  @default(TEXTO) @map("tipo_contenido")
+
+  editado         Boolean        @default(false)
+  fechaCreacion   DateTime       @default(now()) @map("fecha_creacion")
+  fechaEdicion    DateTime?      @map("fecha_edicion")
+  fechaEliminacion DateTime?     @map("fecha_eliminacion")
+
+  @@index([conversacionId, fechaCreacion])
+  @@map("mensajes_chat")
 }
 
 // ============ AUDIT TRAIL ============

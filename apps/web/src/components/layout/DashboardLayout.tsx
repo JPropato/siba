@@ -3,6 +3,10 @@ import Sidebar from './Sidebar';
 import TopHeader from './TopHeader';
 import { CommandMenu } from './CommandMenu';
 import { BottomNav } from './BottomNav';
+import { useTicketSSE } from '../../hooks/useTicketSSE';
+import { ChatBubble } from '../../features/chat/components/ChatBubble';
+import { ChatPanel } from '../../features/chat/components/ChatPanel';
+import { useChatSocket } from '../../features/chat/hooks/useSocket';
 
 interface PageInfo {
   id: string;
@@ -17,6 +21,8 @@ interface DashboardLayoutProps {
 }
 
 export function DashboardLayout({ children, currentPage, onNavigate }: DashboardLayoutProps) {
+  useTicketSSE();
+  useChatSocket();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -77,6 +83,8 @@ export function DashboardLayout({ children, currentPage, onNavigate }: Dashboard
       </main>
 
       <BottomNav />
+      <ChatBubble />
+      <ChatPanel />
     </div>
   );
 }
