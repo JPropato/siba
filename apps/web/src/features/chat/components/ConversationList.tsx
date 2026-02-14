@@ -3,7 +3,12 @@ import { useChatStore } from '../stores/chat-store';
 import { useAuthStore } from '../../../stores/auth-store';
 import { Users, User } from 'lucide-react';
 
-export function ConversationList() {
+interface ConversationListProps {
+  onSelect?: (id: number) => void;
+  selectedId?: number;
+}
+
+export function ConversationList({ onSelect, selectedId }: ConversationListProps = {}) {
   const { data: conversations, isLoading } = useConversations();
   const { setActiveConversation, unreadCounts } = useChatStore();
   const currentUser = useAuthStore((s) => s.user);
@@ -59,11 +64,15 @@ export function ConversationList() {
           ? `${lastMsg.autor.nombre}: ${lastMsg.contenido.substring(0, 50)}${lastMsg.contenido.length > 50 ? '...' : ''}`
           : 'Sin mensajes aun';
 
+        const isSelected = selectedId === conv.id;
+
         return (
           <button
             key={conv.id}
-            onClick={() => setActiveConversation(conv.id)}
-            className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[var(--background)] transition-colors text-left border-b border-[var(--border)]/50"
+            onClick={() => (onSelect ? onSelect(conv.id) : setActiveConversation(conv.id))}
+            className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-[var(--background)] transition-colors text-left border-b border-[var(--border)]/50 ${
+              isSelected ? 'bg-[var(--background)]' : ''
+            }`}
           >
             {/* Avatar */}
             <div className="size-10 rounded-full bg-brand/10 border border-brand/20 flex items-center justify-center shrink-0">

@@ -57,11 +57,16 @@ export function useSendMessage() {
     mutationFn: async ({
       conversationId,
       contenido,
+      menciones,
     }: {
       conversationId: number;
       contenido: string;
+      menciones?: { entidadTipo: string; entidadId: number; textoDisplay: string }[];
     }) => {
-      const res = await api.post(`/chat/conversations/${conversationId}/messages`, { contenido });
+      const res = await api.post(`/chat/conversations/${conversationId}/messages`, {
+        contenido,
+        menciones: menciones?.length ? menciones : undefined,
+      });
       return res.data?.data as ChatMessage;
     },
     onSuccess: (_data, variables) => {
@@ -98,6 +103,81 @@ export function useMarkAsRead() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: UNREAD_KEY });
+    },
+  });
+}
+
+// Get conversation detail
+export function useConversationDetail(conversationId: number | null) {
+  return useQuery({
+    queryKey: ['chat-conversation-detail', conversationId],
+    queryFn: async () => {
+      const res = await api.get(`/chat/conversations/${conversationId}`);
+      return res.data?.data as ChatConversation;
+    },
+    enabled: !!conversationId,
+  });
+}
+
+// Update conversation (group name/description)
+export function useUpdateConversation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      id,
+      data,
+    }: {
+      id: number;
+      data: { nombre?: string; descripcion?: string };
+    }) => {
+      const res = await api.patch(`/chat/conversations/${id}`, data);
+      return res.data?.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: CONVERSATIONS_KEY });
+    },
+  });
+}
+
+// Add participants to group
+export function useAddParticipants() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      conversationId,
+      participantIds,
+    }: {
+      conversationId: number;
+      participantIds: number[];
+    }) => {
+      const res = await api.post(`/chat/conversations/${conversationId}/participants`, {
+        participantIds,
+      });
+      return res.data?.data;
+    },
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: CONVERSATIONS_KEY });
+      queryClient.invalidateQueries({
+        queryKey: ['chat-conversation-detail', vars.conversationId],
+      });
+      queryClient.invalidateQueries({ queryKey: [...MESSAGES_KEY, vars.conversationId] });
+    },
+  });
+}
+
+// Remove participant from group
+export function useRemoveParticipant() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ conversationId, userId }: { conversationId: number; userId: number }) => {
+      await api.delete(`/chat/conversations/${conversationId}/participants/${userId}`);
+    },
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: CONVERSATIONS_KEY });
+      queryClient.invalidateQueries({
+        queryKey: ['chat-conversation-detail', vars.conversationId],
+      });
+      queryClient.invalidateQueries({ queryKey: [...MESSAGES_KEY, vars.conversationId] });
     },
   });
 }

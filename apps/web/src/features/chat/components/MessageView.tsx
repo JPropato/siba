@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
-import { Send } from 'lucide-react';
+import { useEffect, useRef } from 'react';
 import { useMessages, useSendMessage, useMarkAsRead } from '../hooks/useChat';
 import { useChatStore } from '../stores/chat-store';
 import { useAuthStore } from '../../../stores/auth-store';
 import type { ChatMessage } from '../types';
+import { MessageInput } from './MessageInput';
+import { parseMentions } from '../lib/parse-mentions';
 
 interface Props {
   conversationId: number;
@@ -16,7 +17,6 @@ export function MessageView({ conversationId }: Props) {
   const { mutate: markRead } = useMarkAsRead();
   const currentUser = useAuthStore((s) => s.user);
   const decrementUnread = useChatStore((s) => s.decrementUnread);
-  const [input, setInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -42,18 +42,12 @@ export function MessageView({ conversationId }: Props) {
     }
   };
 
-  const handleSend = () => {
-    const trimmed = input.trim();
-    if (!trimmed || sendMessage.isPending) return;
-
-    sendMessage.mutate({ conversationId, contenido: trimmed }, { onSuccess: () => setInput('') });
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-    }
+  const handleSend = (
+    contenido: string,
+    menciones: { entidadTipo: string; entidadId: number; textoDisplay: string }[]
+  ) => {
+    if (sendMessage.isPending) return;
+    sendMessage.mutate({ conversationId, contenido, menciones });
   };
 
   // Flatten all pages' messages and reverse to show oldest first
@@ -99,25 +93,7 @@ export function MessageView({ conversationId }: Props) {
       </div>
 
       {/* Input area */}
-      <div className="shrink-0 border-t border-[var(--border)] px-3 py-2">
-        <div className="flex items-end gap-2">
-          <textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Escribe un mensaje..."
-            rows={1}
-            className="flex-1 resize-none rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none focus:ring-1 focus:ring-brand/50 max-h-24"
-          />
-          <button
-            onClick={handleSend}
-            disabled={!input.trim() || sendMessage.isPending}
-            className="p-2 rounded-lg bg-brand text-white hover:bg-brand/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shrink-0"
-          >
-            <Send className="size-4" />
-          </button>
-        </div>
-      </div>
+      <MessageInput onSend={handleSend} disabled={sendMessage.isPending} />
     </div>
   );
 }
@@ -147,7 +123,9 @@ function MessageBubble({
             {message.autor.nombre} {message.autor.apellido}
           </p>
         )}
-        <p className="text-sm whitespace-pre-wrap break-words">{message.contenido}</p>
+        <p className="text-sm whitespace-pre-wrap break-words">
+          {parseMentions(message.contenido)}
+        </p>
         <p
           className={`text-[9px] mt-0.5 text-right ${isOwn ? 'text-white/60' : 'text-[var(--muted)]'}`}
         >

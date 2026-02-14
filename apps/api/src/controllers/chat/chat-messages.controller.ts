@@ -53,6 +53,7 @@ export const getMessages = async (req: Request, res: Response) => {
             email: true,
           },
         },
+        menciones: true,
       },
     });
 
@@ -98,13 +99,23 @@ export const sendMessage = async (req: Request, res: Response) => {
       });
     }
 
-    // Create message and update conversation's ultimoMensajeAt in a transaction
-    const [message, _] = await prisma.$transaction([
-      prisma.mensaje.create({
+    // Create message with menciones and update conversation's ultimoMensajeAt in a transaction
+    const message = await prisma.$transaction(async (tx) => {
+      const newMessage = await tx.mensaje.create({
         data: {
           conversacionId: conversationId,
           autorId: userId,
           contenido: body.contenido,
+          ...(body.menciones &&
+            body.menciones.length > 0 && {
+              menciones: {
+                create: body.menciones.map((m) => ({
+                  entidadTipo: m.entidadTipo,
+                  entidadId: m.entidadId,
+                  textoDisplay: m.textoDisplay,
+                })),
+              },
+            }),
         },
         include: {
           autor: {
@@ -115,13 +126,17 @@ export const sendMessage = async (req: Request, res: Response) => {
               email: true,
             },
           },
+          menciones: true,
         },
-      }),
-      prisma.conversacion.update({
+      });
+
+      await tx.conversacion.update({
         where: { id: conversationId },
         data: { ultimoMensajeAt: new Date() },
-      }),
-    ]);
+      });
+
+      return newMessage;
+    });
 
     // Emit socket event to all users in the conversation room
     try {

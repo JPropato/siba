@@ -282,3 +282,309 @@ export const getConversationDetail = async (req: Request, res: Response) => {
     res.status(500).json({ error: 'Error al obtener detalle de conversación' });
   }
 };
+
+/**
+ * PATCH /chat/conversations/:id
+ * Update group conversation (nombre, descripcion)
+ * Only ADMIN can update
+ */
+export const updateConversation = async (req: Request, res: Response) => {
+  try {
+    const conversationId = Number(req.params.id);
+    const userId = req.user!.id;
+    const { nombre, descripcion } = req.body;
+
+    // Verify user is ADMIN of this conversation
+    const participation = await prisma.participante.findFirst({
+      where: {
+        conversacionId: conversationId,
+        usuarioId: userId,
+      },
+    });
+
+    if (!participation) {
+      return res.status(403).json({
+        error: 'No tienes acceso a esta conversación',
+      });
+    }
+
+    if (participation.rol !== 'ADMIN') {
+      return res.status(403).json({
+        error: 'Solo los administradores pueden editar la conversación',
+      });
+    }
+
+    // Verify conversation exists and is GRUPAL
+    const conversation = await prisma.conversacion.findUnique({
+      where: { id: conversationId },
+    });
+
+    if (!conversation) {
+      return res.status(404).json({ error: 'Conversación no encontrada' });
+    }
+
+    if (conversation.tipo !== 'GRUPAL') {
+      return res.status(400).json({
+        error: 'Solo se pueden editar conversaciones grupales',
+      });
+    }
+
+    // Validate nombre if provided
+    if (nombre !== undefined && nombre.trim().length === 0) {
+      return res.status(400).json({
+        error: 'El nombre no puede estar vacío',
+      });
+    }
+
+    // Update conversation
+    const updated = await prisma.conversacion.update({
+      where: { id: conversationId },
+      data: {
+        ...(nombre !== undefined && { nombre: nombre.trim() }),
+        ...(descripcion !== undefined && { descripcion: descripcion.trim() || null }),
+      },
+      include: {
+        participantes: {
+          include: {
+            usuario: {
+              select: {
+                id: true,
+                nombre: true,
+                apellido: true,
+                email: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    res.json({ data: updated });
+  } catch (error) {
+    console.error('Error al actualizar conversación:', error);
+    res.status(500).json({ error: 'Error al actualizar conversación' });
+  }
+};
+
+/**
+ * POST /chat/conversations/:id/participants
+ * Add participants to a group conversation
+ * Only ADMIN can add participants
+ */
+export const addParticipants = async (req: Request, res: Response) => {
+  try {
+    const conversationId = Number(req.params.id);
+    const userId = req.user!.id;
+    const { userIds } = req.body;
+
+    if (!Array.isArray(userIds) || userIds.length === 0) {
+      return res.status(400).json({
+        error: 'Se requiere un array de userIds',
+      });
+    }
+
+    // Verify user is ADMIN
+    const participation = await prisma.participante.findFirst({
+      where: {
+        conversacionId: conversationId,
+        usuarioId: userId,
+      },
+    });
+
+    if (!participation) {
+      return res.status(403).json({
+        error: 'No tienes acceso a esta conversación',
+      });
+    }
+
+    if (participation.rol !== 'ADMIN') {
+      return res.status(403).json({
+        error: 'Solo los administradores pueden agregar participantes',
+      });
+    }
+
+    // Verify conversation exists and is GRUPAL
+    const conversation = await prisma.conversacion.findUnique({
+      where: { id: conversationId },
+    });
+
+    if (!conversation) {
+      return res.status(404).json({ error: 'Conversación no encontrada' });
+    }
+
+    if (conversation.tipo !== 'GRUPAL') {
+      return res.status(400).json({
+        error: 'Solo se pueden agregar participantes a conversaciones grupales',
+      });
+    }
+
+    // Verify all users exist
+    const users = await prisma.usuario.findMany({
+      where: {
+        id: { in: userIds },
+        fechaEliminacion: null,
+      },
+      select: { id: true },
+    });
+
+    if (users.length !== userIds.length) {
+      return res.status(400).json({
+        error: 'Uno o más usuarios no existen o están eliminados',
+      });
+    }
+
+    // Get existing participants
+    const existing = await prisma.participante.findMany({
+      where: {
+        conversacionId: conversationId,
+        usuarioId: { in: userIds },
+      },
+      select: { usuarioId: true },
+    });
+
+    const existingIds = new Set(existing.map((p) => p.usuarioId));
+    const newUserIds = userIds.filter((id) => !existingIds.has(id));
+
+    if (newUserIds.length === 0) {
+      return res.status(400).json({
+        error: 'Todos los usuarios ya son participantes',
+      });
+    }
+
+    // Add new participants
+    await prisma.participante.createMany({
+      data: newUserIds.map((id) => ({
+        conversacionId: conversationId,
+        usuarioId: id,
+        rol: 'MIEMBRO' as const,
+      })),
+    });
+
+    // Return updated conversation
+    const updated = await prisma.conversacion.findUnique({
+      where: { id: conversationId },
+      include: {
+        participantes: {
+          include: {
+            usuario: {
+              select: {
+                id: true,
+                nombre: true,
+                apellido: true,
+                email: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    res.json({ data: updated });
+  } catch (error) {
+    console.error('Error al agregar participantes:', error);
+    res.status(500).json({ error: 'Error al agregar participantes' });
+  }
+};
+
+/**
+ * DELETE /chat/conversations/:id/participants/:userId
+ * Remove participant from group conversation
+ * Only ADMIN can remove, cannot remove themselves if they're the only ADMIN
+ */
+export const removeParticipant = async (req: Request, res: Response) => {
+  try {
+    const conversationId = Number(req.params.id);
+    const userIdToRemove = Number(req.params.userId);
+    const currentUserId = req.user!.id;
+
+    // Verify current user is ADMIN
+    const currentParticipation = await prisma.participante.findFirst({
+      where: {
+        conversacionId: conversationId,
+        usuarioId: currentUserId,
+      },
+    });
+
+    if (!currentParticipation) {
+      return res.status(403).json({
+        error: 'No tienes acceso a esta conversación',
+      });
+    }
+
+    if (currentParticipation.rol !== 'ADMIN') {
+      return res.status(403).json({
+        error: 'Solo los administradores pueden remover participantes',
+      });
+    }
+
+    // Verify conversation exists and is GRUPAL
+    const conversation = await prisma.conversacion.findUnique({
+      where: { id: conversationId },
+    });
+
+    if (!conversation) {
+      return res.status(404).json({ error: 'Conversación no encontrada' });
+    }
+
+    if (conversation.tipo !== 'GRUPAL') {
+      return res.status(400).json({
+        error: 'Solo se pueden remover participantes de conversaciones grupales',
+      });
+    }
+
+    // If trying to remove self, verify there's another ADMIN
+    if (userIdToRemove === currentUserId) {
+      const adminCount = await prisma.participante.count({
+        where: {
+          conversacionId: conversationId,
+          rol: 'ADMIN',
+        },
+      });
+
+      if (adminCount <= 1) {
+        return res.status(400).json({
+          error:
+            'No puedes removerte si eres el único administrador. Primero asigna otro administrador.',
+        });
+      }
+    }
+
+    // Remove participant
+    const deleted = await prisma.participante.deleteMany({
+      where: {
+        conversacionId: conversationId,
+        usuarioId: userIdToRemove,
+      },
+    });
+
+    if (deleted.count === 0) {
+      return res.status(404).json({
+        error: 'El usuario no es participante de esta conversación',
+      });
+    }
+
+    // Return updated conversation
+    const updated = await prisma.conversacion.findUnique({
+      where: { id: conversationId },
+      include: {
+        participantes: {
+          include: {
+            usuario: {
+              select: {
+                id: true,
+                nombre: true,
+                apellido: true,
+                email: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    res.json({ data: updated });
+  } catch (error) {
+    console.error('Error al remover participante:', error);
+    res.status(500).json({ error: 'Error al remover participante' });
+  }
+};

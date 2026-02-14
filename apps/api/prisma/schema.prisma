@@ -1583,8 +1583,25 @@ model Mensaje {
   fechaEdicion    DateTime?      @map("fecha_edicion")
   fechaEliminacion DateTime?     @map("fecha_eliminacion")
 
+  menciones       MensajeMencion[]
+
   @@index([conversacionId, fechaCreacion])
   @@map("mensajes_chat")
+}
+
+model MensajeMencion {
+  id          Int     @id @default(autoincrement())
+  mensajeId   Int     @map("mensaje_id")
+  mensaje     Mensaje @relation(fields: [mensajeId], references: [id], onDelete: Cascade)
+
+  entidadTipo String  @map("entidad_tipo") // "Usuario", "Ticket", "Obra", "Cliente", etc.
+  entidadId   Int     @map("entidad_id")
+
+  textoDisplay String @map("texto_display") // "@Juan Perez", "#TKT-00045"
+
+  @@index([mensajeId])
+  @@index([entidadTipo, entidadId])
+  @@map("mensaje_menciones")
 }
 
 // ============ AUDIT TRAIL ============

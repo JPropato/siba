@@ -69,6 +69,7 @@ const FacturasEmitidasPage = lazy(() =>
 );
 const SegurosAPPage = lazy(() => import('./pages/SegurosAPPage'));
 const AuditPage = lazy(() => import('./features/audit/pages/AuditPage'));
+const ChatPage = lazy(() => import('./features/chat').then((m) => ({ default: m.ChatPage })));
 const OperacionesHomePage = lazy(() =>
   import('./features/operaciones').then((m) => ({ default: m.OperacionesHomePage }))
 );
@@ -199,6 +200,8 @@ function DashboardWrapper({ children }: { children: React.ReactNode }) {
     if (id === 'usuarios') navigate('/dashboard/users');
     if (id === 'roles') navigate('/dashboard/roles');
     if (id === 'audit') navigate('/dashboard/audit');
+    // Chat
+    if (id === 'chat') navigate('/dashboard/chat');
   };
 
   const getPageInfo = (path: string) => {
@@ -274,6 +277,8 @@ function DashboardWrapper({ children }: { children: React.ReactNode }) {
     if (path.includes('roles')) return { id: 'roles', label: 'Roles', parentLabel: 'Seguridad' };
     if (path.includes('audit'))
       return { id: 'audit', label: 'Auditoría', parentLabel: 'Seguridad' };
+    // Chat
+    if (path.includes('chat')) return { id: 'chat', label: 'Chat', parentLabel: undefined };
     return { id: 'dashboard', label: 'Dashboard' };
   };
 
@@ -668,6 +673,14 @@ export default function App() {
                   <RequirePermission permission="audit:leer">
                     <AuditPage />
                   </RequirePermission>
+                </DashboardWrapper>
+              }
+            />
+            <Route
+              path="/dashboard/chat"
+              element={
+                <DashboardWrapper>
+                  <ChatPage />
                 </DashboardWrapper>
               }
             />

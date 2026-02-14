@@ -25,6 +25,7 @@ import {
   CreditCard,
   Receipt,
   LayoutGrid,
+  MessageSquare,
 } from 'lucide-react';
 
 // ── New flat structure ──────────────────────────────────────
@@ -168,6 +169,7 @@ export const navSections: NavSection[] = [
 ];
 
 export const sidebarBottomItems: FlatNavItem[] = [
+  { id: 'chat', label: 'Chat', icon: MessageSquare },
   { id: 'configuracion', label: 'Configuracion', icon: Settings },
 ];
 

@@ -1,15 +1,21 @@
-import { X, ArrowLeft, Plus } from 'lucide-react';
+import { X, ArrowLeft, Plus, Users } from 'lucide-react';
 import { useChatStore } from '../stores/chat-store';
 import { ConversationList } from './ConversationList';
 import { MessageView } from './MessageView';
 import { useState } from 'react';
 import { NewConversationDialog } from './NewConversationDialog';
+import { GroupInfoSheet } from './GroupInfoSheet';
+import { useConversationDetail } from '../hooks/useChat';
 
 export function ChatPanel() {
   const { panelOpen, closePanel, activeConversationId, setActiveConversation } = useChatStore();
   const [showNewConv, setShowNewConv] = useState(false);
+  const [showGroupInfo, setShowGroupInfo] = useState(false);
+  const { data: conversation } = useConversationDetail(activeConversationId);
 
   if (!panelOpen) return null;
+
+  const isGroupConversation = conversation?.tipo === 'GRUPAL';
 
   return (
     <>
@@ -20,17 +26,32 @@ export function ChatPanel() {
         {/* Header */}
         <div className="flex items-center justify-between px-4 h-12 border-b border-[var(--border)] shrink-0">
           {activeConversationId ? (
-            <button
-              onClick={() => setActiveConversation(null)}
-              className="flex items-center gap-2 text-sm font-medium text-[var(--foreground)] hover:text-brand transition-colors"
-            >
-              <ArrowLeft className="size-4" />
-              Conversaciones
-            </button>
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <button
+                onClick={() => setActiveConversation(null)}
+                className="p-1 text-[var(--muted)] hover:text-brand transition-colors rounded-md hover:bg-brand/5 shrink-0"
+              >
+                <ArrowLeft className="size-4" />
+              </button>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-[var(--foreground)] truncate">
+                  {conversation?.nombre || 'Conversacion'}
+                </p>
+              </div>
+            </div>
           ) : (
             <h2 className="text-sm font-semibold text-[var(--foreground)]">Chat</h2>
           )}
           <div className="flex items-center gap-1">
+            {activeConversationId && isGroupConversation && (
+              <button
+                onClick={() => setShowGroupInfo(true)}
+                className="p-1.5 text-[var(--muted)] hover:text-brand transition-colors rounded-md hover:bg-brand/5"
+                title="Informacion del grupo"
+              >
+                <Users className="size-4" />
+              </button>
+            )}
             {!activeConversationId && (
               <button
                 onClick={() => setShowNewConv(true)}
@@ -60,6 +81,12 @@ export function ChatPanel() {
       </div>
 
       {showNewConv && <NewConversationDialog onClose={() => setShowNewConv(false)} />}
+      {showGroupInfo && activeConversationId && (
+        <GroupInfoSheet
+          conversationId={activeConversationId}
+          onClose={() => setShowGroupInfo(false)}
+        />
+      )}
     </>
   );
 }
